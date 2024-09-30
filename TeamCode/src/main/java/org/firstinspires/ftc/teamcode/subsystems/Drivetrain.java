@@ -280,19 +280,10 @@ public class Drivetrain extends SubSystem {
         List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
 
         if (different(powers)) {
-            hardwareQueue.add(() -> {
-                frontLeft.setPower(powers.get(0));
-            });
-            hardwareQueue.add(() -> {
-                frontRight.setPower(powers.get(3));
-            });
-            hardwareQueue.add(() -> {
-                backLeft.setPower(powers.get(1));
-
-            });
-            hardwareQueue.add(() -> {
-                backRight.setPower(powers.get(2));
-            });
+            hardwareQueue.add(() -> frontLeft.setPower(powers.get(0)));
+            hardwareQueue.add(() -> frontRight.setPower(powers.get(3)));
+            hardwareQueue.add(() -> backLeft.setPower(powers.get(1)));
+            hardwareQueue.add(() -> backRight.setPower(powers.get(2)));
 
             lastPowers = powers;
         }

@@ -23,7 +23,7 @@ public class Transfer extends SubSystem {
     TransferState transferState = TransferState.NEUTRAL;
     TransferState newTransferState = TransferState.NEUTRAL;
 
-    boolean update = false;
+    boolean update = true;
 
     Servo leftServo, rightServo, tiltServo;
 
@@ -46,15 +46,9 @@ public class Transfer extends SubSystem {
     @Override
     public void loop() {
         if (update) {
-            hardwareQueue.add(() -> {
-                leftServo.setPosition(transferState.leftServoPos);
-            });
-            hardwareQueue.add(() -> {
-                rightServo.setPosition(transferState.rightServoPos);
-            });
-            hardwareQueue.add(() -> {
-                tiltServo.setPosition(transferState.tiltServoPos);
-            });
+            hardwareQueue.add(() -> leftServo.setPosition(transferState.leftServoPos));
+            hardwareQueue.add(() -> rightServo.setPosition(transferState.rightServoPos));
+            hardwareQueue.add(() -> tiltServo.setPosition(transferState.tiltServoPos));
 
             update = false;
         }
