@@ -16,7 +16,7 @@ public class Intake extends SubSystem {
 
     public enum IntakeState {
         EXTENDING,
-        EXTENDING_INTAKE_DOWN,
+        DROP_INTAKE,
         INTAKING,
         RETRACTING,
         TRANSFERING,
@@ -24,6 +24,12 @@ public class Intake extends SubSystem {
     }
 
     IntakeState intakeState = IntakeState.RESTING;
+
+    IntakeState newIntakeState = IntakeState.RESTING;
+
+    boolean changedIntakeState = false;
+
+    ElapsedTimer intakeTimer = new ElapsedTimer();
 
     public enum HorizontalSlide {
         //18.9 max
@@ -49,7 +55,7 @@ public class Intake extends SubSystem {
 
     int slideTicks = 0;
 
-    Encoder horizontalEncoder;
+    Encoder horizontalSlideEncoder;
 
     DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
@@ -81,7 +87,8 @@ public class Intake extends SubSystem {
     public Intake(SubSystemData data) {
         super(data);
 
-        horizontalEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
+        //Motors
+        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
 
         horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft");
         horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight");
@@ -91,16 +98,18 @@ public class Intake extends SubSystem {
         horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         horizontalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+
+        //Servos
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
 
-        leftIntakeServo.setDirection(Servo.Direction.REVERSE);
+        rightIntakeServo.setDirection(Servo.Direction.REVERSE);
 
         intakeServo = hardwareMap.get(Servo.class, "intakeServo");
 
 
         //initiating slide encoder
-        slidePos = ticksToInches(horizontalEncoder.getCurrentPosition());
+        slidePos = ticksToInches(horizontalSlideEncoder.getCurrentPosition());
 
         if (PassData.horizontalSlidesInitiated && slidePos>-.1) {
             //If slides are not at the bottom they are set to their current pose
@@ -111,7 +120,7 @@ public class Intake extends SubSystem {
             horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-            slidePos = ticksToInches(horizontalEncoder.getCurrentPosition());
+            slidePos = 0;
             targetSlidePos = 0;
 
             PassData.horizontalSlidesInitiated = true;
@@ -124,20 +133,48 @@ public class Intake extends SubSystem {
 
     @Override
     public void priorityData() {
-        slideTicks = horizontalEncoder.getCurrentPosition();
-
-        targetSlidePos = newTargetSlidePos;
-
-        if (intakePos != newIntakePos) {
-            intakePos = newIntakePos;
-            updateIntakePos = true;
+        if (changedIntakeState) {
+            intakeState = newIntakeState;
+            changedIntakeState = false;
         }
 
-        targetIntakeSpeed = newIntakeSpeed;
+        slideTicks = horizontalSlideEncoder.getCurrentPosition();
+
+        if(changedTargetSlidePos) {
+            targetSlidePos = newTargetSlidePos;
+            changedTargetSlidePos = false;
+        }
+
+        if (changedIntakePos && intakePos != newIntakePos) {
+            intakePos = newIntakePos;
+            updateIntakePos = true;
+            changedIntakePos = false;
+        }
+
+        if (changedIntakeSpeed) {
+            targetIntakeSpeed = newIntakeSpeed;
+            changedIntakeSpeed = false;
+        }
     }
 
+    //trying to add to things to hardware queue asap so their more time for it to be called
     @Override
     public void loop() {
+
+        //intake code
+        if (updateIntakePos) {
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(intakePos.pos));
+            hardwareQueue.add(() -> rightIntakeServo.setPosition(intakePos.pos));
+
+            updateIntakePos = false;
+        }
+
+        if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.05) {
+            actualIntakeSpeed = targetIntakeSpeed;
+            hardwareQueue.add(() -> intakeServo.setPosition(actualIntakeSpeed));
+        }
+
+
         //slide PID
         slidePos = ticksToInches(slideTicks);
         //limits max time
@@ -171,32 +208,60 @@ public class Intake extends SubSystem {
 
 
 
-
-        //intake code
-        if (updateIntakePos) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(intakePos.pos));
-            hardwareQueue.add(() -> rightIntakeServo.setPosition(intakePos.pos));
-
-            updateIntakePos = false;
-        }
-
-        if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.05) {
-            actualIntakeSpeed = targetIntakeSpeed;
-            hardwareQueue.add(() -> intakeServo.setPosition(actualIntakeSpeed));
-        }
-
         switch (intakeState) {
             case EXTENDING:
-                if (absError<.5)
-                break;
-            case INTAKING:
+                //if slides past bar or need to be dropped
+                //add more logic
+                if (slidePos>10) {
+                    intakePos = IntakePos.DOWN;
+                    intakeTimer.reset();
 
+                    intakeState = IntakeState.DROP_INTAKE;
+                }
+                break;
+            case DROP_INTAKE:
+                //if intake has finished dropping start intaking
+                if (intakeTimer.seconds()>.5) {
+                    targetIntakeSpeed = 1;
+
+                    intakeState = IntakeState.INTAKING;
+                }
+
+            case INTAKING:
+                if (holdingSample()) {
+                    targetIntakeSpeed = .1;
+
+                    intakePos = IntakePos.UP;
+
+                    targetSlidePos = HorizontalSlide.IN.length;
+
+                    intakeState = IntakeState.RETRACTING;
+                }
                 break;
             case RETRACTING:
+                //if fully retracted and holding sample start transferring else rest
+                if (slidePos<.3) {
+                    if (holdingSample()) {
+                        targetIntakeSpeed = -1;
+                        intakeTimer.reset();
 
+                        intakeState = IntakeState.TRANSFERING;
+                    } else {
+                        targetIntakeSpeed = 0;
+                        intakePos = IntakePos.PARTIAL_UP;
+
+                        intakeState = IntakeState.RESTING;
+                    }
+                }
                 break;
             case TRANSFERING:
+                //if transferred go to resting position, add more logic later
+                if (intakeTimer.seconds()>.8) {
+                    targetIntakeSpeed = 0;
+                    intakePos = IntakePos.PARTIAL_UP;
 
+                    intakeState = IntakeState.RESTING;
+                }
                 break;
         }
     }
@@ -208,18 +273,21 @@ public class Intake extends SubSystem {
         return super.dashboard(packet);
     }
 
+    private boolean holdingSample() {
+        return true;
+    }
+
     private double ticksToInches(int ticks) {
         return (ticks/145.1)*4.72;
+    }
+
+    public void setTargetSlidePos(HorizontalSlide targetPos) {
+        setTargetSlidePos(targetPos.length);
     }
 
     public void setTargetSlidePos(double targetPos) {
         changedTargetSlidePos = true;
         newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.7);//18.9 is max .2 to be safe
-    }
-
-    public void setTargetSlidePos(HorizontalSlide targetPos) {
-        changedTargetSlidePos = true;
-        newTargetSlidePos = targetPos.length;
     }
 
     public void setIntakePos(IntakePos intakePos) {
@@ -230,5 +298,26 @@ public class Intake extends SubSystem {
     public void setTargetIntakeSpeed(double intakeSpeed) {
         changedIntakeSpeed = true;
         newIntakeSpeed = intakeSpeed;
+    }
+
+    //changing intake states
+    public void extendAndIntake(HorizontalSlide targetPos) {
+        extendAndIntake(targetPos.length);
+    }
+    public void extendAndIntake(double targetPos) {
+        setTargetSlidePos(targetPos);
+        newIntakeState = IntakeState.EXTENDING;
+
+        changedIntakeState = true;
+    }
+
+    public void retract() {
+        setTargetIntakeSpeed(.1);
+        setIntakePos(IntakePos.UP);
+        setTargetSlidePos(HorizontalSlide.IN);
+
+        newIntakeState = IntakeState.RETRACTING;
+
+        changedIntakeState = true;
     }
 }
