@@ -33,9 +33,9 @@ public class ConstAccelLocalizer extends SubSystem{
     public static double TICKS_PER_REV = 8192;
     public static double WHEEL_RADIUS = 0.69; // in
 
-    public static double PARALLEL_MULTIPLIER = 1.01;//.998342
+    public static double PARALLEL_MULTIPLIER = .998342;//.998342
 
-    public static double PERPENDICULAR_MULTIPLIER = -.998342;//1.01
+    public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
 
     public static double PARALLEL_Y = 1.8799213; // Y is the strafe direction 5.8
     public static double PERPENDICULAR_X = 2.9429134;//2.246
@@ -67,8 +67,8 @@ public class ConstAccelLocalizer extends SubSystem{
 
         localizer = new Localizer(new TwoWheel(PERPENDICULAR_X, PARALLEL_Y), new ConstantAccelSolver());
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "fr"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "fl"));
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
 
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;

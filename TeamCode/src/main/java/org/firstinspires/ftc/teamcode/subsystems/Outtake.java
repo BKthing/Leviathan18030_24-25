@@ -148,15 +148,17 @@ public class Outtake extends SubSystem {
 
     Servo clawServo;
 
+    Servo hangDeploy;
+
 
     public Outtake(SubSystemData data) {
         super(data);
 
         //Motors
-        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
 
-        verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft");
-        verticalRightMotor = hardwareMap.get(DcMotorEx.class, "verticalRight");
+        verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
+        verticalRightMotor = hardwareMap.get(DcMotorEx.class, "verticalRight"); // control hub 3
 
         verticalRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -174,6 +176,8 @@ public class Outtake extends SubSystem {
         wristRollServo = hardwareMap.get(Servo.class, "wristRollServo");
 
         clawServo = hardwareMap.get(Servo.class, "clawServo");
+
+        hangDeploy = hardwareMap.get(Servo.class, "hangDeploy");
 
 
         //initiating slide encoder
