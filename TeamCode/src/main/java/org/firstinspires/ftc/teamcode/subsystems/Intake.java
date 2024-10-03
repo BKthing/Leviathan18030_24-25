@@ -84,6 +84,8 @@ public class Intake extends SubSystem {
 
     ElapsedTimer slideTimer = new ElapsedTimer();
 
+    boolean holdingSample = false;
+
     public Intake(SubSystemData data) {
         super(data);
 
@@ -206,7 +208,11 @@ public class Intake extends SubSystem {
         hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
         hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
 
-
+//        if (gamepad1.right_bumper) {
+//            holdingSample = true;
+//        } else if (gamepad1.left_bumper) {
+//            holdingSample = false;
+//        }
 
         switch (intakeState) {
             case EXTENDING:
@@ -274,7 +280,7 @@ public class Intake extends SubSystem {
     }
 
     private boolean holdingSample() {
-        return true;
+        return holdingSample;
     }
 
     private double ticksToInches(int ticks) {
@@ -306,9 +312,8 @@ public class Intake extends SubSystem {
     }
     public void extendAndIntake(double targetPos) {
         setTargetSlidePos(targetPos);
-        newIntakeState = IntakeState.EXTENDING;
 
-        changedIntakeState = true;
+        setIntakeState(IntakeState.EXTENDING);
     }
 
     public void retract() {
@@ -316,7 +321,11 @@ public class Intake extends SubSystem {
         setIntakePos(IntakePos.UP);
         setTargetSlidePos(HorizontalSlide.IN);
 
-        newIntakeState = IntakeState.RETRACTING;
+        setIntakeState(IntakeState.RETRACTING);
+    }
+
+    public void setIntakeState(IntakeState intakeState) {
+        newIntakeState = intakeState;
 
         changedIntakeState = true;
     }

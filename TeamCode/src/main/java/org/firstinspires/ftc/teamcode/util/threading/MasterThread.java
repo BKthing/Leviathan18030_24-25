@@ -20,9 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 public class MasterThread {
 
-    private HardwareQueue hardwareQueue = new HardwareQueue();
+    private final HardwareQueue hardwareQueue = new HardwareQueue();
 
-    private List<SubSystem> subSystems = new ArrayList<>();
+    private final List<SubSystem> subSystems = new ArrayList<>();
 
     private final HardwareMap hardwareMap;
 

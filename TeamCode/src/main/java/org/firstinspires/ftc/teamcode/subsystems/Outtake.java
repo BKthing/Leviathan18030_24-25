@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -8,6 +9,7 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.teamcode.PassData;
 import org.firstinspires.ftc.teamcode.util.Encoder;
+import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class Outtake extends SubSystem {
@@ -51,6 +53,8 @@ public class Outtake extends SubSystem {
         public final double length;
         VerticalSlide(double length) {this.length = length;}
     }
+
+    ElapsedTimer slideTimer = new ElapsedTimer();
 
     boolean changedTargetSlidePos = false;
 
@@ -144,6 +148,8 @@ public class Outtake extends SubSystem {
     ClawPosition clawPosition = ClawPosition.CLOSED;
     ClawPosition newClawPosition = ClawPosition.CLOSED;
 
+    boolean updatedClawPosition = false;
+
     boolean changedClawPosition = false;
 
     Servo clawServo;
@@ -231,6 +237,7 @@ public class Outtake extends SubSystem {
 
         if (changedClawPosition) {
             clawPosition = newClawPosition;
+            updatedClawPosition = true;
             changedClawPosition = false;
         }
     }
@@ -255,10 +262,95 @@ public class Outtake extends SubSystem {
             actualWristRoll = targetWristRoll;
             hardwareQueue.add(() -> wristRollServo.setPosition(actualWristRoll));
         }
+
+        if (updatedClawPosition) {
+            hardwareQueue.add(() -> clawServo.setPosition(clawPosition.pos));
+            updatedClawPosition = false;
+        }
+
+
+        //slide PID
+        slidePos = ticksToInches(slideTicks);
+        //limits max time
+        double elapsedTime = Math.min(slideTimer.seconds(), .5);
+
+        //pid control
+        double error = targetSlidePos - slidePos;
+        double absError = Math.abs(error);
+
+        double p, d = 0;
+
+        slideI += error*elapsedTime;
+
+        //Checks if error is in acceptable amounts
+        if (absError<.1) {
+            p = .04;
+        } else if (absError>4) {
+            //Slides set to max power
+            p = Math.signum(error);
+        } else {//if (error<4 but error>.1)
+            p = error*.1;
+            d = ((error - prevSlideError) / elapsedTime) * .007;//.007
+        }
+
+        double motorPower = p + slideI - d;
+        slideTimer.reset();
+        prevSlideError = error;
+
+        hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
+        hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
+
+
+    }
+
+    @Override
+    public TelemetryPacket dashboard(TelemetryPacket packet) {
+        return super.dashboard(packet);
     }
 
     private double ticksToInches(int ticks) {
-        return (ticks/145.1)*4.72;
+        return (ticks/384.5)*4.72;
+    }
+
+    public void setTargetSlidePos(VerticalSlide targetPos) {
+        setTargetSlidePos(targetPos.length);
+    }
+
+    public void setTargetSlidePos(double targetPos) {
+        changedTargetSlidePos = true;
+        newTargetSlidePos = MathUtil.clip(targetPos, 0, 28.1);//28.35 in is max
+    }
+
+    public void setTargetV4BarPos(V4BarPos pos) {
+        setTargetV4BarPos(pos.pos);
+    }
+
+    public void setTargetV4BarPos(double pos) {
+        changedV4BarPos = true;
+        newV4BarPos = pos;
+    }
+
+    public void setTargetWristPitch(WristPitch pos) {
+        setTargetV4BarPos(pos.pos);
+    }
+
+    public void setTargetWristPitch(double pos) {
+        changedWristPitch = true;
+        newWristPitch = pos;
+    }
+
+    public void setTargetWristRoll(WristRoll pos) {
+        setTargetV4BarPos(pos.pos);
+    }
+
+    public void setTargetWristRoll(double pos) {
+        changedWristRoll = true;
+        newWristRoll = pos;
+    }
+
+    public void setClawPosition(ClawPosition pos) {
+        changedClawPosition = true;
+        clawPosition = pos;
     }
 
 
