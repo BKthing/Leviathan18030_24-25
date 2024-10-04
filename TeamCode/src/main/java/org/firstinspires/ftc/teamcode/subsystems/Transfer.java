@@ -31,8 +31,8 @@ public class Transfer extends SubSystem {
         super(data);
 
         leftServo = hardwareMap.get(Servo.class, "leftServo");
-        rightServo = hardwareMap.get(Servo.class, "leftServo");
-        tiltServo = hardwareMap.get(Servo.class, "leftServo");
+        rightServo = hardwareMap.get(Servo.class, "rightServo");
+        tiltServo = hardwareMap.get(Servo.class, "tiltServo");
     }
 
     @Override

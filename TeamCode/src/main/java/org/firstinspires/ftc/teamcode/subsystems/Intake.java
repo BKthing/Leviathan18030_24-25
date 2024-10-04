@@ -92,10 +92,10 @@ public class Intake extends SubSystem {
         super(data);
 
         //Motors
-        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
+        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
 
-        horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft");
-        horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight");
+        horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft"); // control hub 0
+        horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight"); // control hub 1
 
         horizontalRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
