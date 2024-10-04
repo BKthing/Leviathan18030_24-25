@@ -76,10 +76,10 @@ public class Drivetrain extends SubSystem {
 
         runner = new TrajectorySequenceRunner(lateralPID, headingPID, naturalDecel, trackWidth, RobotConstants.constraints);
 
-        frontLeft = hardwareMap.get(DcMotorEx.class, "fl");
-        frontRight = hardwareMap.get(DcMotorEx.class, "fr");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
+        frontRight = hardwareMap.get(DcMotorEx.class, "fr");//
         backLeft = hardwareMap.get(DcMotorEx.class, "bl");
-        backRight = hardwareMap.get(DcMotorEx.class, "br");
+        backRight = hardwareMap.get(DcMotorEx.class, "br");//ex 1
 
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);

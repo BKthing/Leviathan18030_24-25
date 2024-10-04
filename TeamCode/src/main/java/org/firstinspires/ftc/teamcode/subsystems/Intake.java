@@ -45,8 +45,10 @@ public class Intake extends SubSystem {
     }
 
     boolean changedTargetSlidePos = false;
-    double targetSlidePos;
+    double targetSlidePos = 0;
     double newTargetSlidePos;
+
+    double prevTargetSlidePos = 0;
 
     double slidePos;//inches
     double prevSlideError = 0;
@@ -157,6 +159,8 @@ public class Intake extends SubSystem {
             targetIntakeSpeed = newIntakeSpeed;
             changedIntakeSpeed = false;
         }
+
+        prevTargetSlidePos = targetSlidePos;
     }
 
     //trying to add to things to hardware queue asap so their more time for it to be called
@@ -299,6 +303,10 @@ public class Intake extends SubSystem {
     public void setIntakePos(IntakePos intakePos) {
         changedIntakePos = true;
         newIntakePos = intakePos;
+    }
+
+    public double getTargetSlidePos() {
+        return prevTargetSlidePos;
     }
 
     public void setTargetIntakeSpeed(double intakeSpeed) {
