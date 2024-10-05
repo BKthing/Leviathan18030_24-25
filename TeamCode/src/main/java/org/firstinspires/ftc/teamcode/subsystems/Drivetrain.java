@@ -83,6 +83,7 @@ public class Drivetrain extends SubSystem {
 
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
