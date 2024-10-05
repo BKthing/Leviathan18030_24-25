@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.SubSystem;
-import org.firstinspires.ftc.teamcode.subsystems.TeleopControler;
+import org.firstinspires.ftc.teamcode.subsystems.TeleopController;
 import org.firstinspires.ftc.teamcode.subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
@@ -27,7 +27,7 @@ public class TeleTest extends LinearOpMode {
     OldLocalizer oldLocalizer;
     Intake intake;
     Outtake outtake;
-    TeleopControler teleopControler;
+    TeleopController teleopController;
     Transfer transfer;
     MasterThread masterThread;
     Telemetry.Item loopTime;
