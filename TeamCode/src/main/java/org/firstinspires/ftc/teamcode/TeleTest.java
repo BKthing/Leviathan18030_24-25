@@ -44,14 +44,25 @@ public class TeleTest extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-//        teleopControler = new TeleopControler(intake, transfer, outtake, masterThread.getData());
         oldLocalizer = new OldLocalizer(masterThread.getData());
+
         drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);
+
+//        intake = new Intake(masterThread.getData());
+//        transfer = new Transfer(masterThread.getData());
+//        outtake = new Outtake(masterThread.getData());
+//
+//        teleopController = new TeleopController(intake, transfer, outtake, masterThread.getData());
+
 
         masterThread.addSubSystems(
                 drivetrain,
                 oldLocalizer
+//                intake,
+//                transfer,
+//                outtake,
+//                teleopController
         );
 
 

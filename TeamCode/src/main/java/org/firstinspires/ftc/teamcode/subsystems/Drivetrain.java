@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.util.RobotConstants.naturalDecel;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.trackWidth;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -60,7 +61,7 @@ public class Drivetrain extends SubSystem {
     Pose2d poseVelocity;
     Pose2d poseAcceleration;
 
-    boolean fieldCentric = true;
+    boolean fieldCentric = false;
     double headingOffset = 0;
 
     public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {
@@ -81,8 +82,15 @@ public class Drivetrain extends SubSystem {
         backLeft = hardwareMap.get(DcMotorEx.class, "bl");
         backRight = hardwareMap.get(DcMotorEx.class, "br");//ex 1
 
-//        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-//        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+//        frontLeft.setDirection(DcMotorSimple.Dir
+//        ection.REVERSE);
 //        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -132,7 +140,8 @@ public class Drivetrain extends SubSystem {
             case DRIVER_CONTROL:
                 double relativeHeading = poseEstimate.getHeading()-headingOffset;
 
-                double speedMultiplier = 1- gamepad1.right_trigger*.7;
+//                double speedMultiplier = 1- gamepad1.right_trigger*.7;
+                double speedMultiplier = .4- gamepad1.right_trigger*.25;
 
                 MotorPowers powers = new MotorPowers();
 
@@ -152,7 +161,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.7*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.75*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }
@@ -169,15 +178,15 @@ public class Drivetrain extends SubSystem {
 
 
                 //driving settings
-                if (gamepad1.a) {
-                    headingOffset = poseEstimate.getHeading();
-                }
-
-                if (gamepad1.x) {
-                    fieldCentric = false;
-                } else if (gamepad1.b) {
-                    fieldCentric = true;
-                }
+//                if (gamepad1.a) {
+//                    headingOffset = poseEstimate.getHeading();
+//                }
+//
+//                if (gamepad1.x) {
+//                    fieldCentric = false;
+//                } else if (gamepad1.b) {
+//                    fieldCentric = true;
+//                }
 
 
                 setDrivePower(powers);

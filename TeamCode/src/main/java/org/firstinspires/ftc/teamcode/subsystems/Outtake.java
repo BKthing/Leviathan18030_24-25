@@ -173,11 +173,12 @@ public class Outtake extends SubSystem {
 
         //Motors
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
+        verticalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
 
         verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
         verticalRightMotor = hardwareMap.get(DcMotorEx.class, "verticalRight"); // control hub 3
 
-        verticalRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+//        verticalRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         verticalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         verticalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
