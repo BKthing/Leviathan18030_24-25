@@ -141,7 +141,7 @@ public class Drivetrain extends SubSystem {
                 double relativeHeading = poseEstimate.getHeading()-headingOffset;
 
 //                double speedMultiplier = 1- gamepad1.right_trigger*.7;
-                double speedMultiplier = .4- gamepad1.right_trigger*.25;
+                double speedMultiplier = 1- gamepad1.right_trigger*.7;
 
                 MotorPowers powers = new MotorPowers();
 
@@ -161,7 +161,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.75*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.6*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }

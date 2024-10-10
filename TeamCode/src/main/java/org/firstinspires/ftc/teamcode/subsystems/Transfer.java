@@ -6,10 +6,10 @@ import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class Transfer extends SubSystem {
     public enum TransferState {
-        EJECT_LEFT(0 , 0, 0),
-        EJECT_RIGHT(0, 0, 0),
-        NEUTRAL(0, 0, 0),
-        CENTER(0, 0, 0);
+        EJECT_LEFT(.46 , 0.23, .755),
+        EJECT_RIGHT(0.7, .47, .945),
+        NEUTRAL(0.7, 0.23, .84),
+        CENTER(.795, 0.135, .84);
 
         public final double leftServoPos, rightServoPos, tiltServoPos;
 

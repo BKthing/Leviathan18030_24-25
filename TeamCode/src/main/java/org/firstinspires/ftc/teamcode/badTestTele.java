@@ -115,7 +115,8 @@ public class badTestTele extends LinearOpMode {
             }
 
             leftServo.setPosition(.46);
-            rightServo.setPosition(.46);
+            rightServo.setPosition(.23);
+            tiltServo.setPosition(.755);
 //            if (gamepad1.b) {
 //                horizontalRightMotor.setPower(0.5);
 //            } else  {

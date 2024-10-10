@@ -32,13 +32,28 @@ public class TeleopController extends SubSystem {
 
         if (gamepad2.a) {
             intake.extendAndIntake(Intake.HorizontalSlide.MEDIUM);
-        } else if (gamepad1.x) {
+        } else if (gamepad2.x) {
             intake.extendAndIntake(Intake.HorizontalSlide.FAR);
         } else if (gamepad2.right_bumper) {
             intake.retract();
-        } else if (Math.abs(gamepad1.left_stick_y) > .05) {
-            intake.setTargetSlidePos(intake.getTargetSlidePos()+.01*loopTimer.seconds());
+        } else if (Math.abs(gamepad2.left_stick_y) > .05) {
+            intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
         }
+
+
+        if (gamepad2.dpad_right) {
+            transfer.setTransferState(Transfer.TransferState.EJECT_RIGHT);
+        } else if (gamepad2.dpad_left) {
+            transfer.setTransferState(Transfer.TransferState.EJECT_LEFT);
+        } else if (gamepad2.dpad_up) {
+            transfer.setTransferState(Transfer.TransferState.CENTER);
+        } else {
+            transfer.setTransferState(Transfer.TransferState.NEUTRAL);
+
+        }
+
+
+
 
 //        if (gamepad2.b) {
 //            outtake.

@@ -183,7 +183,6 @@ public class Outtake extends SubSystem {
         verticalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         verticalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
         //Servos
         leftOuttakeServo = hardwareMap.get(Servo.class, "leftOuttakeServo");
         rightOuttakeServo = hardwareMap.get(Servo.class, "rightOuttakeServo");

@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.PassData;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
@@ -30,6 +32,8 @@ public class Intake extends SubSystem {
     boolean changedIntakeState = false;
 
     ElapsedTimer intakeTimer = new ElapsedTimer();
+
+    Telemetry.Item slidePosTelem;
 
     public enum HorizontalSlide {
         //18.9 max
@@ -98,7 +102,7 @@ public class Intake extends SubSystem {
         horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft"); // control hub 0
         horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight"); // control hub 1
 
-        horizontalRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        horizontalLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         horizontalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -111,6 +115,9 @@ public class Intake extends SubSystem {
         rightIntakeServo.setDirection(Servo.Direction.REVERSE);
 
         intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+
+        intakeServo.getPortNumber();
+        horizontalLeftMotor.getCurrent(CurrentUnit.AMPS);
 
 
         //initiating slide encoder
@@ -132,6 +139,8 @@ public class Intake extends SubSystem {
         }
 
         newTargetSlidePos = targetSlidePos;
+
+        slidePosTelem = telemetry.addData("Slide position", "");
 
 
     }
@@ -203,7 +212,7 @@ public class Intake extends SubSystem {
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
             p = error*.1;
-            d = ((error - prevSlideError) / elapsedTime) * .007;//.007
+            d = ((error - prevSlideError) / elapsedTime) * .0;//.007
         }
 
         double motorPower = p + slideI - d;
@@ -280,6 +289,7 @@ public class Intake extends SubSystem {
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
 
+        slidePosTelem.setValue(String.format("%.2f Target: %.2f", slidePos, targetSlidePos));
 
         return super.dashboard(packet);
     }
