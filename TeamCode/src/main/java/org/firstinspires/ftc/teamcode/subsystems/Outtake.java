@@ -305,6 +305,14 @@ public class Outtake extends SubSystem {
 
         double p, d = 0;
 
+        double f;
+
+        if (targetSlidePos == 0) {
+            f = .1;
+        } else {
+            f = 0;
+        }
+
         slideI += error*elapsedTime;
 
         //Checks if error is in acceptable amounts
@@ -313,12 +321,15 @@ public class Outtake extends SubSystem {
         } else if (absError>4) {
             //Slides set to max power
             p = Math.signum(error);
+        } else if (absError>2) {
+            //Slides set to max power
+            p = Math.signum(error)*.5;
         } else {//if (error<4 but error>.1)
             p = error*.1;
-            d = ((error - prevSlideError) / elapsedTime) * .007;//.007
+            d = ((error - prevSlideError) / elapsedTime) * .00;//.007
         }
 
-        double motorPower = p + slideI - d;
+        double motorPower = p + slideI - d + f;
         slideTimer.reset();
         prevSlideError = error;
 

@@ -40,17 +40,20 @@ public class TeleopController extends SubSystem {
             intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
         }
 
-
-        if (gamepad2.dpad_right) {
-            transfer.setTransferState(Transfer.TransferState.EJECT_RIGHT);
-        } else if (gamepad2.dpad_left) {
-            transfer.setTransferState(Transfer.TransferState.EJECT_LEFT);
-        } else if (gamepad2.dpad_up) {
-            transfer.setTransferState(Transfer.TransferState.CENTER);
-        } else {
-            transfer.setTransferState(Transfer.TransferState.NEUTRAL);
-
+        if (Math.abs(gamepad2.right_stick_y) > .05) {
+            outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.right_stick_y);
         }
+
+//        if (gamepad2.dpad_right) {
+//            transfer.setTransferState(Transfer.TransferState.EJECT_RIGHT);
+//        } else if (gamepad2.dpad_left) {
+//            transfer.setTransferState(Transfer.TransferState.EJECT_LEFT);
+//        } else if (gamepad2.dpad_up) {
+//            transfer.setTransferState(Transfer.TransferState.CENTER);
+//        } else {
+//            transfer.setTransferState(Transfer.TransferState.NEUTRAL);
+//
+//        }
 
 
 
