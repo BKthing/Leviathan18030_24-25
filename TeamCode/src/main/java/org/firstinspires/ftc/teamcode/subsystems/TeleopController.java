@@ -43,6 +43,7 @@ public class TeleopController extends SubSystem {
         if (Math.abs(gamepad2.right_stick_y) > .05) {
             outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.right_stick_y);
         }
+        outtake.setHangDeploy(Outtake.HangDeploy.DEPLOY);
 
 //        if (gamepad2.dpad_right) {
 //            transfer.setTransferState(Transfer.TransferState.EJECT_RIGHT);

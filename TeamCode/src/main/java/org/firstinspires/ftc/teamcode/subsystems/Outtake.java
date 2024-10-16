@@ -56,6 +56,8 @@ public class Outtake extends SubSystem {
         VerticalSlide(double length) {this.length = length;}
     }
 
+
+
     ElapsedTimer slideTimer = new ElapsedTimer();
 
     boolean changedTargetSlidePos = false;
@@ -156,6 +158,10 @@ public class Outtake extends SubSystem {
 
     boolean changedClawPosition = false;
 
+    boolean changedHangDeploy = false;
+
+    boolean updatedHangPos = false;
+
     Servo clawServo;
 
     boolean grabFromTransfer = false;
@@ -166,6 +172,18 @@ public class Outtake extends SubSystem {
     boolean toggleAutoExtendSlides = false;
 
     Servo hangDeploy;
+
+    public enum HangDeploy {
+        DEPLOY(.4),
+        NOTDEPLOYED(.2);
+
+        public final double pos;
+
+        HangDeploy(double pos) {this.pos = pos;}
+    }
+
+    HangDeploy hangDeployPos = HangDeploy.NOTDEPLOYED;
+    HangDeploy newHangDeploy = HangDeploy.NOTDEPLOYED;
 
 
     public Outtake(SubSystemData data) {
@@ -260,6 +278,13 @@ public class Outtake extends SubSystem {
             grabFromTransfer = true;
         }
 
+        if (changedHangDeploy) {
+            hangDeployPos = newHangDeploy;
+            updatedHangPos = true;
+            changedHangDeploy = false;
+        }
+
+
         if (toggleAutoExtendSlides) {
             autoExtendSlides = !autoExtendSlides;
             toggleAutoExtendSlides = false;
@@ -292,6 +317,12 @@ public class Outtake extends SubSystem {
             hardwareQueue.add(() -> clawServo.setPosition(clawPosition.pos));
             updatedClawPosition = false;
         }
+
+        if(updatedHangPos) {
+            hardwareQueue.add(() -> hangDeploy.setPosition(hangDeployPos.pos));
+            updatedHangPos = false;
+        }
+
 
 
         //slide PID
@@ -539,6 +570,11 @@ public class Outtake extends SubSystem {
 
     public void grabFromTransfer() {
         changedGrabFromTransfer = true;
+    }
+
+    public void setHangDeploy(HangDeploy pos) {
+        changedHangDeploy = true;
+        hangDeployPos = pos;
     }
 
 
