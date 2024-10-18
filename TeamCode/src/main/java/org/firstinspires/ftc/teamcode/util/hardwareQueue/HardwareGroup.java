@@ -29,7 +29,7 @@ public class HardwareGroup {
     public double getEstimatedWatts() {
         double watts = 0;
         for (Device device : devices) {
-            watts += device.getEstimatedWatts();
+            watts += device.getEstimatedAMPS();
         }
         return watts;
     }

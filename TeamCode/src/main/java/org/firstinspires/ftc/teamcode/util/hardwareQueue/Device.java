@@ -6,7 +6,7 @@ public interface Device {
     boolean requiresUpdate();
     double getTimeSinceLastUpdate();
 
-    double getEstimatedWatts();
+    double getEstimatedAMPS();
 
     String getDeviceName();
 
@@ -16,7 +16,7 @@ public interface Device {
 
     int getId();
 
-    void setId();
+    void setId(int id);
 
 
 }

@@ -17,8 +17,14 @@ public class VoltageRegulatingHardwareQueue {
     }
 
     public void addDevice(Device device) {
-//        device.setHardwareGroup();
-//        devices
+        addDevice(device, 1);
+    }
+
+    public void addDevice(Device device, int hardwareGroup) {
+        device.setHardwareGroup(hardwareGroup);
+        device.setId(devices.size());
+
+        devices.add(device);
     }
 
     public void update() {
