@@ -56,6 +56,8 @@ public class Outtake extends SubSystem {
         VerticalSlide(double length) {this.length = length;}
     }
 
+
+
     ElapsedTimer slideTimer = new ElapsedTimer();
 
     boolean changedTargetSlidePos = false;
@@ -156,6 +158,10 @@ public class Outtake extends SubSystem {
 
     boolean changedClawPosition = false;
 
+    boolean changedHangDeploy = false;
+
+    boolean updatedHangPos = false;
+
     Servo clawServo;
 
     boolean grabFromTransfer = false;
@@ -166,6 +172,18 @@ public class Outtake extends SubSystem {
     boolean toggleAutoExtendSlides = false;
 
     Servo hangDeploy;
+
+    public enum HangDeploy {
+        DEPLOY(.4),
+        NOTDEPLOYED(.2);
+
+        public final double pos;
+
+        HangDeploy(double pos) {this.pos = pos;}
+    }
+
+    HangDeploy hangDeployPos = HangDeploy.NOTDEPLOYED;
+    HangDeploy newHangDeploy = HangDeploy.NOTDEPLOYED;
 
 
     public Outtake(SubSystemData data) {
@@ -260,6 +278,13 @@ public class Outtake extends SubSystem {
             grabFromTransfer = true;
         }
 
+        if (changedHangDeploy) {
+            hangDeployPos = newHangDeploy;
+            updatedHangPos = true;
+            changedHangDeploy = false;
+        }
+
+
         if (toggleAutoExtendSlides) {
             autoExtendSlides = !autoExtendSlides;
             toggleAutoExtendSlides = false;
@@ -293,6 +318,12 @@ public class Outtake extends SubSystem {
             updatedClawPosition = false;
         }
 
+        if(updatedHangPos) {
+            hardwareQueue.add(() -> hangDeploy.setPosition(hangDeployPos.pos));
+            updatedHangPos = false;
+        }
+
+
 
         //slide PID
         slidePos = ticksToInches(slideTicks);
@@ -308,7 +339,7 @@ public class Outtake extends SubSystem {
         double f;
 
         if (targetSlidePos == 0) {
-            f = .4;
+            f = .13;
         } else {
             f = 0;
         }
@@ -316,18 +347,19 @@ public class Outtake extends SubSystem {
         slideI += error*elapsedTime;
 
         //Checks if error is in acceptable amounts
-         if (false) {//absError>4
+
+        if (absError<0) {
             //Slides set to max power
             p = Math.signum(error);
-        } else if (false) {//absError>2
+        } else if (absError<0) {
             //Slides set to max power
             p = Math.signum(error)*.5;
         } else {//if (error<4 but error>.1)
-            p = error*.05;
-            d = ((error - prevSlideError) / elapsedTime) * .00;//.007
+            p = error*.12;
+            d = ((error - prevSlideError) / elapsedTime) * 0;//.007
         }
 
-        double motorPower =  f;//p + slideI - d +
+        double motorPower =  p + slideI - d + f; //
         slideTimer.reset();
         prevSlideError = error;
 
@@ -538,6 +570,11 @@ public class Outtake extends SubSystem {
 
     public void grabFromTransfer() {
         changedGrabFromTransfer = true;
+    }
+
+    public void setHangDeploy(HangDeploy pos) {
+        changedHangDeploy = true;
+        hangDeployPos = pos;
     }
 
 
