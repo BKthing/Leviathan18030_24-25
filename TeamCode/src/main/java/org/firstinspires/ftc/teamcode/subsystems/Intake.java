@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -66,10 +67,10 @@ public class Intake extends SubSystem {
     DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
     public enum IntakePos {
-        UP(.3),
+        UP(.7),
         PARTIAL_UP(.4),
         CLEAR_BAR(.62),
-        DOWN(.7);
+        DOWN(.1);
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -86,7 +87,8 @@ public class Intake extends SubSystem {
     double newIntakeSpeed = 0;
 
 
-    Servo leftIntakeServo, rightIntakeServo, intakeServo;
+    private Servo leftIntakeServo, rightIntakeServo;
+    private CRServo intakeServo;
 
     ElapsedTimer slideTimer = new ElapsedTimer();
 
@@ -112,9 +114,11 @@ public class Intake extends SubSystem {
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
 
+
         rightIntakeServo.setDirection(Servo.Direction.REVERSE);
 
-        intakeServo = hardwareMap.get(Servo.class, "intakeServo");
+
+        intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
 
         intakeServo.getPortNumber();
         horizontalLeftMotor.getCurrent(CurrentUnit.AMPS);
@@ -179,7 +183,7 @@ public class Intake extends SubSystem {
 
         //intake code
         if (updateIntakePos) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(intakePos.pos));
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(intakePos.pos + .009));
             hardwareQueue.add(() -> rightIntakeServo.setPosition(intakePos.pos));
 
             updateIntakePos = false;
@@ -187,7 +191,7 @@ public class Intake extends SubSystem {
 
         if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.05) {
             actualIntakeSpeed = targetIntakeSpeed;
-            hardwareQueue.add(() -> intakeServo.setPosition(actualIntakeSpeed));
+            hardwareQueue.add(() -> intakeServo.setPower(actualIntakeSpeed));
         }
 
 

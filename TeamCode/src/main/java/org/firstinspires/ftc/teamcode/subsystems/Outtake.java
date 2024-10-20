@@ -359,7 +359,7 @@ public class Outtake extends SubSystem {
             d = ((error - prevSlideError) / elapsedTime) * 0;//.007
         }
 
-        double motorPower =  p + slideI - d + f; //
+        double motorPower =  p  - d + f; //
         slideTimer.reset();
         prevSlideError = error;
 

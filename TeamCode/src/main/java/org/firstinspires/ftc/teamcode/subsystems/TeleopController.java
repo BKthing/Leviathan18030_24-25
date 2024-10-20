@@ -30,20 +30,20 @@ public class TeleopController extends SubSystem {
     @Override
     public void loop() {
 
-        if (gamepad2.a) {
-            intake.extendAndIntake(Intake.HorizontalSlide.MEDIUM);
-        } else if (gamepad2.x) {
-            intake.extendAndIntake(Intake.HorizontalSlide.FAR);
-        } else if (gamepad2.right_bumper) {
-            intake.retract();
-        } else if (Math.abs(gamepad2.left_stick_y) > .05) {
-            intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
-        }
-
-        if (Math.abs(gamepad2.right_stick_y) > .05) {
-            outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.right_stick_y);
-        }
-        outtake.setHangDeploy(Outtake.HangDeploy.DEPLOY);
+//        if (gamepad2.a) {
+//            intake.extendAndIntake(Intake.HorizontalSlide.MEDIUM);
+//        } else if (gamepad2.x) {
+//            intake.extendAndIntake(Intake.HorizontalSlide.FAR);
+//        } else if (gamepad2.right_bumper) {
+//            intake.retract();
+//        } else if (Math.abs(gamepad2.left_stick_y) > .05) {
+//            intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
+//        }
+//
+//        if (Math.abs(gamepad2.right_stick_y) > .05) {
+//            outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.right_stick_y);
+//        }
+//        outtake.setHangDeploy(Outtake.HangDeploy.DEPLOY);
 
 //        if (gamepad2.dpad_right) {
 //            transfer.setTransferState(Transfer.TransferState.EJECT_RIGHT);
@@ -56,12 +56,34 @@ public class TeleopController extends SubSystem {
 //
 //        }
 
+         if (gamepad2.left_bumper) {
+            intake.setTargetIntakeSpeed(1);
+        }
+         else if (gamepad2.right_bumper) {
+             intake.setTargetIntakeSpeed(-1);
+         }
+         else
+             intake.setTargetIntakeSpeed(0);
+
+         if (gamepad2.x) {
+             intake.setIntakePos(Intake.IntakePos.DOWN);
+         }
+         if (gamepad2.a) {
+             intake.setIntakePos(Intake.IntakePos.UP);
+         }
+         if (gamepad2.y) {
+             intake.setIntakePos(Intake.IntakePos.PARTIAL_UP);
+         }
 
 
 
-//        if (gamepad2.b) {
-//            outtake.
+//        else {
+//            intake.leftIntakeServo.setPosition(0);
+//            intake.rightIntakeServo.setPosition(0);
+//            intake.intakeServo.setPosition(0);
 //        }
+
+
 
         loopTimer.reset();
     }
