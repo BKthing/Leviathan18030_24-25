@@ -21,7 +21,6 @@ public class AxonTest extends LinearOpMode {
     private CRServo intakeServo;
     private double LcurPos, RcurPos;
 
-    double targetServoPos = 0;
 
     ElapsedTimer timer = new ElapsedTimer();
 
@@ -31,8 +30,11 @@ public class AxonTest extends LinearOpMode {
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
-
         rightIntakeServo.setDirection(Servo.Direction.REVERSE);
+        leftIntakeServo.scaleRange(.34, .965);
+        rightIntakeServo.scaleRange(.34, .965);
+
+        double targetPos = 0;
 
         waitForStart();
         while (!isStopRequested()) {
@@ -54,17 +56,16 @@ public class AxonTest extends LinearOpMode {
 //                intakeServo.setPower(0);
 //            }
 
-            if (Math.abs(gamepad2.left_stick_y) >0 ) {
-                leftIntakeServo.setPosition( leftIntakeServo.getPosition() + .009 + gamepad2.left_stick_y * .00001);
-                rightIntakeServo.setPosition(rightIntakeServo.getPosition() + gamepad2.left_stick_y * .00001);
+                targetPos = MathUtil.clip(targetPos + gamepad2.left_stick_y * .001, 0, 1);
 
-            }
+                leftIntakeServo.setPosition( targetPos + .006);
+                rightIntakeServo.setPosition(targetPos);
 
 
 
 //
 
-            telemetry.addData("Pos", targetServoPos);
+            telemetry.addData("Pos", targetPos);
 
             telemetry.update();
 

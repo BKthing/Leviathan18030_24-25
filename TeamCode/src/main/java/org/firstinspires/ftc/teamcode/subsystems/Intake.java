@@ -42,8 +42,8 @@ public class Intake extends SubSystem {
         AUTO_PRESET1(12),
         AUTO_PRESET2(4),
         CLOSE(8),
-        MEDIUM(12),
-        FAR(16);
+        MEDIUM(16),
+        FAR(22);
 
         public final double length;
         HorizontalSlide(double length) {this.length = length;}
@@ -67,16 +67,16 @@ public class Intake extends SubSystem {
     DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
     public enum IntakePos {
-        UP(.7),
-        PARTIAL_UP(.4),
+        UP(.69),
+        PARTIAL_UP(.6),
         CLEAR_BAR(.62),
-        DOWN(.1);
+        DOWN(.04);
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
     }
-    IntakePos intakePos = IntakePos.PARTIAL_UP;
-    IntakePos newIntakePos = IntakePos.PARTIAL_UP;
+    double intakePos = IntakePos.PARTIAL_UP.pos;
+    double newIntakePos = IntakePos.PARTIAL_UP.pos;
 
     boolean changedIntakePos = false;
     boolean updateIntakePos = true;
@@ -89,6 +89,7 @@ public class Intake extends SubSystem {
 
     private Servo leftIntakeServo, rightIntakeServo;
     private CRServo intakeServo;
+    private double targetServoPos;
 
     ElapsedTimer slideTimer = new ElapsedTimer();
 
@@ -116,6 +117,8 @@ public class Intake extends SubSystem {
 
 
         rightIntakeServo.setDirection(Servo.Direction.REVERSE);
+        leftIntakeServo.scaleRange(.34, .965);
+        rightIntakeServo.scaleRange(.34, .965);
 
 
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
@@ -183,8 +186,8 @@ public class Intake extends SubSystem {
 
         //intake code
         if (updateIntakePos) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(intakePos.pos + .009));
-            hardwareQueue.add(() -> rightIntakeServo.setPosition(intakePos.pos));
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(newIntakePos));
+            hardwareQueue.add(() -> rightIntakeServo.setPosition(newIntakePos));
 
             updateIntakePos = false;
         }
@@ -206,7 +209,7 @@ public class Intake extends SubSystem {
 
         double p, d = 0;
 
-        slideI += error*elapsedTime;
+//        slideI += error*elapsedTime;
 
         //Checks if error is in acceptable amounts
         if (absError<.1) {
@@ -219,7 +222,7 @@ public class Intake extends SubSystem {
             d = ((error - prevSlideError) / elapsedTime) * .0;//.007
         }
 
-        double motorPower = p + slideI - d;
+        double motorPower = p  - d;
         slideTimer.reset();
         prevSlideError = error;
 
@@ -237,7 +240,7 @@ public class Intake extends SubSystem {
                 //if slides past bar or need to be dropped
                 //add more logic
                 if (slidePos>10) {
-                    intakePos = IntakePos.DOWN;
+                    intakePos = IntakePos.DOWN.pos;
                     intakeTimer.reset();
 
                     intakeState = IntakeState.DROP_INTAKE;
@@ -255,7 +258,7 @@ public class Intake extends SubSystem {
                 if (holdingSample()) {
                     targetIntakeSpeed = .1;
 
-                    intakePos = IntakePos.UP;
+                    intakePos = IntakePos.UP.pos;
 
                     targetSlidePos = HorizontalSlide.IN.length;
 
@@ -272,7 +275,7 @@ public class Intake extends SubSystem {
                         intakeState = IntakeState.TRANSFERING;
                     } else {
                         targetIntakeSpeed = 0;
-                        intakePos = IntakePos.PARTIAL_UP;
+                        intakePos = IntakePos.PARTIAL_UP.pos;
 
                         intakeState = IntakeState.RESTING;
                     }
@@ -282,7 +285,7 @@ public class Intake extends SubSystem {
                 //if transferred go to resting position, add more logic later
                 if (intakeTimer.seconds()>.8) {
                     targetIntakeSpeed = 0;
-                    intakePos = IntakePos.PARTIAL_UP;
+                    intakePos = IntakePos.PARTIAL_UP.pos;
 
                     intakeState = IntakeState.RESTING;
                 }
@@ -316,6 +319,10 @@ public class Intake extends SubSystem {
     }
 
     public void setIntakePos(IntakePos intakePos) {
+        setIntakePos(intakePos.pos);
+    }
+
+    public void setIntakePos(double intakePos) {
         changedIntakePos = true;
         newIntakePos = intakePos;
     }

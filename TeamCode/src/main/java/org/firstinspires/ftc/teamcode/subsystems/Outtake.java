@@ -355,7 +355,7 @@ public class Outtake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error)*.5;
         } else {//if (error<4 but error>.1)
-            p = error*.12;
+            p = error*.16;
             d = ((error - prevSlideError) / elapsedTime) * 0;//.007
         }
 
