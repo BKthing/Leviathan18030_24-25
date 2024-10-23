@@ -31,21 +31,21 @@ public class TeleopController extends SubSystem {
     public void loop() {
 
         if (gamepad2.a) {
-            intake.extendAndIntake(Intake.HorizontalSlide.IN);
+            intake.setTargetSlidePos(Intake.HorizontalSlide.IN);
         } else if (gamepad2.b) {
-            intake.extendAndIntake(Intake.HorizontalSlide.CLOSE);
+            intake.setTargetSlidePos(Intake.HorizontalSlide.CLOSE);
         }
         else if (gamepad2.x) {
-            intake.extendAndIntake(Intake.HorizontalSlide.MEDIUM);
+            intake.setTargetSlidePos(Intake.HorizontalSlide.MEDIUM);
         }
-        else if (gamepad2.b) {
-            intake.extendAndIntake(Intake.HorizontalSlide.FAR);
+        else if (gamepad2.y) {
+            intake.setTargetSlidePos(Intake.HorizontalSlide.FAR);
+
+        } else if (gamepad2.right_bumper) {
+            intake.retract();
+        } else if (Math.abs(gamepad2.left_stick_y) > .05) {
+            intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
         }
-//        } else if (gamepad2.right_bumper) {
-//            intake.retract();
-//        } else if (Math.abs(gamepad2.left_stick_y) > .05) {
-//            intake.setTargetSlidePos(intake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.left_stick_y);
-//        }
 
         if (Math.abs(gamepad2.right_stick_y) > .05) {
             outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 6 * loopTimer.seconds() * -gamepad2.right_stick_y);

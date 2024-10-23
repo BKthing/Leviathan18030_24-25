@@ -70,7 +70,7 @@ public class Intake extends SubSystem {
         UP(.69),
         PARTIAL_UP(.6),
         CLEAR_BAR(.62),
-        DOWN(.04);
+        DOWN(.05);
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -212,14 +212,14 @@ public class Intake extends SubSystem {
 //        slideI += error*elapsedTime;
 
         //Checks if error is in acceptable amounts
-        if (absError<.1) {
-            p = .04;
-        } else if (absError>4) {
+        if (absError<.05) {
+            p = 0;
+        } else if (absError>3) {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.1;
-            d = ((error - prevSlideError) / elapsedTime) * .0;//.007
+            p = error*.25;
+            d = ((error - prevSlideError) / elapsedTime) * .015;//.007
         }
 
         double motorPower = p  - d;
