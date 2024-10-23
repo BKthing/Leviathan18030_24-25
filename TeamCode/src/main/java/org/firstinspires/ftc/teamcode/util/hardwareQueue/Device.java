@@ -1,18 +1,18 @@
 package org.firstinspires.ftc.teamcode.util.hardwareQueue;
 
-public interface Device {
+public interface Device extends Comparable<Device> {
 
+//    void priorityUpdate();
     void update();
-    boolean requiresUpdate();
+
+    void updatePriorityVal();
+    double getPriorityVal();
+
     double getTimeSinceLastUpdate();
 
     double getEstimatedAMPS();
 
     String getDeviceName();
-
-    int getHardwareGroup();
-
-    void setHardwareGroup(int hardwareGroup);
 
     int getId();
 

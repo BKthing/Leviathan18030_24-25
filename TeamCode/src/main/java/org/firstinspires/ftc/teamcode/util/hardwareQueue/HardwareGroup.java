@@ -22,7 +22,6 @@ public class HardwareGroup {
     }
 
     public void addDevice(Device device) {
-        device.setHardwareGroup(id);
         devices.add(device);
     }
 
