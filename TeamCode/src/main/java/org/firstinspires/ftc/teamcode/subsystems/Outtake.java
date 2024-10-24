@@ -202,15 +202,21 @@ public class Outtake extends SubSystem {
         verticalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //Servos
-        leftOuttakeServo = hardwareMap.get(Servo.class, "leftOuttakeServo");
-        rightOuttakeServo = hardwareMap.get(Servo.class, "rightOuttakeServo");
+        leftOuttakeServo = hardwareMap.get(Servo.class, "leftOuttakeServo"); // ex hub 5
+        rightOuttakeServo = hardwareMap.get(Servo.class, "rightOuttakeServo"); // control hub 4
 
         rightOuttakeServo.setDirection(Servo.Direction.REVERSE);
 
-        wristPitchServo = hardwareMap.get(Servo.class, "wristPitchServo");
-        wristRollServo = hardwareMap.get(Servo.class, "wristRollServo");
+        leftOuttakeServo.scaleRange(.34, .965);
+        rightOuttakeServo.scaleRange(.34, .965);
 
-        clawServo = hardwareMap.get(Servo.class, "clawServo");
+        wristPitchServo = hardwareMap.get(Servo.class, "wristPitchServo"); // control hub 1
+        wristRollServo = hardwareMap.get(Servo.class, "wristRollServo"); // control hub 3
+
+        wristPitchServo.scaleRange(.34, .965);
+        wristRollServo.scaleRange(.34, .965);
+
+        clawServo = hardwareMap.get(Servo.class, "clawServo"); // ex hub 4
 
         hangDeploy = hardwareMap.get(Servo.class, "hangDeploy");
 

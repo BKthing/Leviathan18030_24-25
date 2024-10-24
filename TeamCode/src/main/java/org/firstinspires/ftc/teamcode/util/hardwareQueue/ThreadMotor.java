@@ -90,6 +90,11 @@ public class ThreadMotor implements Device {
         this.id = id;
     }
 
+    @Override
+    public DevicePair getDevicePair() {
+        return null;
+    }
+
     public DcMotorEx getMotor() {
         return motor;
     }
@@ -99,8 +104,9 @@ public class ThreadMotor implements Device {
         return Double.compare(device.getPriorityVal(), priorityVal);
     }
 
-    @Override
-    public double[] getDevicePair() {
-        return new double[] {id, priorityVal};
-    }
+//    @Override
+//    public double[] getDevicePair() {
+//        return new double[] {id, priorityVal};
+//    }
+
 }

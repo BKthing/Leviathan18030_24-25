@@ -67,7 +67,7 @@ public class VoltageRegulatingHardwareQueue {
 
         for (Device device : devices) {
             device.updatePriorityVal();
-            devicePairs.add(device.getDevicePair());
+//            devicePairs.add(device.getDevicePair());
         }
 
         //sort device pairs
@@ -80,7 +80,7 @@ public class VoltageRegulatingHardwareQueue {
 
     }
 
-    private Queue<Double> devicePairMergeSort(List<double[]> list) {
-
-    }
+//    private Queue<Double> devicePairMergeSort(List<double[]> list) {
+//
+//    }
 }
