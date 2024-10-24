@@ -565,7 +565,11 @@ public class Outtake extends SubSystem {
 
     public void setClawPosition(ClawPosition pos) {
         changedClawPosition = true;
-        clawPosition = pos;
+        newClawPosition = pos;
+    }
+
+    public ClawPosition getTargetClawPosition() {
+        return newClawPosition;
     }
 
     public void grabFromTransfer() {

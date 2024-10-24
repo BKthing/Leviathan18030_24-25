@@ -18,5 +18,7 @@ public interface Device extends Comparable<Device> {
 
     void setId(int id);
 
+    DevicePair getDevicePair();
+
 
 }

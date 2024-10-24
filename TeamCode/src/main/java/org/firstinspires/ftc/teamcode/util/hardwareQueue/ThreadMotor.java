@@ -98,4 +98,9 @@ public class ThreadMotor implements Device {
     public int compareTo(Device device) {
         return Double.compare(device.getPriorityVal(), priorityVal);
     }
+
+    @Override
+    public double[] getDevicePair() {
+        return new double[] {id, priorityVal};
+    }
 }

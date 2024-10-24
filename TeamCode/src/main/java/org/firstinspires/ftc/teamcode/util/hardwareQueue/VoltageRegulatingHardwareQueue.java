@@ -5,12 +5,16 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class VoltageRegulatingHardwareQueue {
     private final List<HardwareGroup> hardwareGroups = new ArrayList<>();
 
     private final List<Device> devices = new ArrayList<>();
+
+    private Queue<Double> updateQueue;
 
     private final VoltageSensor voltageSensor;
 
@@ -52,16 +56,31 @@ public class VoltageRegulatingHardwareQueue {
     }
 
     public void update(HardwareMap hardwareMap) {
+
+        if (voltageSensor.getVoltage()<criticalOperatingVoltage) {
+            //lower device current draw as necessary
+        } else if (voltageSensor.getVoltage()<targetOperatingVoltage) {
+            //lower device current draw while respecting device limits
+        }
+
+        List<double[]> devicePairs = new LinkedList<>();
+
         for (Device device : devices) {
             device.updatePriorityVal();
+            devicePairs.add(device.getDevicePair());
         }
-        List<Device> sortedDevices = devices;
 
-        Collections.sort(sortedDevices);
+        //sort device pairs
+//        List.sort(devicePairs, );
 
 
-        if (voltageSensor.getVoltage()<targetOperatingVoltage) {
+//        updateQueue = devicePairs;
 
-        }
+
+
+    }
+
+    private Queue<Double> devicePairMergeSort(List<double[]> list) {
+
     }
 }

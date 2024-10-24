@@ -20,9 +20,6 @@ import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 @TeleOp
 public class TeleTest extends LinearOpMode {
-    private DcMotorEx fl, fr, bl, br;
-
-
     Drivetrain drivetrain;
     OldLocalizer oldLocalizer;
     Intake intake;
@@ -52,7 +49,7 @@ public class TeleTest extends LinearOpMode {
         intake = new Intake(masterThread.getData());
         transfer = new Transfer(masterThread.getData());
         outtake = new Outtake(masterThread.getData());
-//
+
         teleopController = new TeleopController(intake, transfer, outtake, masterThread.getData());
 
 

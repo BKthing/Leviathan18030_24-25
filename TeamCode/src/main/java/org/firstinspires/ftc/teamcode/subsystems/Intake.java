@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import android.annotation.SuppressLint;
+
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -293,6 +295,7 @@ public class Intake extends SubSystem {
         }
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
 
