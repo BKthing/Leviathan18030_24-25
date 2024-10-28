@@ -27,7 +27,7 @@ import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 import java.util.Arrays;
 import java.util.List;
 
-public class Drivetrain extends SubSystem {
+public class LimitedDrivetrain extends SubSystem {
 
     public enum DriveState {
         FOLLOW_PATH,
@@ -53,7 +53,7 @@ public class Drivetrain extends SubSystem {
     VoltageSensor batteryVoltageSensor;
     double voltage = 0;
 
-    com.reefsharklibrary.localizers.OldLocalizer localizer;
+    OldLocalizer localizer;
 
     TrajectorySequenceRunner runner;
 
@@ -61,14 +61,14 @@ public class Drivetrain extends SubSystem {
     Pose2d poseVelocity;
     Pose2d poseAcceleration;
 
-    boolean fieldCentric = true;
+    boolean fieldCentric = false;
     double headingOffset = 0;
 
-    public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {
+    public LimitedDrivetrain(SubSystemData data, OldLocalizer localizer) {
         this(data, localizer, DriveState.FOLLOW_PATH);
     }
 
-    public Drivetrain(SubSystemData data, OldLocalizer localizer, DriveState driveState) {
+    public LimitedDrivetrain(SubSystemData data, OldLocalizer localizer, DriveState driveState) {
         super(data);
 
         this.localizer = localizer;
@@ -141,7 +141,7 @@ public class Drivetrain extends SubSystem {
                 double relativeHeading = poseEstimate.getHeading()-headingOffset;
 
 //                double speedMultiplier = 1- gamepad1.right_trigger*.7;
-                double speedMultiplier = 1- gamepad1.right_trigger*.7;
+                double speedMultiplier = .45- gamepad1.right_trigger*.2;
 
                 MotorPowers powers = new MotorPowers();
 
@@ -161,7 +161,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.6*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.8*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }
@@ -178,9 +178,9 @@ public class Drivetrain extends SubSystem {
 
 
                 //driving settings
-                if (gamepad1.back) {
-                    headingOffset = poseEstimate.getHeading();
-                }
+//                if (gamepad1.back) {
+//                    headingOffset = poseEstimate.getHeading();
+//                }
 
 //                if (gamepad1.x) {
 //                    fieldCentric = false;

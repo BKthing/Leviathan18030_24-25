@@ -34,8 +34,8 @@ public class OldLocalizer extends SubSystem{
 
     public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
 
-    public static double PARALLEL_Y = 2.56890; // Y is the strafe direction 5.8
-    public static double PERPENDICULAR_X = 5.98040;//2.246
+    public static double PARALLEL_Y = -2.56890; // Y is the strafe direction 5.8
+    public static double PERPENDICULAR_X = -5.98040;//2.246
 
     private final Encoder perpendicularWheel, parallelWheel;
 
@@ -65,8 +65,8 @@ public class OldLocalizer extends SubSystem{
 
         localizer = new OldTwoWheelOldLocalizer(PERPENDICULAR_X, PARALLEL_Y);
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "fr"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "fl"));
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));//fr
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));//bl
 
 
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;

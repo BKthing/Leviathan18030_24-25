@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PassData;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
@@ -44,8 +45,8 @@ public class Outtake extends SubSystem {
     public enum VerticalSlide {
         //28.35in max
         BOTTOM(0),
-        WAIT_FOR_TRANSFER(5),
-        TRANSFER(4),
+        WAIT_FOR_TRANSFER(3),
+        TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(16),
@@ -79,11 +80,11 @@ public class Outtake extends SubSystem {
 
 
     public enum V4BarPos {
-        PLACE_FRONT(0),
-        WAIT_FOR_TRANSFER(.3),
-        TRANSFER(.33),
-        GRAB_BACK(.55),
-        PLACE_BACK(.7);
+        PLACE_FRONT(.37),
+        WAIT_FOR_TRANSFER(.165),
+        TRANSFER(.165),
+        GRAB_BACK(.0),
+        PLACE_BACK(.89);
 
         public final double pos;
 
@@ -100,10 +101,11 @@ public class Outtake extends SubSystem {
 
 
     public enum WristPitch {
-        DOWN(.4),
-        BACK(0.6),
-        BACK_ANGLED(.7),
-        FRONT(.1);
+        DOWN(.53),
+        BACK(0.24),
+        WAIT_FOR_TRANSFER(.49),
+        Front_ANGLED(.9),
+        FRONT(.81);
 
         public final double pos;
 
@@ -112,18 +114,17 @@ public class Outtake extends SubSystem {
         }
     }
     boolean changedWristPitch = false;
-    double targetWristPitch = 0;
-    double actualWristPitch = 0;
-    double newWristPitch = 0;
+    double targetWristPitch = WristPitch.DOWN.pos;
+    double actualWristPitch = WristPitch.DOWN.pos;
+    double newWristPitch = WristPitch.DOWN.pos;
 
     Servo wristPitchServo;
 
 
     public enum WristRoll {
-        NEGATIVE_NINETY(0),
-        ZERO(.33),
-        NINETY(0.66),
-        TWOSEVENTY(1);
+        NEGATIVE_NINETY(.34),
+        ZERO(.249),
+        NINETY(.145);
 
         public final double pos;
 
@@ -133,16 +134,16 @@ public class Outtake extends SubSystem {
     }
 
     boolean changedWristRoll = false;
-    double targetWristRoll = 0;
-    double actualWristRoll = 0;
-    double newWristRoll = 0;
+    double targetWristRoll = WristRoll.NINETY.pos;
+    double actualWristRoll = WristRoll.NINETY.pos;
+    double newWristRoll = WristRoll.NINETY.pos;
 
     Servo wristRollServo;
 
 
     public enum ClawPosition {
-        OPEN(.3),
-        CLOSED(.6);
+        OPEN(.35),
+        CLOSED(.1);
 
         public final double pos;
 
@@ -171,7 +172,11 @@ public class Outtake extends SubSystem {
     boolean autoExtendSlides = true;
     boolean toggleAutoExtendSlides = false;
 
+    boolean setPosWaitForTransfer = false;
+
     Servo hangDeploy;
+
+    Telemetry.Item V4BTelemetry;
 
     public enum HangDeploy {
         DEPLOY(.4),
@@ -208,7 +213,7 @@ public class Outtake extends SubSystem {
         rightOuttakeServo.setDirection(Servo.Direction.REVERSE);
 
         leftOuttakeServo.scaleRange(.34, .965);
-        rightOuttakeServo.scaleRange(.34, .965);
+        rightOuttakeServo.scaleRange(1-.965, 1-.34);
 
         wristPitchServo = hardwareMap.get(Servo.class, "wristPitchServo"); // control hub 1
         wristRollServo = hardwareMap.get(Servo.class, "wristRollServo"); // control hub 3
@@ -216,7 +221,12 @@ public class Outtake extends SubSystem {
         wristPitchServo.scaleRange(.34, .965);
         wristRollServo.scaleRange(.34, .965);
 
+        wristPitchServo.setPosition(actualWristPitch);
+        wristRollServo.setPosition(actualWristRoll);
+
         clawServo = hardwareMap.get(Servo.class, "clawServo"); // ex hub 4
+
+        clawServo.setPosition(clawPosition.pos);
 
         hangDeploy = hardwareMap.get(Servo.class, "hangDeploy");
 
@@ -230,8 +240,10 @@ public class Outtake extends SubSystem {
                 targetSlidePos = slidePos;
             }
         } else {
-            verticalRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            verticalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            hardwareMap.get(DcMotorEx.class, "horizontalLeft").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+//            verticalRightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            verticalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             slidePos = 0;
             targetSlidePos = 0;
@@ -241,7 +253,7 @@ public class Outtake extends SubSystem {
 
         newTargetSlidePos = targetSlidePos;
 
-
+        V4BTelemetry = telemetry.addData("V4B pos", 0);
     }
 
 
@@ -296,13 +308,25 @@ public class Outtake extends SubSystem {
             toggleAutoExtendSlides = false;
         }
 
+        if (setPosWaitForTransfer) {
+            //greater = in front
+            if (actualV4BarPos>V4BarPos.WAIT_FOR_TRANSFER.pos) {
+                outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
+            } else if (actualV4BarPos<V4BarPos.WAIT_FOR_TRANSFER.pos) {
+                outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND_CLEAR_V4B;
+            } else {
+
+            }
+            setPosWaitForTransfer = false;
+        }
+
         prevTargetSlidePos = targetSlidePos;
     }
 
     @Override
     public void loop() {
         //outtake code
-        if (Math.abs(targetV4BarPos-actualV4BarPos)>.05) {
+        if (targetV4BarPos != actualV4BarPos) {
             actualV4BarPos = targetV4BarPos;
 
             hardwareQueue.add(() -> leftOuttakeServo.setPosition(actualV4BarPos));
@@ -354,13 +378,10 @@ public class Outtake extends SubSystem {
 
         //Checks if error is in acceptable amounts
 
-        if (absError<0) {
+        if (absError>3) {
             //Slides set to max power
             p = Math.signum(error);
-        } else if (absError<0) {
-            //Slides set to max power
-            p = Math.signum(error)*.5;
-        } else {//if (error<4 but error>.1)
+        } else {
             p = error*.2;
             d = ((error - prevSlideError) / elapsedTime) * 0;//.007
         }
@@ -501,6 +522,8 @@ public class Outtake extends SubSystem {
 
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
+        V4BTelemetry.setValue(actualV4BarPos);
+
         return super.dashboard(packet);
     }
 
@@ -539,7 +562,7 @@ public class Outtake extends SubSystem {
 
     public void setTargetSlidePos(double targetPos) {
         changedTargetSlidePos = true;
-        newTargetSlidePos = MathUtil.clip(targetPos, 0, 28.1);//28.35 in is max
+        newTargetSlidePos = MathUtil.clip(targetPos, -.5, 28.1);//28.35 in is max
     }
 
     public void setTargetV4BarPos(V4BarPos pos) {
@@ -552,7 +575,7 @@ public class Outtake extends SubSystem {
     }
 
     public void setTargetWristPitch(WristPitch pos) {
-        setTargetV4BarPos(pos.pos);
+        setTargetWristPitch(pos.pos);
     }
 
     public void setTargetWristPitch(double pos) {
@@ -561,7 +584,7 @@ public class Outtake extends SubSystem {
     }
 
     public void setTargetWristRoll(WristRoll pos) {
-        setTargetV4BarPos(pos.pos);
+        setTargetWristRoll(pos.pos);
     }
 
     public void setTargetWristRoll(double pos) {
@@ -576,6 +599,10 @@ public class Outtake extends SubSystem {
 
     public ClawPosition getTargetClawPosition() {
         return newClawPosition;
+    }
+
+    public void waitForTransfer() {
+        setPosWaitForTransfer = true;
     }
 
     public void grabFromTransfer() {

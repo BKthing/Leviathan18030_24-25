@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.reefsharklibrary.data.Pose2d;
@@ -17,7 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
-@TeleOp
+@Autonomous
 public class BlueLeft extends LinearOpMode {
 
     private enum AutoState{
@@ -74,8 +75,8 @@ public class BlueLeft extends LinearOpMode {
         );
 
 
-        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(6.7, 62.1, Math.toRadians(90)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(6.7, 36), Math.toRadians(270))
+        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(90)), RobotConstants.constraints)
+                .splineToConstantHeading(new Vector2d(13, 36), Math.toRadians(270))
                 .callMarker(2, () -> {
                     outtake.setTargetSlidePos(Outtake.VerticalSlide.SPECIMEN_BAR);
                 })
@@ -90,7 +91,7 @@ public class BlueLeft extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(60, 44), Math.toRadians(0))
                 .callMarker(20, () -> {
                     intake.setTargetSlidePos(Intake.HorizontalSlide.CLOSE);
-                    intake.setIntakePos(Intake.IntakePos.DOWN);
+                    intake.setTargetIntakePos(Intake.IntakePos.DOWN);
                 })
                 .callMarkerFromEnd(1.5, () -> {
                     intake.setTargetIntakeSpeed(1);
@@ -105,12 +106,13 @@ public class BlueLeft extends LinearOpMode {
 
 
         waitForStart();
-        masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(90)));
-
-
-
         drivetrain.runner().followTrajectorySequence(preload);
+
+        masterThread.unThreadedUpdate();
+        oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
+
+
+
 
         while ( !isStopRequested()) {
 

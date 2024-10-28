@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.util.hardwareQueue;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -14,7 +16,7 @@ public class VoltageRegulatingHardwareQueue {
 
     private final List<Device> devices = new ArrayList<>();
 
-    private Queue<Double> updateQueue;
+    private Queue<Integer> updateQueue;
 
     private final VoltageSensor voltageSensor;
 
@@ -55,7 +57,7 @@ public class VoltageRegulatingHardwareQueue {
         }
     }
 
-    public void update(HardwareMap hardwareMap) {
+    public void updateQueue(HardwareMap hardwareMap) {
 
         if (voltageSensor.getVoltage()<criticalOperatingVoltage) {
             //lower device current draw as necessary
@@ -63,24 +65,30 @@ public class VoltageRegulatingHardwareQueue {
             //lower device current draw while respecting device limits
         }
 
-        List<double[]> devicePairs = new LinkedList<>();
+        List<DevicePair> devicePairs = new LinkedList<>();
 
         for (Device device : devices) {
             device.updatePriorityVal();
-//            devicePairs.add(device.getDevicePair());
+            devicePairs.add(device.getDevicePair());
         }
 
-        //sort device pairs
-//        List.sort(devicePairs, );
+        Collections.sort(devicePairs);
 
+        updateQueue.clear();
 
-//        updateQueue = devicePairs;
-
-
+        for (DevicePair devicePair : devicePairs) {
+            updateQueue.add(devicePair.getId());
+        }
 
     }
 
-//    private Queue<Double> devicePairMergeSort(List<double[]> list) {
-//
-//    }
+    public boolean updateSingle() {
+        if (updateQueue.size()>0) {
+            devices.get(updateQueue.remove()).update();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

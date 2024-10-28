@@ -23,8 +23,10 @@ public class Intake extends SubSystem {
         EXTENDING,
         DROP_INTAKE,
         INTAKING,
+        RETRACTING_INTAKE,
         RETRACTING,
         TRANSFERING,
+        MOVING_TO_REST,
         RESTING
     }
 
@@ -40,12 +42,13 @@ public class Intake extends SubSystem {
 
     public enum HorizontalSlide {
         //18.9 max
+        EXTRA_IN(-.4),
         IN(0),
         AUTO_PRESET1(12),
         AUTO_PRESET2(4),
-        CLOSE(8),
-        MEDIUM(16),
-        FAR(22);
+        CLOSE(7),
+        MEDIUM(12),
+        FAR(17);
 
         public final double length;
         HorizontalSlide(double length) {this.length = length;}
@@ -69,33 +72,36 @@ public class Intake extends SubSystem {
     DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
     public enum IntakePos {
-        UP(.69),
-        PARTIAL_UP(.6),
+        UP(.418),//.69
+        PARTIAL_UP(.375),//.6
         CLEAR_BAR(.62),
-        DOWN(.05);
+        DOWN(.115);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
     }
-    double intakePos = IntakePos.PARTIAL_UP.pos;
+    double targetIntakePos = IntakePos.PARTIAL_UP.pos;
     double newIntakePos = IntakePos.PARTIAL_UP.pos;
 
+    double actualIntakePos = IntakePos.PARTIAL_UP.pos;
     boolean changedIntakePos = false;
-    boolean updateIntakePos = true;
+//    boolean updateIntakePos = true;
 
     boolean changedIntakeSpeed = false;
     double targetIntakeSpeed = 0;
     double actualIntakeSpeed = 0;
     double newIntakeSpeed = 0;
 
+    boolean updateTransfered = false;
+    boolean transfered = false;
 
-    private Servo leftIntakeServo, rightIntakeServo;
-    private CRServo intakeServo;
-    private double targetServoPos;
+
+    private final Servo leftIntakeServo, rightIntakeServo;
+    private final CRServo intakeServo;
 
     ElapsedTimer slideTimer = new ElapsedTimer();
 
-    boolean holdingSample = false;
+    boolean holdingSample = true;
 
     public Intake(SubSystemData data) {
         super(data);
@@ -122,6 +128,9 @@ public class Intake extends SubSystem {
         leftIntakeServo.scaleRange(.34, .965);
         rightIntakeServo.scaleRange(.34, .965);
 
+        leftIntakeServo.setPosition(targetIntakePos+.006);
+        rightIntakeServo.setPosition(targetIntakePos);
+
 
         intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
 
@@ -138,8 +147,11 @@ public class Intake extends SubSystem {
                 targetSlidePos = slidePos;
             }
         } else {
-            horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//            horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            hardwareMap.get(DcMotorEx.class, "verticalRight").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            hardwareMap.get(DcMotorEx.class, "verticalRight").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
             slidePos = 0;
             targetSlidePos = 0;
@@ -168,15 +180,20 @@ public class Intake extends SubSystem {
             changedTargetSlidePos = false;
         }
 
-        if (changedIntakePos && intakePos != newIntakePos) {
-            intakePos = newIntakePos;
-            updateIntakePos = true;
+        if (changedIntakePos && targetIntakePos != newIntakePos) {
+            targetIntakePos = newIntakePos;
+//            updateIntakePos = true;
             changedIntakePos = false;
         }
 
         if (changedIntakeSpeed) {
             targetIntakeSpeed = newIntakeSpeed;
             changedIntakeSpeed = false;
+        }
+
+        if (updateTransfered) {
+            transfered = true;
+            updateTransfered = false;
         }
 
         prevTargetSlidePos = targetSlidePos;
@@ -187,11 +204,12 @@ public class Intake extends SubSystem {
     public void loop() {
 
         //intake code
-        if (updateIntakePos) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(newIntakePos));
-            hardwareQueue.add(() -> rightIntakeServo.setPosition(newIntakePos));
+        if (Math.abs(targetIntakePos-actualIntakePos)>.005) {
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos+.006));
+            hardwareQueue.add(() -> rightIntakeServo.setPosition(targetIntakePos));
 
-            updateIntakePos = false;
+            actualIntakePos = targetIntakePos;
+//            updateIntakePos = false;
         }
 
         if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.05) {
@@ -209,22 +227,26 @@ public class Intake extends SubSystem {
         double error = targetSlidePos - slidePos;
         double absError = Math.abs(error);
 
-        double p, d = 0;
+        double p, d = 0, f = 0;
 
 //        slideI += error*elapsedTime;
 
         //Checks if error is in acceptable amounts
-        if (absError<.05) {
+        if (absError<.1) {
             p = 0;
-        } else if (absError>3) {
+        } else if (absError>4) {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.25;
-            d = ((error - prevSlideError) / elapsedTime) * .015;//.007
+            p = error*.35;
+            d = ((prevSlideError-error) / elapsedTime) * .008;//.007
+            f=.15*Math.signum(error);
         }
 
-        double motorPower = p  - d;
+//        p = 0;
+//        f=.3*Math.signum(error);
+
+        double motorPower = (p - d)*Math.abs(p - d) + f;
         slideTimer.reset();
         prevSlideError = error;
 
@@ -242,7 +264,7 @@ public class Intake extends SubSystem {
                 //if slides past bar or need to be dropped
                 //add more logic
                 if (slidePos>10) {
-                    intakePos = IntakePos.DOWN.pos;
+                    targetIntakePos = IntakePos.DOWN.pos;
                     intakeTimer.reset();
 
                     intakeState = IntakeState.DROP_INTAKE;
@@ -260,24 +282,35 @@ public class Intake extends SubSystem {
                 if (holdingSample()) {
                     targetIntakeSpeed = .1;
 
-                    intakePos = IntakePos.UP.pos;
+                    targetIntakePos = IntakePos.UP.pos;
 
-                    targetSlidePos = HorizontalSlide.IN.length;
+//                    targetSlidePos = HorizontalSlide.IN.length;
+
+                    intakeState = IntakeState.RETRACTING_INTAKE;
+
+                    intakeTimer.reset();
+                }
+                break;
+            case RETRACTING_INTAKE:
+                if (intakeTimer.seconds()>.2) {
+                    targetSlidePos = HorizontalSlide.EXTRA_IN.length;
 
                     intakeState = IntakeState.RETRACTING;
                 }
                 break;
             case RETRACTING:
                 //if fully retracted and holding sample start transferring else rest
-                if (slidePos<.3) {
+                if (slidePos<.5 && intakeTimer.seconds()>.6) {
                     if (holdingSample()) {
                         targetIntakeSpeed = -1;
                         intakeTimer.reset();
 
+                        targetSlidePos = HorizontalSlide.IN.length;
+
                         intakeState = IntakeState.TRANSFERING;
                     } else {
                         targetIntakeSpeed = 0;
-                        intakePos = IntakePos.PARTIAL_UP.pos;
+                        targetIntakePos = IntakePos.PARTIAL_UP.pos;
 
                         intakeState = IntakeState.RESTING;
                     }
@@ -285,9 +318,20 @@ public class Intake extends SubSystem {
                 break;
             case TRANSFERING:
                 //if transferred go to resting position, add more logic later
-                if (intakeTimer.seconds()>.8) {
+                if (intakeTimer.seconds()>.5) {
+                    targetIntakeSpeed = .2;
+                    targetIntakePos = IntakePos.PARTIAL_UP.pos;
+
+                    intakeState = IntakeState.MOVING_TO_REST;
+
+                    intakeTimer.reset();
+                }
+                break;
+            case MOVING_TO_REST:
+                if (intakeTimer.seconds()>.2) {
+                    updateTransfered = true;
+
                     targetIntakeSpeed = 0;
-                    intakePos = IntakePos.PARTIAL_UP.pos;
 
                     intakeState = IntakeState.RESTING;
                 }
@@ -318,11 +362,11 @@ public class Intake extends SubSystem {
 
     public void setTargetSlidePos(double targetPos) {
         changedTargetSlidePos = true;
-        newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.7);//18.9 is max .2 to be safe
+        newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.5);//18.9 is max .2 to be safe
     }
 
-    public void setIntakePos(IntakePos intakePos) {
-        setIntakePos(intakePos.pos);
+    public void setTargetIntakePos(IntakePos targetIntakePos) {
+        setIntakePos(targetIntakePos.pos);
     }
 
     public void setIntakePos(double intakePos) {
@@ -351,15 +395,26 @@ public class Intake extends SubSystem {
 
     public void retract() {
         setTargetIntakeSpeed(.1);
-        setIntakePos(IntakePos.UP);
-        setTargetSlidePos(HorizontalSlide.IN);
+        setTargetIntakePos(IntakePos.UP);
+//        setTargetSlidePos(HorizontalSlide.IN);
 
-        setIntakeState(IntakeState.RETRACTING);
+        setIntakeState(IntakeState.RETRACTING_INTAKE);
+
+        intakeTimer.reset();
     }
 
     public void setIntakeState(IntakeState intakeState) {
         newIntakeState = intakeState;
 
         changedIntakeState = true;
+    }
+
+    public boolean transfered() {
+        if (transfered) {
+            transfered = false;
+            return true;
+        } else {
+            return false;
+        }
     }
 }

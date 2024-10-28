@@ -92,7 +92,7 @@ public class ThreadMotor implements Device {
 
     @Override
     public DevicePair getDevicePair() {
-        return null;
+        return new DevicePair(id, priorityVal);
     }
 
     public DcMotorEx getMotor() {

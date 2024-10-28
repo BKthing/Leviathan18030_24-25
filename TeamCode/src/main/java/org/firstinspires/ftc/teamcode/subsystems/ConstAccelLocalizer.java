@@ -55,7 +55,7 @@ public class ConstAccelLocalizer extends SubSystem{
     private final Telemetry.Item rawPosition;
     private final Telemetry.Item velocity;
 
-    private ElapsedTimer timer = new ElapsedTimer();
+    private final ElapsedTimer timer = new ElapsedTimer();
 
     public ConstAccelLocalizer(SubSystemData data) {
         super(data);

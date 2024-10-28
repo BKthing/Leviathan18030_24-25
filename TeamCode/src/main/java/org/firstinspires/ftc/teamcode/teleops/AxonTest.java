@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 @TeleOp
 public class AxonTest extends LinearOpMode {
-    private Servo leftIntakeServo, rightIntakeServo, claw, hangDeploy, leftOuttake, rightOuttake, clawWristRoll;
+    private Servo leftIntakeServo, rightIntakeServo, claw, hangDeploy, leftOuttake, rightOuttake, clawWristRoll, clawWristPitch;
     private CRServo intakeServo;
     private double LcurPos, RcurPos;
 
@@ -26,25 +26,34 @@ public class AxonTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-//        leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
-//        rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
+        leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
+        rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
+
+
 //        intakeServo = hardwareMap.get(CRServo.class, "intakeServo");
         claw = hardwareMap.get(Servo.class, "clawServo");
         hangDeploy = hardwareMap.get(Servo.class, "hangDeploy");
         leftOuttake = hardwareMap.get(Servo.class, "leftOuttakeServo");
         rightOuttake = hardwareMap.get(Servo.class, "rightOuttakeServo");
         clawWristRoll = hardwareMap.get(Servo.class, "wristRollServo");
+        clawWristPitch = hardwareMap.get(Servo.class, "wristPitchServo");
+
 
         rightOuttake.setDirection(Servo.Direction.REVERSE);
-//        rightIntakeServo.setDirection(Servo.Direction.REVERSE);
         leftOuttake.scaleRange(.34, .965);
         rightOuttake.scaleRange(1-.965, 1-.34);
 
+        rightIntakeServo.setDirection(Servo.Direction.REVERSE);
+        leftIntakeServo.scaleRange(.34, .965);
+        rightIntakeServo.scaleRange(.34, .965);
+
         clawWristRoll.scaleRange(.34, .965);
+        clawWristPitch.scaleRange(.34, .965);
 
-        double targetPos = .8;
 
-        double clawRollPos = 0;
+        double targetPos = .2;
+
+        double clawRollPos = .3;
 
         waitForStart();
         while (!isStopRequested()) {
@@ -82,14 +91,17 @@ public class AxonTest extends LinearOpMode {
             }
 
            if (Math.abs (gamepad2.left_stick_y) > .1 ) {
+//               clawWristPitch.setPosition(targetPos);
+//               leftIntakeServo.setPosition( targetPos + .006);
+//               rightIntakeServo.setPosition(targetPos);
                leftOuttake.setPosition( targetPos);
                rightOuttake.setPosition(targetPos);
-               targetPos = MathUtil.clip(targetPos + gamepad2.left_stick_y * .001 * timer.milliSeconds(), 0, 1);
+               targetPos = MathUtil.clip(targetPos + gamepad2.left_stick_y * .0002 * timer.milliSeconds(), 0, 1);
            }
 
            if (Math.abs (gamepad2.right_stick_x) > .1) {
                clawWristRoll.setPosition(clawRollPos);
-               clawRollPos = MathUtil.clip(clawRollPos + gamepad2.right_stick_x * .0001 * timer.milliSeconds(), 0, 1);
+               clawRollPos = MathUtil.clip(clawRollPos + gamepad2.right_stick_x * .0002 * timer.milliSeconds(), 0, 1);
            }
 
 
@@ -103,6 +115,8 @@ public class AxonTest extends LinearOpMode {
 //
 
             telemetry.addData("Pos", targetPos);
+            telemetry.addData("Roll Pos", clawRollPos);
+
 
             telemetry.update();
 

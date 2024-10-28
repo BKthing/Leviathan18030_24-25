@@ -58,4 +58,6 @@ public class Transfer extends SubSystem {
     public void setTransferState(TransferState transferState) {
         newTransferState = transferState;
     }
+
+
 }
