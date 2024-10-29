@@ -36,10 +36,10 @@ public class Outtake extends SubSystem {
         INIT_POSITION
     }
 
-    OuttakeState outtakeState = OuttakeState.INIT_POSITION;
-    OuttakeState newOuttakeState = OuttakeState.INIT_POSITION;
+    private OuttakeState outtakeState = OuttakeState.INIT_POSITION;
+    private OuttakeState newOuttakeState = OuttakeState.INIT_POSITION;
 
-    boolean changedOuttakeState = false;
+    private boolean changedOuttakeState = false;
 
     public enum ToOuttakeState {
         EXTEND_PLACE_BEHIND,
@@ -57,7 +57,7 @@ public class Outtake extends SubSystem {
 
 
 
-    ElapsedTimer outtakeTimer = new ElapsedTimer();
+    private final ElapsedTimer outtakeTimer = new ElapsedTimer();
 
 
     public enum VerticalSlide {
@@ -76,26 +76,26 @@ public class Outtake extends SubSystem {
     }
 
 
-    Telemetry.Item outtakeSlideTelemetry;
+    private final Telemetry.Item outtakeSlideTelemetry;
 
-    ElapsedTimer slideTimer = new ElapsedTimer();
+    private final ElapsedTimer slideTimer = new ElapsedTimer();
 
-    boolean changedTargetSlidePos = false;
+    private boolean changedTargetSlidePos = false;
 
-    double targetSlidePos;
-    double newTargetSlidePos;
-    double prevTargetSlidePos;
+    private double targetSlidePos;
+    private double newTargetSlidePos;
+    private double prevTargetSlidePos;
 
-    double slidePos;//inches
-    double prevSlideError = 0;
+    private double slidePos;//inches
+    private double prevSlideError = 0;
 
-    double slideI = 0;
+    private double slideI = 0;
 
-    int slideTicks = 0;
+    private int slideTicks = 0;
 
-    Encoder verticalSlideEncoder;
+    private final Encoder verticalSlideEncoder;
 
-    DcMotorEx verticalLeftMotor, verticalRightMotor;
+    private final DcMotorEx verticalLeftMotor, verticalRightMotor;
 
 
     public enum V4BarPos {
@@ -111,12 +111,12 @@ public class Outtake extends SubSystem {
             this.pos = pos;
         }
     }
-    boolean changedV4BarPos = false;
-    double targetV4BarPos = 0;
-    double actualV4BarPos = 0;
-    double newV4BarPos = 0;
+    private boolean changedV4BarPos = false;
+    private double targetV4BarPos = 0;
+    private double actualV4BarPos = 0;
+    private double newV4BarPos = 0;
 
-    Servo leftOuttakeServo, rightOuttakeServo;
+    private final Servo leftOuttakeServo, rightOuttakeServo;
 
 
     public enum WristPitch {
@@ -132,12 +132,12 @@ public class Outtake extends SubSystem {
             this.pos = pos;
         }
     }
-    boolean changedWristPitch = false;
-    double targetWristPitch = WristPitch.DOWN.pos;
-    double actualWristPitch = WristPitch.DOWN.pos;
-    double newWristPitch = WristPitch.DOWN.pos;
+    private boolean changedWristPitch = false;
+    private double targetWristPitch = WristPitch.DOWN.pos;
+    private double actualWristPitch = WristPitch.DOWN.pos;
+    private double newWristPitch = WristPitch.DOWN.pos;
 
-    Servo wristPitchServo;
+    private final Servo wristPitchServo;
 
 
     public enum WristRoll {
@@ -152,12 +152,12 @@ public class Outtake extends SubSystem {
         }
     }
 
-    boolean changedWristRoll = false;
-    double targetWristRoll = WristRoll.NINETY.pos;
-    double actualWristRoll = WristRoll.NINETY.pos;
-    double newWristRoll = WristRoll.NINETY.pos;
+    private boolean changedWristRoll = false;
+    private double targetWristRoll = WristRoll.NINETY.pos;
+    private double actualWristRoll = WristRoll.NINETY.pos;
+    private double newWristRoll = WristRoll.NINETY.pos;
 
-    Servo wristRollServo;
+    private final Servo wristRollServo;
 
 
     public enum ClawPosition {
@@ -171,32 +171,31 @@ public class Outtake extends SubSystem {
         }
     }
 
-    ClawPosition clawPosition = ClawPosition.CLOSED;
-    ClawPosition newClawPosition = ClawPosition.CLOSED;
+    private ClawPosition clawPosition = ClawPosition.CLOSED;
+    private ClawPosition newClawPosition = ClawPosition.CLOSED;
 
-    boolean updateClawPosition = false;
+    private boolean updateClawPosition = false;
 
-    boolean changedClawPosition = false;
+    private boolean changedClawPosition = false;
 
-    boolean changedHangDeploy = false;
+    private boolean changedHangDeploy = false;
 
-    boolean updatedHangPos = false;
+    private boolean updatedHangPos = false;
 
-    Servo clawServo;
+    private final Servo clawServo;
 
-    boolean grabFromTransfer = false;
-    boolean changedGrabFromTransfer = false;
+    private boolean grabFromTransfer = false;
+    private boolean changedGrabFromTransfer = false;
 
 
-    boolean autoExtendSlides = true;
-    boolean autoRetractSlides = false;
+    private final boolean autoExtendSlides;
+    private final boolean autoRetractSlides;
 //    boolean toggleAutoExtendSlides = false;
 
-    boolean setPosWaitForTransfer = false;
 
-    Servo hangDeploy;
+    private final Servo hangDeploy;
 
-    Telemetry.Item V4BTelemetry;
+    private final Telemetry.Item V4BTelemetry;
 
     public enum HangDeploy {
         DEPLOY(.4),
@@ -207,12 +206,15 @@ public class Outtake extends SubSystem {
         HangDeploy(double pos) {this.pos = pos;}
     }
 
-    HangDeploy hangDeployPos = HangDeploy.NOTDEPLOYED;
-    HangDeploy newHangDeploy = HangDeploy.NOTDEPLOYED;
+    private HangDeploy hangDeployPos = HangDeploy.NOTDEPLOYED;
+    private HangDeploy newHangDeploy = HangDeploy.NOTDEPLOYED;
 
 
-    public Outtake(SubSystemData data) {
+    public Outtake(SubSystemData data, boolean autoExtendSlides, boolean autoRetractSlides) {
         super(data);
+
+        this.autoExtendSlides = autoExtendSlides;
+        this.autoRetractSlides = autoRetractSlides;
 
         //Motors
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -693,17 +695,13 @@ public class Outtake extends SubSystem {
         return newClawPosition;
     }
 
-    public void waitForTransfer() {
-        setPosWaitForTransfer = true;
-    }
-
     public void grabFromTransfer() {
         changedGrabFromTransfer = true;
     }
 
     public void setHangDeploy(HangDeploy pos) {
         changedHangDeploy = true;
-        hangDeployPos = pos;
+        newHangDeploy = pos;
     }
 
 

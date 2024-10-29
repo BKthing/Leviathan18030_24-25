@@ -20,12 +20,12 @@ public class Transfer extends SubSystem {
         }
     }
 
-    TransferState transferState = TransferState.NEUTRAL;
-    TransferState newTransferState = TransferState.NEUTRAL;
+    private TransferState transferState = TransferState.NEUTRAL;
+    private TransferState newTransferState = TransferState.NEUTRAL;
 
-    boolean update = true;
+    private boolean update = true;
 
-    Servo leftServo, rightServo, tiltServo;
+    private final Servo leftServo, rightServo, tiltServo;
 
     public Transfer(SubSystemData data) {
         super(data);

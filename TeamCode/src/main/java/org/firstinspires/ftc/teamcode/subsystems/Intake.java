@@ -30,15 +30,15 @@ public class Intake extends SubSystem {
         RESTING
     }
 
-    IntakeState intakeState = IntakeState.RESTING;
+    private IntakeState intakeState = IntakeState.RESTING;
 
-    IntakeState newIntakeState = IntakeState.RESTING;
+    private IntakeState newIntakeState = IntakeState.RESTING;
 
-    boolean changedIntakeState = false;
+    private boolean changedIntakeState = false;
 
-    ElapsedTimer intakeTimer = new ElapsedTimer();
+    private final ElapsedTimer intakeTimer = new ElapsedTimer();
 
-    Telemetry.Item slidePosTelem;
+    private final Telemetry.Item slidePosTelem;
 
     public enum HorizontalSlide {
         //18.9 max
@@ -54,22 +54,22 @@ public class Intake extends SubSystem {
         HorizontalSlide(double length) {this.length = length;}
     }
 
-    boolean changedTargetSlidePos = false;
-    double targetSlidePos = 0;
-    double newTargetSlidePos;
+    private boolean changedTargetSlidePos = false;
+    private double targetSlidePos = 0;
+    private double newTargetSlidePos;
 
-    double prevTargetSlidePos = 0;
+    private double prevTargetSlidePos = 0;
 
-    double slidePos;//inches
-    double prevSlideError = 0;
+    private double slidePos;//inches
+    private double prevSlideError = 0;
 
-    double slideI = 0;
+//    private double slideI = 0;
 
-    int slideTicks = 0;
+    private int slideTicks = 0;
 
-    Encoder horizontalSlideEncoder;
+    private final Encoder horizontalSlideEncoder;
 
-    DcMotorEx horizontalLeftMotor, horizontalRightMotor;
+    private final DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
     public enum IntakePos {
         UP(.418),//.69
@@ -80,28 +80,28 @@ public class Intake extends SubSystem {
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
     }
-    double targetIntakePos = IntakePos.PARTIAL_UP.pos;
-    double newIntakePos = IntakePos.PARTIAL_UP.pos;
+    private double targetIntakePos = IntakePos.PARTIAL_UP.pos;
+    private double newIntakePos = IntakePos.PARTIAL_UP.pos;
 
-    double actualIntakePos = IntakePos.PARTIAL_UP.pos;
-    boolean changedIntakePos = false;
+    private double actualIntakePos = IntakePos.PARTIAL_UP.pos;
+    private boolean changedIntakePos = false;
 //    boolean updateIntakePos = true;
 
-    boolean changedIntakeSpeed = false;
-    double targetIntakeSpeed = 0;
-    double actualIntakeSpeed = 0;
-    double newIntakeSpeed = 0;
+    private boolean changedIntakeSpeed = false;
+    private double targetIntakeSpeed = 0;
+    private double actualIntakeSpeed = 0;
+    private double newIntakeSpeed = 0;
 
-    boolean updateTransfered = false;
-    boolean transfered = false;
+    private boolean updateTransfered = false;
+    private boolean transfered = false;
 
 
     private final Servo leftIntakeServo, rightIntakeServo;
     private final CRServo intakeServo;
 
-    ElapsedTimer slideTimer = new ElapsedTimer();
+    private final ElapsedTimer slideTimer = new ElapsedTimer();
 
-    boolean holdingSample = true;
+    private boolean holdingSample = true;
 
     public Intake(SubSystemData data) {
         super(data);
