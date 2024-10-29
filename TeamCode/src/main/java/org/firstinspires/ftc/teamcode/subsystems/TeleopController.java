@@ -49,7 +49,9 @@ public class TeleopController extends SubSystem {
         if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
             intake.setTargetIntakePos(Intake.IntakePos.DOWN);
             intake.setTargetIntakeSpeed(1);
-        } else if (!gamepad2.left_bumper && oldGamePad2.left_bumper) {
+        } else if (gamepad2.right_trigger>.1) {
+            intake.setTargetIntakeSpeed(-1);
+        } else if ((!gamepad2.left_bumper && oldGamePad2.left_bumper) || (gamepad2.right_trigger<=.1 && oldGamePad2.right_trigger>.1)) {
             intake.setTargetIntakeSpeed(0);
         }
 
@@ -82,23 +84,13 @@ public class TeleopController extends SubSystem {
 
         //Vertical Slides
         if (gamepad2.a && !oldGamePad2.a) {
-            outtake.setTargetSlidePos(Outtake.VerticalSlide.TRANSFER);
-            outtake.setTargetV4BarPos(Outtake.V4BarPos.TRANSFER);
-            outtake.setTargetWristPitch(Outtake.WristPitch.DOWN);
-            outtake.setTargetWristRoll(Outtake.WristRoll.ZERO);
+            outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
         } else if (gamepad2.b && !oldGamePad2.b) {
-//            outtake.setTargetSlidePos(Outtake.VerticalSlide.SPECIMEN_BAR);
-            outtake.setTargetSlidePos(Outtake.VerticalSlide.WAIT_FOR_TRANSFER);
-            outtake.setTargetV4BarPos(Outtake.V4BarPos.WAIT_FOR_TRANSFER);
-            outtake.setTargetWristPitch(Outtake.WristPitch.WAIT_FOR_TRANSFER);
-            outtake.setTargetWristRoll(Outtake.WristRoll.ZERO);
+            outtake.toOuttakeState(Outtake.ToOuttakeState.GRAB_BEHIND);
         } else if (gamepad2.x && !oldGamePad2.x) {
-            outtake.setTargetSlidePos(Outtake.VerticalSlide.LOW_BUCKET_HEIGHT);
+            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
         } else if (gamepad2.y && !oldGamePad2.y) {
-            outtake.setTargetSlidePos(Outtake.VerticalSlide.HIGH_BUCKET);
-            outtake.setTargetV4BarPos(Outtake.V4BarPos.PLACE_BACK);
-            outtake.setTargetWristPitch(Outtake.WristPitch.BACK);
-            outtake.setTargetWristRoll(Outtake.WristRoll.NINETY);
+            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_BEHIND);
         } else if (Math.abs(gamepad2.right_stick_y) > .05) {
             outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 8 * loopTimer.seconds() * -gamepad2.right_stick_y * (1-gamepad2.left_trigger*.75));
         }

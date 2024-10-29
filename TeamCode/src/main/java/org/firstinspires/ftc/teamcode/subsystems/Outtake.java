@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
@@ -18,16 +17,20 @@ public class Outtake extends SubSystem {
     public enum OuttakeState {
         EXTENDING_PLACE_BEHIND,
         PLACING_BEHIND,
+        PLACING_BEHIND_RETRACT_DELAY,
         RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B,
         RETRACT_FROM_PLACE_BEHIND,
         EXTENDING_PLACE_FRONT,
         PLACING_FRONT,
+        PLACING_FRONT_RETRACT_DELAY,
         RETRACTING_GRAB_BEHIND_CLEAR_V4B,
         RETRACTING_GRAB_BEHIND,
         WAITING_GRAB_BEHIND,
+        GRABBING_BEHIND_EXTEND_DELAY,
         LIFT_SPECIMEN,
         WAITING_FOR_TRANSFER,
         PICK_UP_FROM_TRANSFER,
+        WAIT_FOR_PICK_UP_FROM_TRANSFER,
         IDLE,
 
         INIT_POSITION
@@ -36,8 +39,23 @@ public class Outtake extends SubSystem {
     OuttakeState outtakeState = OuttakeState.INIT_POSITION;
     OuttakeState newOuttakeState = OuttakeState.INIT_POSITION;
 
-
     boolean changedOuttakeState = false;
+
+    public enum ToOuttakeState {
+        EXTEND_PLACE_BEHIND,
+        EXTEND_PLACE_FRONT,
+        GRAB_BEHIND,
+        RETRACT_FROM_PLACE_BEHIND,
+        RETRACT,
+        NOTHING
+    }
+
+    private ToOuttakeState toOuttakeState = ToOuttakeState.NOTHING;
+    private ToOuttakeState targetToOuttakeState = ToOuttakeState.NOTHING;
+
+    private boolean updateToOuttakeState = false;
+
+
 
     ElapsedTimer outtakeTimer = new ElapsedTimer();
 
@@ -45,9 +63,9 @@ public class Outtake extends SubSystem {
     public enum VerticalSlide {
         //28.35in max
         BOTTOM(0),
-        WAIT_FOR_TRANSFER(3),
+        WAIT_FOR_TRANSFER(5.5),
         TRANSFER(-.5),
-        MIN_PASSTHROUGH_HEIGHT(8),
+        MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(16),
         LOW_BUCKET_HEIGHT(20),
@@ -58,6 +76,7 @@ public class Outtake extends SubSystem {
     }
 
 
+    Telemetry.Item outtakeSlideTelemetry;
 
     ElapsedTimer slideTimer = new ElapsedTimer();
 
@@ -81,8 +100,8 @@ public class Outtake extends SubSystem {
 
     public enum V4BarPos {
         PLACE_FRONT(.37),
-        WAIT_FOR_TRANSFER(.165),
-        TRANSFER(.165),
+        WAIT_FOR_TRANSFER(.1645),
+        TRANSFER(.166),
         GRAB_BACK(.0),
         PLACE_BACK(.89);
 
@@ -101,7 +120,7 @@ public class Outtake extends SubSystem {
 
 
     public enum WristPitch {
-        DOWN(.53),
+        DOWN(.54),
         BACK(0.24),
         WAIT_FOR_TRANSFER(.49),
         Front_ANGLED(.9),
@@ -155,7 +174,7 @@ public class Outtake extends SubSystem {
     ClawPosition clawPosition = ClawPosition.CLOSED;
     ClawPosition newClawPosition = ClawPosition.CLOSED;
 
-    boolean updatedClawPosition = false;
+    boolean updateClawPosition = false;
 
     boolean changedClawPosition = false;
 
@@ -170,7 +189,8 @@ public class Outtake extends SubSystem {
 
 
     boolean autoExtendSlides = true;
-    boolean toggleAutoExtendSlides = false;
+    boolean autoRetractSlides = false;
+//    boolean toggleAutoExtendSlides = false;
 
     boolean setPosWaitForTransfer = false;
 
@@ -254,6 +274,8 @@ public class Outtake extends SubSystem {
         newTargetSlidePos = targetSlidePos;
 
         V4BTelemetry = telemetry.addData("V4B pos", 0);
+
+        outtakeSlideTelemetry = telemetry.addData("Outtake target pos", "");
     }
 
 
@@ -288,12 +310,13 @@ public class Outtake extends SubSystem {
 
         if (changedClawPosition) {
             clawPosition = newClawPosition;
-            updatedClawPosition = true;
+            updateClawPosition = true;
             changedClawPosition = false;
         }
 
         if (changedGrabFromTransfer) {
             grabFromTransfer = true;
+            changedGrabFromTransfer = false;
         }
 
         if (changedHangDeploy) {
@@ -303,21 +326,14 @@ public class Outtake extends SubSystem {
         }
 
 
-        if (toggleAutoExtendSlides) {
-            autoExtendSlides = !autoExtendSlides;
-            toggleAutoExtendSlides = false;
-        }
+//        if (toggleAutoExtendSlides) {
+//            autoExtendSlides = !autoExtendSlides;
+//            toggleAutoExtendSlides = false;
+//        }
 
-        if (setPosWaitForTransfer) {
-            //greater = in front
-            if (actualV4BarPos>V4BarPos.WAIT_FOR_TRANSFER.pos) {
-                outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
-            } else if (actualV4BarPos<V4BarPos.WAIT_FOR_TRANSFER.pos) {
-                outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND_CLEAR_V4B;
-            } else {
-
-            }
-            setPosWaitForTransfer = false;
+        if (updateToOuttakeState) {
+            toOuttakeState = targetToOuttakeState;
+            updateToOuttakeState = false;
         }
 
         prevTargetSlidePos = targetSlidePos;
@@ -325,6 +341,29 @@ public class Outtake extends SubSystem {
 
     @Override
     public void loop() {
+        switch (toOuttakeState) {
+            case RETRACT_FROM_PLACE_BEHIND:
+                retractFromPlaceBehind();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+            case GRAB_BEHIND:
+                grabBehind();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+            case EXTEND_PLACE_FRONT:
+                extendPlaceFront();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+            case EXTEND_PLACE_BEHIND:
+                extendPlaceBehind();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+            case RETRACT:
+                retractFromPlaceBehind();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+        }
+
         //outtake code
         if (targetV4BarPos != actualV4BarPos) {
             actualV4BarPos = targetV4BarPos;
@@ -343,9 +382,9 @@ public class Outtake extends SubSystem {
             hardwareQueue.add(() -> wristRollServo.setPosition(actualWristRoll));
         }
 
-        if (updatedClawPosition) {
+        if (updateClawPosition) {
             hardwareQueue.add(() -> clawServo.setPosition(clawPosition.pos));
-            updatedClawPosition = false;
+            updateClawPosition = false;
         }
 
         if(updatedHangPos) {
@@ -402,22 +441,18 @@ public class Outtake extends SubSystem {
                 break;
             case PLACING_BEHIND:
                 //claw opened by other code calling method
-                if (clawPosition == ClawPosition.OPEN) {
-
-                    targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
-                    targetWristPitch = WristPitch.DOWN.pos;
-                    targetWristRoll = WristRoll.ZERO.pos;
-
-                    //set to this so V4B has room to rotate, set lower after v4b is clear
-                    targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
-
-                    slideTimer.reset();
-
-                    outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
+                if (clawPosition == ClawPosition.OPEN && autoRetractSlides) {
+                    outtakeTimer.reset();
+                    outtakeState = OuttakeState.PLACING_BEHIND_RETRACT_DELAY;
+                }
+                break;
+            case PLACING_BEHIND_RETRACT_DELAY:
+                if (outtakeTimer.seconds()>.3) {
+                    retractFromPlaceBehind();
                 }
                 break;
             case RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B:
-                if (slideTimer.seconds()>1) {
+                if (outtakeTimer.seconds()>1.7) {
                     targetSlidePos = VerticalSlide.WAIT_FOR_TRANSFER.length;
 
                     outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND;
@@ -435,22 +470,18 @@ public class Outtake extends SubSystem {
                 break;
             case PLACING_FRONT:
                 //claw opened by other code calling method
-                if (clawPosition == ClawPosition.OPEN) {
-
-                    targetV4BarPos = V4BarPos.GRAB_BACK.pos;
-                    targetWristPitch = WristPitch.BACK.pos;
-                    targetWristRoll = WristRoll.NEGATIVE_NINETY.pos;
-
-                    //set to this so V4B has room to rotate, set lower after v4b is clear
-                    targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
-
-                    slideTimer.reset();
-
-                    outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND_CLEAR_V4B;
+                if (clawPosition == ClawPosition.OPEN && autoRetractSlides) {
+                    outtakeTimer.reset();
+                    outtakeState = OuttakeState.PLACING_FRONT_RETRACT_DELAY;
+                }
+                break;
+            case PLACING_FRONT_RETRACT_DELAY:
+                if (outtakeTimer.seconds()>.3) {
+                    grabBehind();
                 }
                 break;
             case RETRACTING_GRAB_BEHIND_CLEAR_V4B:
-                if (slideTimer.seconds()>1) {
+                if (outtakeTimer.seconds()>1) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
 
                     outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND;
@@ -462,19 +493,27 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case WAITING_GRAB_BEHIND:
-                if (clawPosition == ClawPosition.CLOSED) {
+                if (clawPosition == ClawPosition.CLOSED && autoExtendSlides) {
+                    updateClawPosition = true;
+                    outtakeTimer.reset();
+                    outtakeState = OuttakeState.GRABBING_BEHIND_EXTEND_DELAY;
+                }
+                break;
+            case GRABBING_BEHIND_EXTEND_DELAY:
+                if (outtakeTimer.seconds()>.3) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length+2;
                     outtakeState = OuttakeState.LIFT_SPECIMEN;
                 }
-                break;
             case LIFT_SPECIMEN:
                 if (absError<.5) {
                     //might need to do something to make sure it won't hit wall
-                    if (autoExtendSlides) {
-                        extendPlaceFront();
-                    } else {
-                        outtakeState = OuttakeState.IDLE;
-                    }
+                    extendPlaceFront();
+
+//                    if (autoExtendSlides) {
+//                        extendPlaceFront();
+//                    } else {
+//                        outtakeState = OuttakeState.IDLE;
+//                    }
                 }
                 break;
             case WAITING_FOR_TRANSFER:
@@ -487,16 +526,23 @@ public class Outtake extends SubSystem {
 
                     targetSlidePos = VerticalSlide.TRANSFER.length;
 
-                    slideTimer.reset();
+                    outtakeTimer.reset();
 
                     outtakeState = OuttakeState.PICK_UP_FROM_TRANSFER;
                 }
                 break;
             case PICK_UP_FROM_TRANSFER:
                 //waits for claw to be in position before grabbing sample
-                if (slideTimer.seconds()>.4) {
+                if (outtakeTimer.seconds()>1) {
                     clawPosition = ClawPosition.CLOSED;
+                    updateClawPosition = true;
 
+                    outtakeState = OuttakeState.WAIT_FOR_PICK_UP_FROM_TRANSFER;
+                    outtakeTimer.reset();
+                }
+                break;
+            case WAIT_FOR_PICK_UP_FROM_TRANSFER:
+                if (outtakeTimer.seconds()>.3) {
                     if (autoExtendSlides) {
                         extendPlaceBehind();
                     } else {
@@ -509,6 +555,7 @@ public class Outtake extends SubSystem {
                         outtakeState = OuttakeState.IDLE;
                     }
                 }
+
                 break;
             case IDLE:
 
@@ -523,6 +570,8 @@ public class Outtake extends SubSystem {
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
         V4BTelemetry.setValue(actualV4BarPos);
+
+        outtakeSlideTelemetry.setValue(targetSlidePos);
 
         return super.dashboard(packet);
     }
@@ -551,6 +600,49 @@ public class Outtake extends SubSystem {
         outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
     }
 
+//    private void extend
+
+    private void grabBehind() {
+        targetV4BarPos = V4BarPos.GRAB_BACK.pos;
+        targetWristPitch = WristPitch.BACK.pos;
+        targetWristRoll = WristRoll.NEGATIVE_NINETY.pos;
+
+        if (clawPosition != ClawPosition.OPEN) {
+            clawPosition = ClawPosition.OPEN;
+            updateClawPosition = true;
+        }
+
+        //set to this so V4B has room to rotate, set lower after v4b is clear
+        targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
+
+        outtakeTimer.reset();
+
+        outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND_CLEAR_V4B;
+    }
+
+    private void retractFromPlaceBehind() {
+        targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
+        targetWristPitch = WristPitch.WAIT_FOR_TRANSFER.pos;
+        targetWristRoll = WristRoll.ZERO.pos;
+
+        if (clawPosition != ClawPosition.OPEN) {
+            clawPosition = ClawPosition.OPEN;
+            updateClawPosition = true;
+        }
+
+        //set to this so V4B has room to rotate, set lower after v4b is clear
+        targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
+
+        outtakeTimer.reset();
+
+        outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
+    }
+
+
+    public void toOuttakeState(ToOuttakeState outtakeState) {
+        targetToOuttakeState = outtakeState;
+        updateToOuttakeState = true;
+    }
 
     public void setTargetSlidePos(VerticalSlide targetPos) {
         setTargetSlidePos(targetPos.length);
