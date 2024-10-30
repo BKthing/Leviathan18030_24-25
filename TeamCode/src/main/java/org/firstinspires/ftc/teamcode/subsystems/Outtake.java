@@ -19,6 +19,7 @@ public class Outtake extends SubSystem {
         PLACING_BEHIND,
         PLACING_BEHIND_RETRACT_DELAY,
         RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B,
+        RETRACT_FROM_PLACE_BEHIND_DELAY,
         RETRACT_FROM_PLACE_BEHIND,
         EXTENDING_PLACE_FRONT,
         PLACING_FRONT,
@@ -63,13 +64,13 @@ public class Outtake extends SubSystem {
     public enum VerticalSlide {
         //28.35in max
         BOTTOM(0),
-        WAIT_FOR_TRANSFER(5.5),
+        WAIT_FOR_TRANSFER(5),
         TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(16),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(28);
+        HIGH_BUCKET(28.5);
 
         public final double length;
         VerticalSlide(double length) {this.length = length;}
@@ -112,9 +113,9 @@ public class Outtake extends SubSystem {
         }
     }
     private boolean changedV4BarPos = false;
-    private double targetV4BarPos = 0;
-    private double actualV4BarPos = 0;
-    private double newV4BarPos = 0;
+    private double targetV4BarPos = V4BarPos.PLACE_FRONT.pos;
+    private double actualV4BarPos = V4BarPos.PLACE_FRONT.pos;
+    private double newV4BarPos = V4BarPos.PLACE_FRONT.pos;
 
     private final Servo leftOuttakeServo, rightOuttakeServo;
 
@@ -133,9 +134,9 @@ public class Outtake extends SubSystem {
         }
     }
     private boolean changedWristPitch = false;
-    private double targetWristPitch = WristPitch.DOWN.pos;
-    private double actualWristPitch = WristPitch.DOWN.pos;
-    private double newWristPitch = WristPitch.DOWN.pos;
+    private double targetWristPitch = WristPitch.BACK.pos;
+    private double actualWristPitch = WristPitch.BACK.pos;
+    private double newWristPitch = WristPitch.BACK.pos;
 
     private final Servo wristPitchServo;
 
@@ -236,6 +237,9 @@ public class Outtake extends SubSystem {
 
         leftOuttakeServo.scaleRange(.34, .965);
         rightOuttakeServo.scaleRange(1-.965, 1-.34);
+
+        leftOuttakeServo.setPosition(actualV4BarPos);
+        rightOuttakeServo.setPosition(actualV4BarPos);
 
         wristPitchServo = hardwareMap.get(Servo.class, "wristPitchServo"); // control hub 1
         wristRollServo = hardwareMap.get(Servo.class, "wristRollServo"); // control hub 3
@@ -453,8 +457,15 @@ public class Outtake extends SubSystem {
                     retractFromPlaceBehind();
                 }
                 break;
+            case RETRACT_FROM_PLACE_BEHIND_DELAY:
+                if (outtakeTimer.seconds()>.2) {
+                    targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
+
+                    outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
+                }
+                break;
             case RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B:
-                if (outtakeTimer.seconds()>1.7) {
+                if (outtakeTimer.seconds()>1.4) {
                     targetSlidePos = VerticalSlide.WAIT_FOR_TRANSFER.length;
 
                     outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND;
@@ -535,7 +546,7 @@ public class Outtake extends SubSystem {
                 break;
             case PICK_UP_FROM_TRANSFER:
                 //waits for claw to be in position before grabbing sample
-                if (outtakeTimer.seconds()>1) {
+                if (outtakeTimer.seconds()>.5) {
                     clawPosition = ClawPosition.CLOSED;
                     updateClawPosition = true;
 
@@ -623,9 +634,9 @@ public class Outtake extends SubSystem {
     }
 
     private void retractFromPlaceBehind() {
-        targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
         targetWristPitch = WristPitch.WAIT_FOR_TRANSFER.pos;
         targetWristRoll = WristRoll.ZERO.pos;
+        targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
 
         if (clawPosition != ClawPosition.OPEN) {
             clawPosition = ClawPosition.OPEN;
@@ -633,11 +644,10 @@ public class Outtake extends SubSystem {
         }
 
         //set to this so V4B has room to rotate, set lower after v4b is clear
-        targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
 
         outtakeTimer.reset();
 
-        outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_CLEAR_V4B;
+        outtakeState = OuttakeState.RETRACT_FROM_PLACE_BEHIND_DELAY;
     }
 
 

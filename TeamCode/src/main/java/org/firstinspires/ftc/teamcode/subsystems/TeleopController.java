@@ -12,6 +12,8 @@ public class TeleopController extends SubSystem {
         SPECIMEN
     }
 
+    private boolean grabFromTransfer = false;
+
     CycleMode cycleMode = CycleMode.NORMAL;
 
     Intake intake;
@@ -101,8 +103,13 @@ public class TeleopController extends SubSystem {
             transfer.setTransferState(Transfer.TransferState.CENTER);
 
             if (cycleMode == CycleMode.NORMAL) {
-                outtake.grabFromTransfer();
+                grabFromTransfer = true;
             }
+        }
+
+        if (grabFromTransfer && gamepad2.a) {
+            outtake.grabFromTransfer();
+            grabFromTransfer = false;
         }
 
         if (gamepad1.left_bumper && !oldGamePad1.left_bumper) {

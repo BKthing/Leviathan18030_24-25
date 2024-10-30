@@ -72,7 +72,7 @@ public class Intake extends SubSystem {
     private final DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
     public enum IntakePos {
-        UP(.418),//.69
+        UP(.435),//.69
         PARTIAL_UP(.375),//.6
         CLEAR_BAR(.62),
         DOWN(.115);//.05
