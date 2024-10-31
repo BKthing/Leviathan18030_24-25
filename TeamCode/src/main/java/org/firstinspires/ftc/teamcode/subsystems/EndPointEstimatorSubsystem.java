@@ -21,7 +21,7 @@ public class EndPointEstimatorSubsystem extends SubSystem {
 
         this.localizer = localizer;
 
-        endpointEstimator = new EndpointEstimator(RobotConstants.lateralPID, RobotConstants.headingPID, RobotConstants.naturalDecel);
+        endpointEstimator = new EndpointEstimator(RobotConstants.lateralPID, RobotConstants.headingPID, RobotConstants.constraints.getNaturalDecel());
     }
 
     @Override

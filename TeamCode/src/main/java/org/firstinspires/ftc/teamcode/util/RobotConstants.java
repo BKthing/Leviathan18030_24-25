@@ -9,14 +9,14 @@ import com.reefsharklibrary.data.VelConstraint;
 
 @Config
 public class RobotConstants {
-    public static PIDCoeficients lateralPID = new PIDCoeficients(.28, .06, .02, 0, 0, 0);//.24, 0.08, 0.011, 0, 0.06, .0006
+    public static PIDCoeficients lateralPID = new PIDCoeficients(.15, .08, .006, 0, 0, 0);//.24, 0.08, 0.011, 0, 0.06, .0006
 
 
-    public static PIDCoeficients headingPID = new PIDCoeficients(.12, .06, 0.006);//.17, .07, 0.005
+    public static PIDCoeficients headingPID = new PIDCoeficients(.075, .07, 0.0013);//.17, .07, 0.005
 
-    public static Pose2d naturalDecel = new Pose2d(500, 500, Math.toRadians(10000));//new Pose2d(210, 210, Math.toRadians(2000))
+    public static Pose2d naturalDecel = new Pose2d(380, 380, Math.toRadians(2600));//new Pose2d(210, 210, Math.toRadians(2000))
 
-    public static double trackWidth = 14;
+    public static double trackWidth = 16;
 
     public static final VelConstraint velConstraint = new VelConstraint(50, 50, 50);
 

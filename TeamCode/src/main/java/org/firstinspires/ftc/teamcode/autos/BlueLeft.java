@@ -75,23 +75,27 @@ public class BlueLeft extends LinearOpMode {
         );
 
 
-        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(90)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(13, 36), Math.toRadians(270))
+        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
+                .splineToConstantHeading(new Vector2d(7, 36), Math.toRadians(270))
                 .callMarker(2, () -> {
-                    outtake.setTargetSlidePos(Outtake.VerticalSlide.SPECIMEN_BAR);
+                    outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
                 })
-                .callMarker(62.1-36-.1, () -> {
-                    outtake.setTargetSlidePos(Outtake.VerticalSlide.SPECIMEN_BAR.length-.5);
+
+                .callMarkerFromEnd(.1, () -> {
+                    outtake.place();
                 })
                 .setEndDelay(.3)
                 .build();
 
         TrajectorySequence cycle1 = new TrajectorySequenceBuilder(preload.endPose(), RobotConstants.constraints)
                 .back(2)
-                .splineToConstantHeading(new Vector2d(60, 44), Math.toRadians(0))
-                .callMarker(20, () -> {
-                    intake.setTargetSlidePos(Intake.HorizontalSlide.CLOSE);
+                .splineToConstantHeading(new Vector2d(50, 44), Math.toRadians(0))
+                .callMarker(24, () -> {
+                    intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
+                })
+                .callMarkerFromEnd(8, () -> {
+//                    drivetrain.setForwardComponent(.3);
                 })
                 .callMarkerFromEnd(1.5, () -> {
                     intake.setTargetIntakeSpeed(1);
@@ -101,12 +105,14 @@ public class BlueLeft extends LinearOpMode {
                 .localTemporalMarker(0, () -> {
                     intake.retract();
                 })
-                .splineToSplineHeading(new Pose2d(65, 65, Math.toRadians(-45)), Math.toRadians(135))
+                .splineToSplineHeading(new Pose2d(55, 55, Math.toRadians(270-45)), Math.toRadians(45))
                 .build();
 
 
+//        drivetrain.setForwardComponent(.3);
+
         waitForStart();
-        drivetrain.runner().followTrajectorySequence(preload);
+        drivetrain.followTrajectorySequence(preload);
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
@@ -118,22 +124,24 @@ public class BlueLeft extends LinearOpMode {
 
             switch (autoState) {
                 case PLACING_PRELOAD:
-                    if (drivetrain.runner().isFinished()) {
-                        outtake.setClawPosition(Outtake.ClawPosition.OPEN);
+                    if (drivetrain.isFinished()) {
+//                        outtake.setClawPosition(Outtake.ClawPosition.OPEN);
 
                         autoTimer.reset();
-                        autoState = AutoState.PLACING_DELAY;
-                    }
-                    break;
-                case PLACING_DELAY:
-                    if (autoTimer.seconds()>.2) {
-                        drivetrain.runner().followTrajectorySequence(cycle1);
+                        drivetrain.followTrajectorySequence(cycle1);
 
                         autoState = AutoState.CYCLE_1;
                     }
                     break;
+//                case PLACING_DELAY:
+//                    if (autoTimer.seconds()>.2) {
+//                        drivetrain.followTrajectorySequence(cycle1);
+//
+//                        autoState = AutoState.CYCLE_1;
+//                    }
+//                    break;
                 case CYCLE_1:
-                    if (drivetrain.runner().isFinished()) {
+                    if (drivetrain.isFinished()) {
                         autoState = AutoState.FINISHED;
                     }
                     break;

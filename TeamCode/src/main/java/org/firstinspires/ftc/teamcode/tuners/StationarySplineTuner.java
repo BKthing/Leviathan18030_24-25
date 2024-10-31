@@ -47,7 +47,7 @@ public class StationarySplineTuner extends LinearOpMode {
                 oldLocalizer
         );
 
-        drivetrain.runner().setForwardComponent(0);
+        drivetrain.setForwardComponent(0);
 
 
         TrajectorySequence spline = new TrajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(0)), RobotConstants.constraints)
@@ -57,7 +57,7 @@ public class StationarySplineTuner extends LinearOpMode {
 
 
         waitForStart();
-        drivetrain.runner().followTrajectorySequence(spline);
+        drivetrain.followTrajectorySequence(spline);
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(spline.startPos());

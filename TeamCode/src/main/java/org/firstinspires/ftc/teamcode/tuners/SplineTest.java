@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.tuners;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.reefsharklibrary.data.Pose2d;
+import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
@@ -50,14 +51,15 @@ public class SplineTest extends LinearOpMode {
 //        drivetrain.runner().setForwardComponent(0);
 
 
-        TrajectorySequence spline = new TrajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(0)), RobotConstants.constraints)
-                .splineToSplineHeading(new Pose2d(50, 25, Math.toRadians(0)), Math.toRadians(0))
+        TrajectorySequence spline = new TrajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(90)), RobotConstants.constraints)
+                .splineToSplineHeading(new Pose2d(16, 48, Math.toRadians(270)), Math.toRadians(90))
+                .lineToConstantHeading(new Vector2d(16, 64))
                 .build();
 
 
 
         waitForStart();
-        drivetrain.runner().followTrajectorySequence(spline);
+        drivetrain.followTrajectorySequence(spline);
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(spline.startPos());

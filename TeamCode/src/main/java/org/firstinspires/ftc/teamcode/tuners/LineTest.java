@@ -50,7 +50,7 @@ public class LineTest extends LinearOpMode {
 
 
         TrajectorySequence forward = new TrajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(0)), RobotConstants.constraints)
-                .forward(30)
+                .forward(24)
                 .build();
 
 //        TrajectorySequence backward = new TrajectorySequenceBuilder(forward.endPose(), RobotConstants.constraints)
@@ -59,7 +59,7 @@ public class LineTest extends LinearOpMode {
 
 
         waitForStart();
-        drivetrain.runner().followTrajectorySequence(forward);
+        drivetrain.followTrajectorySequence(forward);
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(forward.startPos());

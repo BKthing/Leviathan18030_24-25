@@ -16,6 +16,7 @@ import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.OldLocalizer;
 import com.reefsharklibrary.pathing.EndpointEstimator;
 import com.reefsharklibrary.pathing.TrajectoryInterface;
+import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceRunner;
 import com.reefsharklibrary.pathing.data.IndexCallMarker;
 
@@ -34,35 +35,35 @@ public class Drivetrain extends SubSystem {
         DRIVER_CONTROL
     }
 
-    DriveState driveState;
+    private DriveState driveState;
 
-    DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    private final DcMotorEx frontLeft, frontRight, backLeft, backRight;
 
-    List<Double> lastPowers = Arrays.asList(0.0, 0.0, 0.0, 0.0);
+    private List<Double> lastPowers = Arrays.asList(0.0, 0.0, 0.0, 0.0);
 
-    Telemetry.Item motorPowerTelemetry;
+    private final Telemetry.Item motorPowerTelemetry;
 
-    Telemetry.Item followState;
+    private final Telemetry.Item followState;
 
-    Telemetry.Item targetMotionState;
+    private final Telemetry.Item targetMotionState;
 
     //how much a motor power must change to warrant an update
     private final double minPowerChange = .03;
 
 
-    VoltageSensor batteryVoltageSensor;
-    double voltage = 0;
+    private final VoltageSensor batteryVoltageSensor;
+    private double voltage = 0;
 
-    com.reefsharklibrary.localizers.OldLocalizer localizer;
+    private final com.reefsharklibrary.localizers.OldLocalizer localizer;
 
-    TrajectorySequenceRunner runner;
+    private final TrajectorySequenceRunner runner;
 
-    Pose2d poseEstimate;
-    Pose2d poseVelocity;
-    Pose2d poseAcceleration;
+    private Pose2d poseEstimate;
+    private Pose2d poseVelocity;
+    private Pose2d poseAcceleration;
 
-    boolean fieldCentric = true;
-    double headingOffset = 0;
+    private final boolean fieldCentric = true;
+    private double headingOffset = 0;
 
     public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {
         this(data, localizer, DriveState.FOLLOW_PATH);
@@ -282,8 +283,20 @@ public class Drivetrain extends SubSystem {
         return driveState;
     }
 
-    public TrajectorySequenceRunner runner() {
-        return runner;
+//    public TrajectorySequenceRunner runner() {
+//        return runner;
+//    }
+
+    public void followTrajectorySequence(TrajectorySequence trajectorySequence) {
+        runner.followTrajectorySequence(trajectorySequence);
+    }
+
+    public void setForwardComponent(double forwardComponent) {
+        runner.setForwardComponent(forwardComponent);
+    }
+
+    public boolean isFinished() {
+        return runner.isFinished();
     }
 
     public void setDrivePower(MotorPowers motorPowers) {
@@ -302,7 +315,7 @@ public class Drivetrain extends SubSystem {
     private boolean different(List<Double> powers) {
         for (int i = 0; i<4; i++) {
             //checks if powers are far enough apart to be worthy of an update
-            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.03)) {
+            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.02)) {
                 return true;
             }
         }

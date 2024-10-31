@@ -12,7 +12,7 @@ public class TeleopController extends SubSystem {
         SPECIMEN
     }
 
-    private boolean grabFromTransfer = false;
+//    private boolean grabFromTransfer = false;
 
     CycleMode cycleMode = CycleMode.NORMAL;
 
@@ -85,7 +85,9 @@ public class TeleopController extends SubSystem {
         }
 
         //Vertical Slides
-        if (gamepad2.a && !oldGamePad2.a) {
+        if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
+            outtake.grabFromTransfer();
+        } else if (gamepad2.a && !oldGamePad2.a) {
             outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
         } else if (gamepad2.b && !oldGamePad2.b) {
             outtake.toOuttakeState(Outtake.ToOuttakeState.GRAB_BEHIND);
@@ -99,18 +101,19 @@ public class TeleopController extends SubSystem {
 
 
         //Transfer
-        if (intake.transfered()) {
-            transfer.setTransferState(Transfer.TransferState.CENTER);
+//        if (intake.transfered()) {
+//            transfer.setTransferState(Transfer.TransferState.CENTER);
+//
+//            if (cycleMode == CycleMode.NORMAL) {
+//                outtake.grabFromTransfer();
+////                grabFromTransfer = true;
+//            }
+//        }
 
-            if (cycleMode == CycleMode.NORMAL) {
-                grabFromTransfer = true;
-            }
-        }
-
-        if (grabFromTransfer && gamepad2.a) {
-            outtake.grabFromTransfer();
-            grabFromTransfer = false;
-        }
+//        if (grabFromTransfer && gamepad2.a) {
+//            outtake.grabFromTransfer();
+//            grabFromTransfer = false;
+//        }
 
         if (gamepad1.left_bumper && !oldGamePad1.left_bumper) {
             transfer.setTransferState(Transfer.TransferState.EJECT_LEFT);

@@ -59,7 +59,7 @@ public class BackAndForthTuner extends LinearOpMode {
 
 
         waitForStart();
-        drivetrain.runner().followTrajectorySequence(forward);
+        drivetrain.followTrajectorySequence(forward);
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(forward.startPos());
@@ -73,10 +73,10 @@ public class BackAndForthTuner extends LinearOpMode {
 
             if (drivetrain.isFinished()) {
                 if (forwardBol) {
-                    drivetrain.runner().followTrajectorySequence(backward);
+                    drivetrain.followTrajectorySequence(backward);
                     forwardBol = false;
                 } else {
-                    drivetrain.runner().followTrajectorySequence(forward);
+                    drivetrain.followTrajectorySequence(forward);
                     forwardBol = true;
                 }
             }

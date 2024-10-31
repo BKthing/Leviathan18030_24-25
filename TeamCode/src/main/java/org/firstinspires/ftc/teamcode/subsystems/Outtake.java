@@ -23,6 +23,7 @@ public class Outtake extends SubSystem {
         RETRACT_FROM_PLACE_BEHIND,
         EXTENDING_PLACE_FRONT,
         PLACING_FRONT,
+        WAIT_PLACING_FRONT,
         PLACING_FRONT_RETRACT_DELAY,
         RETRACTING_GRAB_BEHIND_CLEAR_V4B,
         RETRACTING_GRAB_BEHIND,
@@ -69,6 +70,7 @@ public class Outtake extends SubSystem {
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(16),
+        PLACE_SPECIMEN_BAR(15),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(28.5);
 
@@ -195,6 +197,9 @@ public class Outtake extends SubSystem {
 
 
     private final Servo hangDeploy;
+
+    private boolean place = false;
+    private boolean changedPlace = false;
 
     private final Telemetry.Item V4BTelemetry;
 
@@ -329,6 +334,11 @@ public class Outtake extends SubSystem {
             hangDeployPos = newHangDeploy;
             updatedHangPos = true;
             changedHangDeploy = false;
+        }
+
+        if (changedPlace) {
+            place = true;
+            changedPlace = false;
         }
 
 
@@ -483,21 +493,36 @@ public class Outtake extends SubSystem {
                 break;
             case PLACING_FRONT:
                 //claw opened by other code calling method
-                if (clawPosition == ClawPosition.OPEN && autoRetractSlides) {
+                if (place) {
+//                    clawPosition = ClawPosition.OPEN;
+                    targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
+
+                    place = false;
                     outtakeTimer.reset();
+                    outtakeState = OuttakeState.WAIT_PLACING_FRONT;
+                }
+                break;
+            case WAIT_PLACING_FRONT:
+                if (outtakeTimer.seconds()>.5) {
+                    clawPosition = ClawPosition.OPEN;
+
                     outtakeState = OuttakeState.PLACING_FRONT_RETRACT_DELAY;
+                    outtakeTimer.reset();
                 }
                 break;
             case PLACING_FRONT_RETRACT_DELAY:
-                if (outtakeTimer.seconds()>.3) {
-                    grabBehind();
+                if (outtakeTimer.seconds()>.5) {
+//                    clawPosition = ClawPosition.OPEN;
+                    retractFromPlaceBehind();
+//                    grabBehind();
                 }
                 break;
             case RETRACTING_GRAB_BEHIND_CLEAR_V4B:
                 if (outtakeTimer.seconds()>1) {
-                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
-
-                    outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND;
+                    retractFromPlaceBehind();
+//                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
+//
+//                    outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND;
                 }
                 break;
             case RETRACTING_GRAB_BEHIND:
@@ -605,7 +630,7 @@ public class Outtake extends SubSystem {
 
     private void extendPlaceFront() {
         targetV4BarPos = V4BarPos.PLACE_FRONT.pos;
-        targetWristPitch = WristPitch.FRONT.pos;
+        targetWristPitch = WristPitch.Front_ANGLED.pos;
         targetWristRoll = WristRoll.NINETY.pos;
 
         targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
@@ -706,12 +731,18 @@ public class Outtake extends SubSystem {
     }
 
     public void grabFromTransfer() {
-        changedGrabFromTransfer = true;
+        if (outtakeState == OuttakeState.WAITING_FOR_TRANSFER) {
+            changedGrabFromTransfer = true;
+        }
     }
 
     public void setHangDeploy(HangDeploy pos) {
         changedHangDeploy = true;
         newHangDeploy = pos;
+    }
+
+    public void place() {
+        changedPlace = true;
     }
 
 
