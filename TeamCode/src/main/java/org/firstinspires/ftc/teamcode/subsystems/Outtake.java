@@ -33,6 +33,9 @@ public class Outtake extends SubSystem {
         WAITING_FOR_TRANSFER,
         PICK_UP_FROM_TRANSFER,
         WAIT_FOR_PICK_UP_FROM_TRANSFER,
+        RETRACTING_DEPLOY_HANG,
+        WAITING_FOR_DEPLOY_HANG,
+        EXTENDING_DEPLOY_HANG,
         IDLE,
 
         INIT_POSITION
@@ -49,6 +52,7 @@ public class Outtake extends SubSystem {
         GRAB_BEHIND,
         RETRACT_FROM_PLACE_BEHIND,
         RETRACT,
+        DEPLOY_HANG,
         NOTHING
     }
 
@@ -64,13 +68,15 @@ public class Outtake extends SubSystem {
 
     public enum VerticalSlide {
         //28.35in max
-        BOTTOM(0),
+        EXTRA_DOWN(-.3),
+        DOWN(0),
         WAIT_FOR_TRANSFER(5),
         TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(6.5),
+        HANG_HEIGHT(14),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(28.5);
 
@@ -205,15 +211,15 @@ public class Outtake extends SubSystem {
 
     public enum HangDeploy {
         DEPLOY(.4),
-        NOTDEPLOYED(.2);
+        NOT_DEPLOYED(.2);
 
         public final double pos;
 
         HangDeploy(double pos) {this.pos = pos;}
     }
 
-    private HangDeploy hangDeployPos = HangDeploy.NOTDEPLOYED;
-    private HangDeploy newHangDeploy = HangDeploy.NOTDEPLOYED;
+    private HangDeploy hangDeployPos = HangDeploy.NOT_DEPLOYED;
+    private HangDeploy newHangDeployPos = HangDeploy.NOT_DEPLOYED;
 
 
     public Outtake(SubSystemData data, boolean autoExtendSlides, boolean autoRetractSlides) {
@@ -260,6 +266,7 @@ public class Outtake extends SubSystem {
         clawServo.setPosition(clawPosition.pos);
 
         hangDeploy = hardwareMap.get(Servo.class, "hangDeploy");
+        hangDeploy.setPosition(hangDeployPos.pos);
 
 
         //initiating slide encoder
@@ -331,7 +338,7 @@ public class Outtake extends SubSystem {
         }
 
         if (changedHangDeploy) {
-            hangDeployPos = newHangDeploy;
+            hangDeployPos = newHangDeployPos;
             updatedHangPos = true;
             changedHangDeploy = false;
         }
@@ -376,6 +383,12 @@ public class Outtake extends SubSystem {
                 break;
             case RETRACT:
                 retractFromPlaceBehind();
+                toOuttakeState = ToOuttakeState.NOTHING;
+                break;
+            case DEPLOY_HANG:
+                targetSlidePos = VerticalSlide.EXTRA_DOWN.length;
+                outtakeState = OuttakeState.RETRACTING_DEPLOY_HANG;
+
                 toOuttakeState = ToOuttakeState.NOTHING;
                 break;
         }
@@ -555,6 +568,28 @@ public class Outtake extends SubSystem {
 //                    }
                 }
                 break;
+            case RETRACTING_DEPLOY_HANG:
+                if (error<.5) {
+                    targetSlidePos = VerticalSlide.DOWN.length;
+
+                    hangDeployPos = HangDeploy.DEPLOY;
+                    changedHangDeploy = true;
+
+                    slideTimer.reset();
+
+                    outtakeState = OuttakeState.WAITING_FOR_DEPLOY_HANG;
+                }
+                break;
+            case WAITING_FOR_DEPLOY_HANG:
+                if (slideTimer.seconds()>.3) {
+                    targetSlidePos = VerticalSlide.HANG_HEIGHT.length;
+
+                    outtakeState = OuttakeState.EXTENDING_DEPLOY_HANG;
+                }
+                break;
+            case EXTENDING_DEPLOY_HANG:
+
+                break;
             case WAITING_FOR_TRANSFER:
                 if (grabFromTransfer) {
                     grabFromTransfer = false;
@@ -704,6 +739,10 @@ public class Outtake extends SubSystem {
         newV4BarPos = pos;
     }
 
+    public double getTargetV4BarPos() {
+        return newV4BarPos;
+    }
+
     public void setTargetWristPitch(WristPitch pos) {
         setTargetWristPitch(pos.pos);
     }
@@ -720,6 +759,10 @@ public class Outtake extends SubSystem {
     public void setTargetWristRoll(double pos) {
         changedWristRoll = true;
         newWristRoll = pos;
+    }
+
+    public double getTargetWristRoll() {
+        return newWristRoll;
     }
 
     public void setClawPosition(ClawPosition pos) {
@@ -739,7 +782,7 @@ public class Outtake extends SubSystem {
 
     public void setHangDeploy(HangDeploy pos) {
         changedHangDeploy = true;
-        newHangDeploy = pos;
+        newHangDeployPos = pos;
     }
 
     public void place() {

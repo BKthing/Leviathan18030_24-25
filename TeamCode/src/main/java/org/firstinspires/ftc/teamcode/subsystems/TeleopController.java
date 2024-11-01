@@ -47,6 +47,8 @@ public class TeleopController extends SubSystem {
     @Override
     public void loop() {
 
+        //driver 2 controls
+
         //Intake drop and intake controls
         if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
             intake.setTargetIntakePos(Intake.IntakePos.DOWN);
@@ -57,10 +59,9 @@ public class TeleopController extends SubSystem {
             intake.setTargetIntakeSpeed(0);
         }
 
-
-        if (gamepad2.back && !oldGamePad2.back) {
-            intake.setTargetIntakePos(Intake.IntakePos.PARTIAL_UP);
-        }
+//        if (gamepad2.back && !oldGamePad2.back) {
+//            intake.setTargetIntakePos(Intake.IntakePos.PARTIAL_UP);
+//        }
 
 
         //Horizontal slides
@@ -74,7 +75,11 @@ public class TeleopController extends SubSystem {
         } else if (gamepad2.dpad_up && !oldGamePad2.dpad_up) {
             intake.setTargetSlidePos(Intake.HorizontalSlide.FAR);
         } else if (Math.abs(gamepad2.left_stick_y) > .05) {
-            intake.setTargetSlidePos(intake.getTargetSlidePos() + 10 * loopTimer.seconds() * -gamepad2.left_stick_y * (1-gamepad2.right_trigger*.75));
+            if (!gamepad2.start) {
+                intake.setTargetSlidePos(intake.getTargetSlidePos() + 10 * loopTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75));
+            } else {
+                intake.setTargetIntakePos(intake.getTargetIntakePos() + gamepad2.left_stick_y * .0002 * loopTimer.milliSeconds());
+            }
         }
 
 
@@ -100,9 +105,20 @@ public class TeleopController extends SubSystem {
         } else if (gamepad2.y && !oldGamePad2.y) {
             outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_BEHIND);
         } else if (Math.abs(gamepad2.right_stick_y) > .05) {
-            outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 8 * loopTimer.seconds() * -gamepad2.right_stick_y * (1-gamepad2.left_trigger*.75));
+            if (!gamepad2.back) {
+                outtake.setTargetSlidePos(outtake.getTargetSlidePos() + 8 * loopTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75));
+            } else {
+                outtake.setTargetV4BarPos(outtake.getTargetV4BarPos()+gamepad2.right_stick_y * .0002 * loopTimer.milliSeconds());
+            }
         }
 
+        if (gamepad2.back && Math.abs(gamepad2.right_stick_x)>.05) {
+            outtake.setTargetWristRoll(outtake.getTargetWristRoll()+gamepad2.right_stick_x * .0002 * loopTimer.milliSeconds());
+        }
+
+        if ((gamepad2.back && gamepad2.start) && !(oldGamePad2.back && oldGamePad2.start)) {
+            outtake.toOuttakeState(Outtake.ToOuttakeState.DEPLOY_HANG);
+        }
 
         //Transfer
         if (intake.transfered()) {

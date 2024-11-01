@@ -366,12 +366,16 @@ public class Intake extends SubSystem {
     }
 
     public void setTargetIntakePos(IntakePos targetIntakePos) {
-        setIntakePos(targetIntakePos.pos);
+        setTargetIntakePos(targetIntakePos.pos);
     }
 
-    public void setIntakePos(double intakePos) {
+    public void setTargetIntakePos(double intakePos) {
         changedIntakePos = true;
-        newIntakePos = intakePos;
+        newIntakePos = MathUtil.clip(intakePos, .1, .46);
+    }
+
+    public double getTargetIntakePos() {
+        return newIntakePos;
     }
 
     public double getTargetSlidePos() {
