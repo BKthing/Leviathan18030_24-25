@@ -736,7 +736,7 @@ public class Outtake extends SubSystem {
 
     public void setTargetV4BarPos(double pos) {
         changedV4BarPos = true;
-        newV4BarPos = pos;
+        newV4BarPos = MathUtil.clip(pos, V4BarPos.GRAB_BACK.pos, V4BarPos.PLACE_BACK.pos);
     }
 
     public double getTargetV4BarPos() {
@@ -758,7 +758,7 @@ public class Outtake extends SubSystem {
 
     public void setTargetWristRoll(double pos) {
         changedWristRoll = true;
-        newWristRoll = pos;
+        newWristRoll = MathUtil.clip(pos, WristRoll.NINETY.pos, WristRoll.NEGATIVE_NINETY.pos);
     }
 
     public double getTargetWristRoll() {
