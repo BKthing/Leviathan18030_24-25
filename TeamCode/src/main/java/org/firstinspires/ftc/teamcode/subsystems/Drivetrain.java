@@ -47,6 +47,8 @@ public class Drivetrain extends SubSystem {
 
     private final Telemetry.Item targetMotionState;
 
+    private final Telemetry.Item forwardComponentTelemetry;
+
     //how much a motor power must change to warrant an update
     private final double minPowerChange = .03;
 
@@ -101,6 +103,8 @@ public class Drivetrain extends SubSystem {
         followState = telemetry.addData("Follow state", "");
 
         targetMotionState = telemetry.addData("Motion state", "");
+
+        forwardComponentTelemetry = telemetry.addData("Forward component", "");
 
     }
 
@@ -162,7 +166,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.6*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.4*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }
@@ -255,7 +259,12 @@ public class Drivetrain extends SubSystem {
 
                 //drawing the robots target velocity
                 targetMotionState.setValue(runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection());
-                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getVector2d()));
+//                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getVector2d()));
+                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(new Vector2d(15*runner.getForwardComponent(), runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection(), true)));
+                forwardComponentTelemetry.setValue(runner.getForwardComponent());
+//                packet.fieldOverlay().setStroke("#9D00FF");
+//                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(new Vector2d(10, runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection(), true)));
+
             } else if (runner.getFollowState() == TrajectorySequenceRunner.FollowState.TARGET_END_POINT) {
                 packet.fieldOverlay().setStroke("#4CAF50");
 

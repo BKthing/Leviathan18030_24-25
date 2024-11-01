@@ -69,8 +69,8 @@ public class Outtake extends SubSystem {
         TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
-        SPECIMEN_BAR(16),
-        PLACE_SPECIMEN_BAR(15),
+        SPECIMEN_BAR(8),
+        PLACE_SPECIMEN_BAR(6.5),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(28.5);
 
@@ -103,10 +103,10 @@ public class Outtake extends SubSystem {
 
     public enum V4BarPos {
         PLACE_FRONT(.37),
-        WAIT_FOR_TRANSFER(.1645),
-        TRANSFER(.166),
+        WAIT_FOR_TRANSFER(.15),
+        TRANSFER(.128),
         GRAB_BACK(.0),
-        PLACE_BACK(.89);
+        PLACE_BACK(.85);
 
         public final double pos;
 
@@ -124,7 +124,7 @@ public class Outtake extends SubSystem {
 
     public enum WristPitch {
         DOWN(.54),
-        BACK(0.24),
+        BACK(0.35),
         WAIT_FOR_TRANSFER(.49),
         Front_ANGLED(.9),
         FRONT(.81);
@@ -156,15 +156,15 @@ public class Outtake extends SubSystem {
     }
 
     private boolean changedWristRoll = false;
-    private double targetWristRoll = WristRoll.NINETY.pos;
-    private double actualWristRoll = WristRoll.NINETY.pos;
-    private double newWristRoll = WristRoll.NINETY.pos;
+    private double targetWristRoll = WristRoll.NEGATIVE_NINETY.pos;
+    private double actualWristRoll = WristRoll.NEGATIVE_NINETY.pos;
+    private double newWristRoll = WristRoll.NEGATIVE_NINETY.pos;
 
     private final Servo wristRollServo;
 
 
     public enum ClawPosition {
-        OPEN(.35),
+        OPEN(.39),
         CLOSED(.1);
 
         public final double pos;
@@ -423,7 +423,7 @@ public class Outtake extends SubSystem {
 
         double f;
 
-        if (targetSlidePos == 0) {
+        if (targetSlidePos != 0) {
             f = .13;
         } else {
             f = 0;
@@ -433,12 +433,12 @@ public class Outtake extends SubSystem {
 
         //Checks if error is in acceptable amounts
 
-        if (absError>3) {
+        if (absError>1) {
             //Slides set to max power
             p = Math.signum(error);
         } else {
-            p = error*.2;
-            d = ((error - prevSlideError) / elapsedTime) * 0;//.007
+            p = Math.sqrt(error)*.27*Math.signum(error);
+            d = ((error - prevSlideError) / elapsedTime) * .0013;//.007
         }
 
         double motorPower =  p  - d + f; //
@@ -503,7 +503,8 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case WAIT_PLACING_FRONT:
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>.3) {
+                    updateClawPosition = true;
                     clawPosition = ClawPosition.OPEN;
 
                     outtakeState = OuttakeState.PLACING_FRONT_RETRACT_DELAY;
@@ -511,7 +512,7 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case PLACING_FRONT_RETRACT_DELAY:
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>2) {
 //                    clawPosition = ClawPosition.OPEN;
                     retractFromPlaceBehind();
 //                    grabBehind();
@@ -631,11 +632,11 @@ public class Outtake extends SubSystem {
     private void extendPlaceFront() {
         targetV4BarPos = V4BarPos.PLACE_FRONT.pos;
         targetWristPitch = WristPitch.Front_ANGLED.pos;
-        targetWristRoll = WristRoll.NINETY.pos;
+        targetWristRoll = WristRoll.NEGATIVE_NINETY.pos;
 
         targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
 
-        outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
+        outtakeState = OuttakeState.PLACING_FRONT;
     }
 
 //    private void extend

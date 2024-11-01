@@ -76,7 +76,7 @@ public class BlueLeft extends LinearOpMode {
 
 
         TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(7, 36), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(8, 35), Math.toRadians(270))
                 .callMarker(2, () -> {
                     outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
                 })
@@ -84,23 +84,23 @@ public class BlueLeft extends LinearOpMode {
                 .callMarkerFromEnd(.1, () -> {
                     outtake.place();
                 })
-                .setEndDelay(.3)
+                .setEndDelay(1.5)
                 .build();
 
         TrajectorySequence cycle1 = new TrajectorySequenceBuilder(preload.endPose(), RobotConstants.constraints)
                 .back(2)
-                .splineToConstantHeading(new Vector2d(50, 44), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(47, 44), Math.toRadians(0))
                 .callMarker(24, () -> {
                     intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
                 })
-                .callMarkerFromEnd(8, () -> {
-//                    drivetrain.setForwardComponent(.3);
-                })
+//                .callMarkerFromEnd(8, () -> {
+////                    drivetrain.setForwardComponent(.3);
+//                })
                 .callMarkerFromEnd(1.5, () -> {
                     intake.setTargetIntakeSpeed(1);
                 })
-                .setEndDelay(.5)
+                .setEndDelay(1)
                 .back(.1)
                 .localTemporalMarker(0, () -> {
                     intake.retract();
@@ -109,10 +109,12 @@ public class BlueLeft extends LinearOpMode {
                 .build();
 
 
-//        drivetrain.setForwardComponent(.3);
+        drivetrain.setForwardComponent(.4);
 
         waitForStart();
         drivetrain.followTrajectorySequence(preload);
+
+        oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
 
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
@@ -128,7 +130,7 @@ public class BlueLeft extends LinearOpMode {
 //                        outtake.setClawPosition(Outtake.ClawPosition.OPEN);
 
                         autoTimer.reset();
-                        drivetrain.followTrajectorySequence(cycle1);
+//                        drivetrain.followTrajectorySequence(cycle1);
 
                         autoState = AutoState.CYCLE_1;
                     }

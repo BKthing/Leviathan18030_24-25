@@ -42,7 +42,7 @@ public class Intake extends SubSystem {
 
     public enum HorizontalSlide {
         //18.9 max
-        EXTRA_IN(-.4),
+        EXTRA_IN(-1.5),
         IN(0),
         AUTO_PRESET1(12),
         AUTO_PRESET2(4),
@@ -73,7 +73,7 @@ public class Intake extends SubSystem {
 
     public enum IntakePos {
         UP(.435),//.69
-        PARTIAL_UP(.375),//.6
+        PARTIAL_UP(.34),//.6
         CLEAR_BAR(.62),
         DOWN(.115);//.05
 

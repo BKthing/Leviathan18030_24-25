@@ -51,9 +51,9 @@ public class TeleopController extends SubSystem {
         if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
             intake.setTargetIntakePos(Intake.IntakePos.DOWN);
             intake.setTargetIntakeSpeed(1);
-        } else if (gamepad2.right_trigger>.1) {
+        } else if (gamepad2.left_trigger>.1) {
             intake.setTargetIntakeSpeed(-1);
-        } else if ((!gamepad2.left_bumper && oldGamePad2.left_bumper) || (gamepad2.right_trigger<=.1 && oldGamePad2.right_trigger>.1)) {
+        } else if ((!gamepad2.left_bumper && oldGamePad2.left_bumper) || (gamepad2.left_trigger<=.1 && oldGamePad2.left_trigger>.1)) {
             intake.setTargetIntakeSpeed(0);
         }
 
@@ -90,9 +90,13 @@ public class TeleopController extends SubSystem {
         } else if (gamepad2.a && !oldGamePad2.a) {
             outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
         } else if (gamepad2.b && !oldGamePad2.b) {
-            outtake.toOuttakeState(Outtake.ToOuttakeState.GRAB_BEHIND);
+            outtake.setTargetSlidePos(15);
+
+//            outtake.toOuttakeState(Outtake.ToOuttakeState.GRAB_BEHIND);
         } else if (gamepad2.x && !oldGamePad2.x) {
-            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
+            outtake.setTargetSlidePos(Outtake.VerticalSlide.LOW_BUCKET_HEIGHT);
+
+//            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
         } else if (gamepad2.y && !oldGamePad2.y) {
             outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_BEHIND);
         } else if (Math.abs(gamepad2.right_stick_y) > .05) {
@@ -101,14 +105,14 @@ public class TeleopController extends SubSystem {
 
 
         //Transfer
-//        if (intake.transfered()) {
-//            transfer.setTransferState(Transfer.TransferState.CENTER);
-//
+        if (intake.transfered()) {
+            transfer.setTransferState(Transfer.TransferState.CENTER);
+
 //            if (cycleMode == CycleMode.NORMAL) {
 //                outtake.grabFromTransfer();
 ////                grabFromTransfer = true;
 //            }
-//        }
+        }
 
 //        if (grabFromTransfer && gamepad2.a) {
 //            outtake.grabFromTransfer();
