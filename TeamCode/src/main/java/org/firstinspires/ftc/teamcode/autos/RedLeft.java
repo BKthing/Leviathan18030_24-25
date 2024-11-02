@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.autos;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
@@ -17,6 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
+@Disabled
 @Autonomous
 public class RedLeft extends LinearOpMode {
     private enum AutoState{
@@ -172,7 +174,7 @@ public class RedLeft extends LinearOpMode {
 
 
 
-        drivetrain.setForwardComponent(1);
+        drivetrain.setForwardComponent(.5);
 
         waitForStart();
         drivetrain.followTrajectorySequence(preload);

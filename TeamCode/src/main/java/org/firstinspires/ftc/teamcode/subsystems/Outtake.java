@@ -77,10 +77,10 @@ public class Outtake extends SubSystem {
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(7),
-        PLACE_SPECIMEN_BAR(2),
+        PLACE_SPECIMEN_BAR(4),
         HANG_HEIGHT(17.5),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(24);
+        HIGH_BUCKET(24.6);
 
         public final double length;
         VerticalSlide(double length) {this.length = length;}
@@ -134,7 +134,7 @@ public class Outtake extends SubSystem {
         DOWN(.54),
         BACK(0.35),
         WAIT_FOR_TRANSFER(.49),
-        FRONT_ANGLED_UP(.9),
+        FRONT_ANGLED_UP(.87),
         FRONT_ANGELED_DOWN(.6),
 
         FRONT(.81);
@@ -524,7 +524,7 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case WAIT_PLACING_FRONT:
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>.4) {
                     updateClawPosition = true;
                     clawPosition = ClawPosition.OPEN;
 

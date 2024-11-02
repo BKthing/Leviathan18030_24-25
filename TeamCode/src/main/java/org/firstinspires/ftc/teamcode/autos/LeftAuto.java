@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.autos;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
@@ -19,7 +18,7 @@ import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @Autonomous
-public class BlueLeft extends LinearOpMode {
+public class LeftAuto extends LinearOpMode {
 
     private enum AutoState{
         PLACING_PRELOAD,
@@ -84,7 +83,7 @@ public class BlueLeft extends LinearOpMode {
 
 
         TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(10, 32.5), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(10, 32), Math.toRadians(270))
                 .callMarker(2, () -> {
                     outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
                 })
@@ -104,6 +103,7 @@ public class BlueLeft extends LinearOpMode {
                 .callMarker(24, () -> {
                     intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
+                    transfer.setTransferState(Transfer.TransferState.NEUTRAL);
                 })
                 .callMarkerFromEnd(.5, () -> {
                     intake.setTargetIntakeSpeed(1);
@@ -126,9 +126,10 @@ public class BlueLeft extends LinearOpMode {
                 .callMarker(5, () -> {
                     intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
+                    transfer.setTransferState(Transfer.TransferState.NEUTRAL);
                 })
                 .forward(1)
-                .left(8)
+                .left(7)
                 .localCallMarkerFromEnd(.5, () -> {
                     intake.setTargetIntakeSpeed(1);
                 })
@@ -169,12 +170,12 @@ public class BlueLeft extends LinearOpMode {
                 .callMarker(7, () -> {
                     outtake.setTargetSlidePos(Outtake.VerticalSlide.DOWN);
                 })
-                .back(17)
+                .back(30)
                 .build();
 
 
 
-        drivetrain.setForwardComponent(1);
+        drivetrain.setForwardComponent(.6);
 
         waitForStart();
         drivetrain.followTrajectorySequence(preload);
@@ -272,6 +273,7 @@ public class BlueLeft extends LinearOpMode {
             masterThread.unThreadedUpdate();
 
             if (intake.transfered()) {
+                transfer.setTransferState(Transfer.TransferState.CENTER);
                 outtake.grabFromTransfer();
             }
 
