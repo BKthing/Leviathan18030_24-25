@@ -9,10 +9,10 @@ import com.reefsharklibrary.data.VelConstraint;
 
 @Config
 public class RobotConstants {
-    public static PIDCoeficients lateralPID = new PIDCoeficients(.15, .08, .006, 0, 0, 0);//.24, 0.08, 0.011, 0, 0.06, .0006
+    public static PIDCoeficients lateralPID = new PIDCoeficients(.15, .12, .006, 0, 0, 0);//.24, 0.08, 0.011, 0, 0.06, .0006
 
 
-    public static PIDCoeficients headingPID = new PIDCoeficients(.075, .07, 0.0013);//.17, .07, 0.005
+    public static PIDCoeficients headingPID = new PIDCoeficients(.06, 0, 0.0004);//.17, .07, 0.005 //0.0013 .1
 
     public static Pose2d naturalDecel = new Pose2d(380, 380, Math.toRadians(5000));//new Pose2d(210, 210, Math.toRadians(2000))
 

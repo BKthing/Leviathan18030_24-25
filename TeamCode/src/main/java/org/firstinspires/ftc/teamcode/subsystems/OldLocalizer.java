@@ -5,6 +5,7 @@ import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.xyzOrientation;
 import android.annotation.SuppressLint;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.hardware.bosch.BHI260IMU;
 import com.qualcomm.hardware.bosch.BNO055IMUNew;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -13,10 +14,10 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.OldTwoWheelOldLocalizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
-import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
@@ -25,7 +26,6 @@ import java.util.function.DoubleSupplier;
 
 public class OldLocalizer extends SubSystem{
     OldTwoWheelOldLocalizer localizer;
-    ReusableHardwareAction imuAction;
 
     public static double TICKS_PER_REV = 8192;
     public static double WHEEL_RADIUS = 0.69; // in
@@ -39,16 +39,29 @@ public class OldLocalizer extends SubSystem{
 
     private final Encoder perpendicularWheel, parallelWheel;
 
-    private final IMU imu;
+    private final IMU externalImu, expansionImu, controlImu;
+
+
+    private enum CurrentImu{
+        EXTERNAL_IMU,
+        EXPANSION_IMU,
+        CONTROL_IMU;
+    }
+
+    CurrentImu currentImu = CurrentImu.EXTERNAL_IMU;
+
 
     private double imuAngle = 0;
     private double updatedImuAngle = 0;
+
+    private double imuOffsetAngle = 0;
 
     private final DoubleSupplier getPerpendicularWheelDistance, getParallelWheelDistance;
 
     private double perpendicularWheelDistance, parallelWheelDistance;
 
     private final Telemetry.Item position;
+    private final Telemetry.Item imuType;
 //    private final Telemetry.Item rawPosition;
 //    private final Telemetry.Item velocity;
 
@@ -59,6 +72,7 @@ public class OldLocalizer extends SubSystem{
 
         //initializing localizer and sensors
         position = data.getTelemetry().addData("Pose Estimate (old)", new Pose2d(0, 0 ,0));
+        imuType = data.getTelemetry().addData("IMU", currentImu);
 //        rawPosition = data.getTelemetry().addData("Raw Pos", "");
 //        velocity = data.getTelemetry().addData("Velocity", new Pose2d(0, 0, 0));
 
@@ -72,12 +86,16 @@ public class OldLocalizer extends SubSystem{
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;
         getParallelWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * parallelWheel.getCurrentPosition() * PARALLEL_MULTIPLIER / TICKS_PER_REV;
 
-        imuAction = new ReusableHardwareAction(data.getHardwareQueue());
+        externalImu = hardwareMap.get(BNO055IMUNew.class, "imu");
+        expansionImu = hardwareMap.get(BNO055IMUNew.class, "expansionImu");
+        controlImu = hardwareMap.get(BHI260IMU.class, "controlImu");
 
-        imu = hardwareMap.get(BNO055IMUNew.class, "imu");
+        externalImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
+        externalImu.resetYaw();
 
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
-        imu.resetYaw();
+        expansionImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.DOWN, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+
+        controlImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.DOWN, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
 
 //        imuAction.setAction(() -> {
 //            imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)*Math.PI/180;
@@ -91,8 +109,15 @@ public class OldLocalizer extends SubSystem{
         perpendicularWheelDistance = getPerpendicularWheelDistance.getAsDouble();
         parallelWheelDistance = getParallelWheelDistance.getAsDouble();
         //is set here to prevent threading conflicts
-        imuAngle = updatedImuAngle;
-    }
+
+        if (Double.isNaN(updatedImuAngle)) {
+            changeImu();
+        } else {
+            imuAngle = updatedImuAngle + imuOffsetAngle;
+        }
+
+
+        }
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -101,13 +126,28 @@ public class OldLocalizer extends SubSystem{
 
         //request an imu call, only gets called if it is not already queued
 //        imuAction.queueAction();
-        data.getHardwareQueue().add(() -> {
-            updatedImuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
-        });
+        switch (currentImu) {
+            case EXTERNAL_IMU:
+                data.getHardwareQueue().add(() -> {
+                    updatedImuAngle = externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+                });
+                break;
+            case EXPANSION_IMU:
+                data.getHardwareQueue().add(() -> {
+                    updatedImuAngle = expansionImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+                });
+                break;
+            case CONTROL_IMU:
+                data.getHardwareQueue().add(() -> {
+                    updatedImuAngle = controlImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+                });
+                break;
+        }
+
     }
 
     public void update() {
-        localizer.update(getPerpendicularWheelDistance.getAsDouble(), getParallelWheelDistance.getAsDouble(), imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        localizer.update(getPerpendicularWheelDistance.getAsDouble(), getParallelWheelDistance.getAsDouble(), externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
     }
 
     @Override
@@ -139,5 +179,40 @@ public class OldLocalizer extends SubSystem{
 
     public com.reefsharklibrary.localizers.OldLocalizer getLocalizer() {
         return localizer;
+    }
+
+    private void changeImu() {
+            if (currentImu != CurrentImu.EXTERNAL_IMU) {
+                double testIMUAngle = externalImu.getRobotYawPitchRollAngles().getYaw();
+                if (!Double.isNaN(testIMUAngle)) {
+                    currentImu = CurrentImu.EXTERNAL_IMU;
+                    //imuAngle = testImuangle + offset
+                    imuOffsetAngle = imuAngle-testIMUAngle;
+                    imuType.setValue(currentImu);
+                    return;
+                }
+            }
+
+            if (currentImu != CurrentImu.EXPANSION_IMU) {
+                double testIMUAngle = expansionImu.getRobotYawPitchRollAngles().getYaw();
+                if (!Double.isNaN(testIMUAngle)) {
+                    currentImu = CurrentImu.EXPANSION_IMU;
+
+                    imuOffsetAngle = imuAngle-testIMUAngle;
+                    imuType.setValue(currentImu);
+                    return;
+                }
+            }
+
+            if (currentImu != CurrentImu.CONTROL_IMU) {
+                double testIMUAngle = controlImu.getRobotYawPitchRollAngles().getYaw();
+                if (!Double.isNaN(testIMUAngle)) {
+                    currentImu = CurrentImu.CONTROL_IMU;
+
+                    imuOffsetAngle = imuAngle-testIMUAngle;
+                    imuType.setValue(currentImu);
+                    return;
+                }
+            }
     }
 }

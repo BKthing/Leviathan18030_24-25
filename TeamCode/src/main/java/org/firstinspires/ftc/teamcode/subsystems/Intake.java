@@ -48,7 +48,7 @@ public class Intake extends SubSystem {
         AUTO_PRESET2(4),
         CLOSE(7),
         MEDIUM(12),
-        FAR(17);
+        FAR(16);//17
 
         public final double length;
         HorizontalSlide(double length) {this.length = length;}
@@ -75,7 +75,7 @@ public class Intake extends SubSystem {
         UP(.435),//.69
         PARTIAL_UP(.34),//.6
         CLEAR_BAR(.62),
-        DOWN(.115);//.05
+        DOWN(.122);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -362,7 +362,7 @@ public class Intake extends SubSystem {
 
     public void setTargetSlidePos(double targetPos) {
         changedTargetSlidePos = true;
-        newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.5);//18.9 is max .2 to be safe
+        newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.5);//18.5
     }
 
     public void setTargetIntakePos(IntakePos targetIntakePos) {

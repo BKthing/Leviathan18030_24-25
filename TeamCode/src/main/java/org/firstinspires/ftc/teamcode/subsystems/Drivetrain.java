@@ -64,7 +64,7 @@ public class Drivetrain extends SubSystem {
     private Pose2d poseVelocity;
     private Pose2d poseAcceleration;
 
-    private final boolean fieldCentric = true;
+    private boolean fieldCentric = true;
     private double headingOffset = 0;
 
     public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {
@@ -187,11 +187,11 @@ public class Drivetrain extends SubSystem {
                     headingOffset = poseEstimate.getHeading();
                 }
 
-//                if (gamepad1.x) {
-//                    fieldCentric = false;
-//                } else if (gamepad1.b) {
-//                    fieldCentric = true;
-//                }
+                if (gamepad1.start && gamepad1.dpad_up) {
+                    fieldCentric = false;
+                } else if (gamepad1.start && gamepad1.dpad_down) {
+                    fieldCentric = true;
+                }
 
 
                 setDrivePower(powers);

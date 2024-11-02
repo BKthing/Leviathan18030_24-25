@@ -44,6 +44,8 @@ public class Outtake extends SubSystem {
     private OuttakeState outtakeState = OuttakeState.INIT_POSITION;
     private OuttakeState newOuttakeState = OuttakeState.INIT_POSITION;
 
+    private double prevError = 0;
+
     private boolean changedOuttakeState = false;
 
     public enum ToOuttakeState {
@@ -74,11 +76,11 @@ public class Outtake extends SubSystem {
         TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
-        SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(6.5),
-        HANG_HEIGHT(14),
+        SPECIMEN_BAR(7),
+        PLACE_SPECIMEN_BAR(2),
+        HANG_HEIGHT(17.5),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(28.5);
+        HIGH_BUCKET(24);
 
         public final double length;
         VerticalSlide(double length) {this.length = length;}
@@ -112,7 +114,7 @@ public class Outtake extends SubSystem {
         WAIT_FOR_TRANSFER(.15),
         TRANSFER(.128),
         GRAB_BACK(.0),
-        PLACE_BACK(.85);
+        PLACE_BACK(.78);
 
         public final double pos;
 
@@ -132,7 +134,9 @@ public class Outtake extends SubSystem {
         DOWN(.54),
         BACK(0.35),
         WAIT_FOR_TRANSFER(.49),
-        Front_ANGLED(.9),
+        FRONT_ANGLED_UP(.9),
+        FRONT_ANGELED_DOWN(.6),
+
         FRONT(.81);
 
         public final double pos;
@@ -210,7 +214,7 @@ public class Outtake extends SubSystem {
     private final Telemetry.Item V4BTelemetry;
 
     public enum HangDeploy {
-        DEPLOY(.4),
+        DEPLOY(.28),
         NOT_DEPLOYED(.2);
 
         public final double pos;
@@ -294,6 +298,7 @@ public class Outtake extends SubSystem {
         V4BTelemetry = telemetry.addData("V4B pos", 0);
 
         outtakeSlideTelemetry = telemetry.addData("Outtake target pos", "");
+
     }
 
 
@@ -359,6 +364,8 @@ public class Outtake extends SubSystem {
             updateToOuttakeState = false;
         }
 
+        prevError = prevSlideError;
+
         prevTargetSlidePos = targetSlidePos;
     }
 
@@ -406,7 +413,7 @@ public class Outtake extends SubSystem {
             hardwareQueue.add(() -> wristPitchServo.setPosition(actualWristPitch));
         }
 
-        if (Math.abs(targetWristRoll-actualWristRoll)>.05) {
+        if (Math.abs(targetWristRoll-actualWristRoll)>.005) {
             actualWristRoll = targetWristRoll;
             hardwareQueue.add(() -> wristRollServo.setPosition(actualWristRoll));
         }
@@ -450,8 +457,8 @@ public class Outtake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {
-            p = Math.sqrt(error)*.27*Math.signum(error);
-            d = ((error - prevSlideError) / elapsedTime) * .0013;//.007
+            p =error*.38;
+            d = ((prevSlideError-error) / elapsedTime) * .015;
         }
 
         double motorPower =  p  - d + f; //
@@ -509,6 +516,7 @@ public class Outtake extends SubSystem {
                 if (place) {
 //                    clawPosition = ClawPosition.OPEN;
                     targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
+                    targetWristPitch = WristPitch.FRONT_ANGELED_DOWN.pos;
 
                     place = false;
                     outtakeTimer.reset();
@@ -516,7 +524,7 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case WAIT_PLACING_FRONT:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.5) {
                     updateClawPosition = true;
                     clawPosition = ClawPosition.OPEN;
 
@@ -525,7 +533,7 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case PLACING_FRONT_RETRACT_DELAY:
-                if (outtakeTimer.seconds()>2) {
+                if (outtakeTimer.seconds()>.8) {
 //                    clawPosition = ClawPosition.OPEN;
                     retractFromPlaceBehind();
 //                    grabBehind();
@@ -533,7 +541,11 @@ public class Outtake extends SubSystem {
                 break;
             case RETRACTING_GRAB_BEHIND_CLEAR_V4B:
                 if (outtakeTimer.seconds()>1) {
-                    retractFromPlaceBehind();
+                    if (autoRetractSlides) {
+                        retractFromPlaceBehind();
+                    } else {
+                        outtakeState = OuttakeState.IDLE;
+                    }
 //                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
 //
 //                    outtakeState = OuttakeState.RETRACTING_GRAB_BEHIND;
@@ -569,19 +581,19 @@ public class Outtake extends SubSystem {
                 }
                 break;
             case RETRACTING_DEPLOY_HANG:
-                if (error<.5) {
+                if (slidePos<.4) {
                     targetSlidePos = VerticalSlide.DOWN.length;
 
                     hangDeployPos = HangDeploy.DEPLOY;
-                    changedHangDeploy = true;
+                    updatedHangPos = true;
 
-                    slideTimer.reset();
+                    outtakeTimer.reset();
 
                     outtakeState = OuttakeState.WAITING_FOR_DEPLOY_HANG;
                 }
                 break;
             case WAITING_FOR_DEPLOY_HANG:
-                if (slideTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>1) {
                     targetSlidePos = VerticalSlide.HANG_HEIGHT.length;
 
                     outtakeState = OuttakeState.EXTENDING_DEPLOY_HANG;
@@ -645,7 +657,7 @@ public class Outtake extends SubSystem {
     public TelemetryPacket dashboard(TelemetryPacket packet) {
         V4BTelemetry.setValue(actualV4BarPos);
 
-        outtakeSlideTelemetry.setValue(targetSlidePos);
+        outtakeSlideTelemetry.setValue(targetSlidePos + " error: " + (targetSlidePos-slidePos));
 
         return super.dashboard(packet);
     }
@@ -666,7 +678,7 @@ public class Outtake extends SubSystem {
 
     private void extendPlaceFront() {
         targetV4BarPos = V4BarPos.PLACE_FRONT.pos;
-        targetWristPitch = WristPitch.Front_ANGLED.pos;
+        targetWristPitch = WristPitch.FRONT_ANGLED_UP.pos;
         targetWristRoll = WristRoll.NEGATIVE_NINETY.pos;
 
         targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
@@ -787,6 +799,10 @@ public class Outtake extends SubSystem {
 
     public void place() {
         changedPlace = true;
+    }
+
+    public double getSlideError() {
+        return prevError;
     }
 
 
