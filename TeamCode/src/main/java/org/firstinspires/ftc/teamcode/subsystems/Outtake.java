@@ -76,11 +76,11 @@ public class Outtake extends SubSystem {
         TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
-        SPECIMEN_BAR(7),
+        SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(4),
         HANG_HEIGHT(17.5),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(24.6);
+        HIGH_BUCKET(25);
 
         public final double length;
         VerticalSlide(double length) {this.length = length;}
@@ -114,7 +114,7 @@ public class Outtake extends SubSystem {
         WAIT_FOR_TRANSFER(.15),
         TRANSFER(.128),
         GRAB_BACK(.0),
-        PLACE_BACK(.78);
+        PLACE_BACK(.8);
 
         public final double pos;
 
@@ -134,8 +134,8 @@ public class Outtake extends SubSystem {
         DOWN(.54),
         BACK(0.35),
         WAIT_FOR_TRANSFER(.49),
-        FRONT_ANGLED_UP(.87),
-        FRONT_ANGELED_DOWN(.6),
+        FRONT_ANGLED_UP(.84),
+        FRONT_ANGELED_DOWN(.59),
 
         FRONT(.81);
 
@@ -619,7 +619,7 @@ public class Outtake extends SubSystem {
                 break;
             case PICK_UP_FROM_TRANSFER:
                 //waits for claw to be in position before grabbing sample
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>.7) {
                     clawPosition = ClawPosition.CLOSED;
                     updateClawPosition = true;
 

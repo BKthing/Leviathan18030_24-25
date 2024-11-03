@@ -32,7 +32,8 @@ public class LeftAuto extends LinearOpMode {
         CYCLE_3,
         CYCLE_3_WAIT,
         PLACING_3,
-        PARK,
+        PARK1,
+        PARK2,
         FINISHED
     }
 
@@ -83,7 +84,7 @@ public class LeftAuto extends LinearOpMode {
 
 
         TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(10, 32), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(10, 33), Math.toRadians(270))
                 .callMarker(2, () -> {
                     outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
                 })
@@ -99,21 +100,24 @@ public class LeftAuto extends LinearOpMode {
                 .callMarker(.5, () -> {
                     outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
                 })
-                .splineToConstantHeading(new Vector2d(49, 42.5), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(49, 41), Math.toRadians(0))
                 .callMarker(24, () -> {
+                    drivetrain.setForwardComponent(.25);
                     intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
                     transfer.setTransferState(Transfer.TransferState.NEUTRAL);
                 })
                 .callMarkerFromEnd(.5, () -> {
+//                    intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2 +2);
                     intake.setTargetIntakeSpeed(1);
                 })
                 .setEndDelay(1)
                 .back(.1)
                 .localTemporalMarker(0, () -> {
                     intake.retract();
+                    drivetrain.setForwardComponent(.5);
                 })
-                .splineToSplineHeading(new Pose2d(55, 55, Math.toRadians(270-45)), Math.toRadians(45))
+                .splineToSplineHeading(new Pose2d(56, 56, Math.toRadians(270-45)), Math.toRadians(45))
                 .setTargetEndDistance(.5)
                 .build();
 
@@ -122,14 +126,15 @@ public class LeftAuto extends LinearOpMode {
                 .callMarker(.5, () -> {
                     outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
                 })
-                .splineToSplineHeading(new Pose2d(51, 44.3, Math.toRadians(270)), Math.toRadians(270))
-                .callMarker(5, () -> {
+                .splineToSplineHeading(new Pose2d(50, 42.8, Math.toRadians(270)), Math.toRadians(270))
+                .callMarker(3, () -> {
+                    drivetrain.setForwardComponent(.25);
                     intake.setTargetSlidePos(Intake.HorizontalSlide.AUTO_PRESET2);
                     intake.setTargetIntakePos(Intake.IntakePos.DOWN);
                     transfer.setTransferState(Transfer.TransferState.NEUTRAL);
                 })
                 .forward(1)
-                .left(7)
+                .left(8)
                 .localCallMarkerFromEnd(.5, () -> {
                     intake.setTargetIntakeSpeed(1);
                 })
@@ -137,8 +142,9 @@ public class LeftAuto extends LinearOpMode {
                 .right(.4)
                 .localTemporalMarker(0, () -> {
                     intake.retract();
+                    drivetrain.setForwardComponent(.5);
                 })
-                .splineToLineHeading(new Pose2d(55, 55, Math.toRadians(270-45)), Math.toRadians(45))
+                .splineToLineHeading(new Pose2d(56, 56, Math.toRadians(270-45)), Math.toRadians(45))
                 .setTargetEndDistance(.5)
                 .build();
 
@@ -165,17 +171,21 @@ public class LeftAuto extends LinearOpMode {
 //                .setTargetEndDistance(.5)
 //                .build();
 
-        TrajectorySequence park = new TrajectorySequenceBuilder(cycle2.endPose(), RobotConstants.constraints)
-                .splineToSplineHeading(new Pose2d(26,13, Math.toRadians(0)), Math.toRadians(180))
+        TrajectorySequence park1 = new TrajectorySequenceBuilder(cycle2.endPose(), RobotConstants.constraints)
+                .splineToLineHeading(new Pose2d(20,13, Math.toRadians(0)), Math.toRadians(180))
                 .callMarker(7, () -> {
                     outtake.setTargetSlidePos(Outtake.VerticalSlide.DOWN);
                 })
-                .back(30)
                 .build();
 
+//        TrajectorySequence park2 = new TrajectorySequenceBuilder(park1.endPose(), RobotConstants.constraints)
+//
+//                .back(30)
+//                .build();
 
 
-        drivetrain.setForwardComponent(.6);
+
+        drivetrain.setForwardComponent(.5);
 
         waitForStart();
         drivetrain.followTrajectorySequence(preload);
@@ -236,8 +246,8 @@ public class LeftAuto extends LinearOpMode {
                     break;
                 case PLACING_2:
                     if (autoTimer.seconds()>.4) {
-                        drivetrain.followTrajectorySequence(park);
-                        autoState = AutoState.PARK;
+                        drivetrain.followTrajectorySequence(park1);
+                        autoState = AutoState.PARK1;
 
                     }
                     break;
@@ -262,11 +272,16 @@ public class LeftAuto extends LinearOpMode {
 //
 //                    }
 //                    break;
-                case PARK:
+                case PARK1:
                     if (drivetrain.isFinished()) {
+//                        drivetrain.followTrajectorySequence(park2);
                         autoState = AutoState.FINISHED;
                     }
                     break;
+                case PARK2:
+                    if (drivetrain.isFinished()) {
+                        autoState = AutoState.FINISHED;
+                    }
 
             }
 

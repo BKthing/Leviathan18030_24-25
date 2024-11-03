@@ -73,7 +73,7 @@ public class Intake extends SubSystem {
 
     public enum IntakePos {
         UP(.435),//.69
-        PARTIAL_UP(.34),//.6
+        PARTIAL_UP(.36),//.6
         CLEAR_BAR(.62),
         DOWN(.122);//.05
 
