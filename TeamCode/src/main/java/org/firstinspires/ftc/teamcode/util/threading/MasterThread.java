@@ -36,7 +36,7 @@ public class MasterThread {
 
     private final FtcDashboard dashboard;
 
-    private final boolean dashboardEnabled = false;
+    private final boolean dashboardEnabled = true;
 
     private final SubSystemData data;
 
