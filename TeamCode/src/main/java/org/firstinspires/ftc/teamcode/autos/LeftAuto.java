@@ -94,7 +94,7 @@ public class LeftAuto extends LinearOpMode {
                     specimen onto the top rung, and rotates the claw to hold the specimen right side up  */
                     outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
                 })
- 0
+
                 .callMarkerFromEnd(.2, () -> {
                     /* rotates the 4bar down to place the already-positioned specimen on the rungs */
                     outtake.place();
