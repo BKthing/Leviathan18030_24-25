@@ -37,8 +37,8 @@ public class ConstAccelLocalizer extends SubSystem{
 
     public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
 
-    public static double PARALLEL_Y = 2.56890; // Y is the strafe direction 5.8
-    public static double PERPENDICULAR_X = 5.98040;//2.246
+    public static double PARALLEL_Y = -2.56890; // Y is the strafe direction 5.8
+    public static double PERPENDICULAR_X = -5.98040;//2.246
 
     private final Encoder perpendicularWheel, parallelWheel;
 
@@ -61,7 +61,7 @@ public class ConstAccelLocalizer extends SubSystem{
         super(data);
 
         //initializing localizer and sensors
-        position = data.getTelemetry().addData("Pose Estimate", new Pose2d(0, 0 ,0));
+        position = data.getTelemetry().addData("New Localizer Pos", new Pose2d(0, 0 ,0));
         rawPosition = data.getTelemetry().addData("Raw Pos", "");
         velocity = data.getTelemetry().addData("Velocity", new Pose2d(0, 0, 0));
 
@@ -114,7 +114,7 @@ public class ConstAccelLocalizer extends SubSystem{
 
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
-        position.setValue(localizer.getPoseEstimate().toString());
+        position.setValue("X: " + localizer.getPoseEstimate().getX() + " Y: " + localizer.getPoseEstimate().getY());//((Pose2d) localizer.getPoseEstimate()).toString()
         rawPosition.setValue("Perp: " + perpendicularWheelDistance + " Parallel: " + parallelWheelDistance);
 
         packet.put("x", localizer.getPoseEstimate().getX());
