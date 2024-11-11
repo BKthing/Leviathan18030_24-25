@@ -65,7 +65,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         super(data);
 
         //initializing localizer and sensors
-        position = data.getTelemetry().addData("New Localizer Pos", new Pose2d(0, 0 ,0));
+        position = data.getTelemetry().addData("Clueless Pos", new Pose2d(0, 0 ,0));
         rawPosition = data.getTelemetry().addData("Raw Pos", "");
         velocity = data.getTelemetry().addData("Velocity", new Pose2d(0, 0, 0));
 
@@ -105,8 +105,8 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     @SuppressLint("DefaultLocale")
     @Override
     public void loop() {
-//        localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
-        localizer.update(0, 0, 0, 1);
+        localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
+//        localizer.update(0, 0, 0, 1);
         twoWheel.update(new Point(parallelWheelDistance, timer.seconds()), new Point(perpendicularWheelDistance, timer.seconds()), new Point(imuAngle, timer.seconds()));
         //request an imu call, only gets called if it is not already queued
 //        imuAction.queueAction();
@@ -116,13 +116,13 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     }
 
     public void update() {
-//        localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
-        localizer.update(0, 0, 0, 1);
+//        localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.nanoSeconds());
+//        localizer.update(0, 0, 0, 1);
     }
 
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
-        position.setValue("X: " + localizer.getPoseEstimate().getX() + " Y: " + localizer.getPoseEstimate().getY());//((Pose2d) localizer.getPoseEstimate()).toString()
+        position.setValue("X: " + localizer.getPoseEstimate().getX() + " Y: " + localizer.getPoseEstimate().getY() + "Heading: " + localizer.getPoseEstimate().getHeading());//((Pose2d) localizer.getPoseEstimate()).toString()
         rawPosition.setValue("Perp: " + perpendicularWheelDistance + " Parallel: " + parallelWheelDistance);
 
         packet.put("x", localizer.getPoseEstimate().getX());

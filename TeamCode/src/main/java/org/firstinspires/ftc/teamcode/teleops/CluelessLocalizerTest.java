@@ -34,7 +34,6 @@ public class CluelessLocalizerTest extends LinearOpMode {
         ElapsedTimer loopTimer = new ElapsedTimer();
         loopTime = telemetry.addData("Loop time:", loopTimer.milliSeconds());
         temporalCount = telemetry.addData("Temporal data", "");
-        clulessTelem = telemetry.addData("Clueless loacalizer points:", "");
 
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
@@ -53,7 +52,7 @@ public class CluelessLocalizerTest extends LinearOpMode {
 
         masterThread.addSubSystems(
                 drivetrain,
-//                oldLocalizer,
+                oldLocalizer,
                 cluelessConstAccelLocalizer
 
         );
@@ -62,12 +61,11 @@ public class CluelessLocalizerTest extends LinearOpMode {
         waitForStart();
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
+        cluelessConstAccelLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
 
         while ( !isStopRequested()) {
 
             masterThread.unThreadedUpdate();
-            clulessTelem.setValue(" X: " + cluelessConstAccelLocalizer.getLocalizer().getPoseEstimate().getX() + "  Y: "
-                    + cluelessConstAccelLocalizer.getLocalizer().getPoseEstimate().getY() + "  H: " + cluelessConstAccelLocalizer.getLocalizer().getPoseEstimate().getHeading());
 
             loopTime.setValue(loopTimer.milliSeconds());
             loopTimer.reset();
