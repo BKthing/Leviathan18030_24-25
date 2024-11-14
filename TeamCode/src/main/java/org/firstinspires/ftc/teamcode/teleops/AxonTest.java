@@ -1,18 +1,24 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import android.graphics.Color;
 import android.util.Range;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.hardware.configuration.annotations.ServoType;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 @TeleOp
@@ -21,6 +27,11 @@ public class AxonTest extends LinearOpMode {
     private CRServo intakeServo;
     private double LcurPos, RcurPos;
     private CRServo leftIntake, rightIntake;
+    private NormalizedColorSensor colorSensor;
+    Telemetry.Item colorTelem;
+    Telemetry.Item sampleColorTelem;
+    Telemetry.Item loopTime;
+
 
 
     ElapsedTimer timer = new ElapsedTimer();
@@ -30,8 +41,15 @@ public class AxonTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         leftIntake = hardwareMap.get(CRServo.class, "leftIntake");
         rightIntake = hardwareMap.get(CRServo.class, "rightIntake");
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
 
         rightIntake.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        colorTelem = telemetry.addData("Color RGB", "");
+        sampleColorTelem = telemetry.addData("Sample Color:", "");
+        loopTime = telemetry.addData("Loop Time:", "");
+
+
 //        leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
 //        rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
 
@@ -63,19 +81,48 @@ public class AxonTest extends LinearOpMode {
 
         waitForStart();
         while (!isStopRequested()) {
+            NormalizedRGBA colors = colorSensor.getNormalizedColors();
 
             if (gamepad2.a) {
-                leftIntake.setPower(.8);
-                rightIntake.setPower(.8);
+                if (colors.red > .006 && colors.green < .01) {
+                    sampleColorTelem.setValue("red");
+                    leftIntake.setPower(.8);
+                    rightIntake.setPower(.8);
+                }
+                else {
+                    leftIntake.setPower(-.8);
+                    rightIntake.setPower(-.8);
+                }
+
             }
             else if (gamepad2.b) {
-                leftIntake.setPower(-.8);
-                rightIntake.setPower(-.8);
+                leftIntake.setPower(.8);
+                rightIntake.setPower(.8);
             }
             else {
                 leftIntake.setPower(0);
                 rightIntake.setPower(0);
             }
+
+            colorTelem.setValue(colors.red + " " + colors.green + " " + colors.blue);
+
+            if (colors.red > .006 && colors.green < .01) {
+                sampleColorTelem.setValue("red");
+            }
+            else if (colors.blue > .006) {
+                sampleColorTelem.setValue("blue");
+            }
+            else if (colors.green > .01) {
+                sampleColorTelem.setValue("yellow");
+            }
+            else {
+                sampleColorTelem.setValue("no sample");
+            }
+
+            loopTime.setValue(timer);
+//            if (colorSensor.argb() == Color.rgb(0, 0, 0)){
+//
+//            }
 //            if (gamepad2.x) {
 //                leftIntakeServo.setPosition(.3);
 ////                rightIntakeServo.setPosition(.3);
