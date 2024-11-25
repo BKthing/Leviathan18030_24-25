@@ -11,12 +11,12 @@ import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 import java.util.concurrent.ExecutorService;
 
 public abstract class SubSystem {
-    final SubSystemData data;
-    final HardwareMap hardwareMap;
-    final Telemetry telemetry;
-    final Gamepad gamepad1, gamepad2;
+    public final SubSystemData data;
+    public final HardwareMap hardwareMap;
+    public final Telemetry telemetry;
+    public final Gamepad gamepad1, gamepad2;
 
-    HardwareQueue hardwareQueue;
+    public HardwareQueue hardwareQueue;
 
     Thread updateThread = new Thread();
 

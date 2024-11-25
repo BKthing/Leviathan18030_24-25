@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.depricated;
 
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.headingPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.lateralPID;
@@ -20,6 +20,7 @@ import com.reefsharklibrary.pathing.TrajectorySequenceRunner;
 import com.reefsharklibrary.pathing.data.IndexCallMarker;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.SubSystem;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;

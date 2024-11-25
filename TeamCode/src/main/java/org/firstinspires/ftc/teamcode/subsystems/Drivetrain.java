@@ -86,6 +86,7 @@ public class Drivetrain extends SubSystem {
         backRight = hardwareMap.get(DcMotorEx.class, "br");//ex 1
 
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

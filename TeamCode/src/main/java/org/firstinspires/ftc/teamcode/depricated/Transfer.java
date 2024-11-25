@@ -1,7 +1,8 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.depricated;
 
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.subsystems.SubSystem;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class Transfer extends SubSystem {
