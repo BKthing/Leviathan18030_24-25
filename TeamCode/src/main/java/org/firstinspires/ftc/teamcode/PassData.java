@@ -6,4 +6,5 @@ public class PassData {
 
     public static boolean verticalSlidesInitiated = false;
 
+
 }

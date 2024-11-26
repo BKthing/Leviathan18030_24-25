@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import android.util.Range;
-
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,18 +12,25 @@ import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
+import java.util.function.BooleanSupplier;
+
 public class NewOuttake extends SubSystem {
 
     public enum OuttakeState {
         EXTENDING_PLACE_BEHIND,
         WAITING_PLACE_BEHIND,
         PLACING_BEHIND,
+        WAITING_CLEAR_BUCKET,
         RETRACTING_FROM_PLACE_BEHIND,
         WAITING_FOR_TRANSFER,
         MOVING_TO_TRANSFER,
         GRABBING_FROM_TRANSFER,
         EXTRACTING_FROM_TRANSFER,
 
+        EXTENDING_TO_DROP_SAMPLE,
+        WAITING_DROP_SAMPLE,
+        DROPPING_SAMPLE,
+        MOVING_TO_GRAB_SPECIMEN,
         WAITING_GRAB_SPECIMEN,
         GRABBING_SPECIMEN,
         REMOVING_SPECIMEN_FROM_WALL,
@@ -33,9 +38,10 @@ public class NewOuttake extends SubSystem {
         EXTENDING_PLACE_FRONT,
         WAITING_PLACE_FRONT,
         PLACING_FRONT,
-        MOVING_TO_CLEAR_BAR,
+        MOVING_TO_CLEAR_FRONT_BAR,
+        MOVING_DOWN_TO_RETRACT,
+        MOVING_ARM_BACK,
         RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE,
-        RETRACTING_TO_GRAB_SPECIMEN,
 
         INIT_POSITION,
         IDLE
@@ -46,7 +52,7 @@ public class NewOuttake extends SubSystem {
     public enum ToOuttakeState {
         WAIT_PLACE_FRONT,
         PLACE_FRONT,
-        WAIT_FOR_TRANSFER,
+        RETRACT_FROM_PLACE_BEHIND,
         WAIT_PLACE_BEHIND,
         PLACE_BEHIND,
         INIT_POSITION,
@@ -67,12 +73,13 @@ public class NewOuttake extends SubSystem {
         EXTRA_DOWN(-.3),
         DOWN(0),
         WAIT_FOR_TRANSFER(5),
-        TRANSFER(-.5),
-        EXTRACT_FROM_TRANSFER(1),
+        TRANSFER(4),
+        EXTRACT_FROM_TRANSFER(7),
         MIN_PASSTHROUGH_HEIGHT(8.5),
-        SPECIMEN_PICKUP(6),
+        SPECIMEN_PICKUP(1),
+        CLEAR_SPECIMEN_BAR(4.7),
         SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(4),
+        PLACE_SPECIMEN_BAR(14.2),
         HANG_HEIGHT(17.5),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(25);
@@ -92,13 +99,14 @@ public class NewOuttake extends SubSystem {
     private int slideTicks = 0;
 
     public enum V4BarPos {
-        PLACE_FRONT(.37),
-        WAIT_FOR_TRANSFER(.15),
-        TRANSFER(.128),
-        EXTRACT_FROM_TRANSFER(.12),
+        PLACE_FRONT(.53),
+        CLEAR_FRONT_BAR(.72),
+//        WAIT_FOR_TRANSFER(.35),
+        TRANSFER(.28),
+//        EXTRACT_FROM_TRANSFER(.35),
         GRAB_BACK(.0),
         EXTRACT_FROM_GRAB_BACK(.1),
-        PLACE_BACK(.8),
+        PLACE_BACK(1),
         IDLE_POSITION(.5);
 
         public final double pos;
@@ -114,15 +122,17 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPitch {
-        DOWN(.21),
-        BACK(0.35),
-        WAIT_FOR_TRANSFER(.49),
-        TRANSFER(.49),
-        EXTRACT_FROM_TRANSFER(.49),
-        FRONT_ANGLED_UP(.84),
-        FRONT_ANGELED_DOWN(.59),
+        DOWN(.22),
+        BACK(0.135),
+        BACK_ANGLED_DOWN(.17),
+        BACK2(.45),
+        WAIT_FOR_TRANSFER(.3),
+        TRANSFER(.26),
+        EXTRACT_FROM_TRANSFER(.3),
+        FRONT_ANGLED_UP(.3),
+        FRONT_ANGELED_DOWN(.3),
 
-        FRONT(.3);
+        FRONT(.32);
 
         public final double pos;
 
@@ -139,7 +149,7 @@ public class NewOuttake extends SubSystem {
     public enum ClawPosition {
         EXTRA_OPEN(.6),
         OPEN(.4),
-        CLOSED(.07);
+        CLOSED(.1);
 
         public final double pos;
 
@@ -175,18 +185,25 @@ public class NewOuttake extends SubSystem {
     private final DcMotorEx verticalLeftMotor,verticalRightMotor;
     private final Encoder verticalSlideEncoder;
 
+    private double actualMotorPower = 0;
+
+    private boolean cycleSpecimen = false;
+
     private Gamepad oldGamePad2 = new Gamepad();
+
+    private final BooleanSupplier doTransfer;
 
 
     private final Servo clawServo, clawPitchServo, leftOuttakeServo, rightOuttakeServo;
 
-    public NewOuttake(SubSystemData data, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
+    public NewOuttake(SubSystemData data, NewIntake intake, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
         super(data);
 
         this.teleOpControls = teleOpControls;
         this.autoExtendSlides = autoExtendSlides;
         this.autoRetractSlides = autoRetractSlides;
 
+        doTransfer = intake::transfer;
 
         //motors
         verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
@@ -253,36 +270,78 @@ public class NewOuttake extends SubSystem {
             transfer = true;
             updateTransfer = false;
         }
+
+        transfer = doTransfer.getAsBoolean();
     }
 
     @Override
     public void loop() {
         if (teleOpControls) {
-            if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
-//                outtake.grabFromTransfer();
-            } else if (gamepad2.a && !oldGamePad2.a) {
-                targetSlidePos = VerticalSlide.TRANSFER.length;
-//                outtake.toOuttakeState(Outtake.ToOuttakeState.RETRACT);
-            } else if (gamepad2.b && !oldGamePad2.b) {
-                targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
-//                outtake.setTargetSlidePos(15);
+            if (gamepad2.back) {
+                if (gamepad2.y && !oldGamePad2.y) {
+                    cycleSpecimen = false;
+                } else if (gamepad2.b && !oldGamePad2.b) {
+                    cycleSpecimen = true;
+                }
 
-//            outtake.toOuttakeState(Outtake.ToOuttakeState.GRAB_BEHIND);
-            } else if (gamepad2.x && !oldGamePad2.x) {
-                targetSlidePos = VerticalSlide.LOW_BUCKET_HEIGHT.length;
+                if (gamepad2.a && !oldGamePad2.a) {
+                    verticalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    targetSlidePos = 0;
+                }
+
+                if (Math.abs(gamepad2.right_stick_y) > .05) {
+                    targetSlidePos = targetSlidePos+8 * slideTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75);
+                }
+            } else {
+                if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
+                    transfer = true;
+                } else if (gamepad2.a && !oldGamePad2.a) {
+                    toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
+                } else if (gamepad2.b && !oldGamePad2.b) {
+                    toOuttakeState = ToOuttakeState.PLACE_FRONT;
+                } else if (gamepad2.x && !oldGamePad2.x) {
+                    targetSlidePos = VerticalSlide.LOW_BUCKET_HEIGHT.length;
 //                outtake.setTargetSlidePos(Outtake.VerticalSlide.LOW_BUCKET_HEIGHT);
 
 //            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
-            } else if (gamepad2.y && !oldGamePad2.y) {
-                targetSlidePos = VerticalSlide.HIGH_BUCKET.length;
-//                outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_BEHIND);
-            } else if (Math.abs(gamepad2.right_stick_y) > .05) {
-                if (!gamepad2.back) {
-                    targetSlidePos = MathUtil.clip(targetSlidePos+8 * slideTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75), -.5, 28.1);
-                } else {
+                } else if (gamepad2.y && !oldGamePad2.y) {
+                    toOuttakeState = ToOuttakeState.PLACE_BEHIND;
+                } else if (Math.abs(gamepad2.right_stick_y) > .05) {
+                    if (!gamepad2.back) {
+                        targetSlidePos = MathUtil.clip(targetSlidePos+8 * slideTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75), -.5, 28.1);
+                    } else {
 //                    outtake.setTargetV4BarPos(outtake.getTargetV4BarPos()+gamepad2.right_stick_y * .0002 * loopTimer.milliSeconds());
+                    }
                 }
             }
+
+
+
+
+
+            if (gamepad2.right_bumper && !oldGamePad2.right_bumper) {
+                updateClawPosition = true;
+                clawPosition = clawPosition == ClawPosition.CLOSED ? (outtakeState == OuttakeState.WAITING_DROP_SAMPLE ? ClawPosition.EXTRA_OPEN : ClawPosition.OPEN) : ClawPosition.CLOSED;
+            }
+        }
+
+
+        switch (toOuttakeState) {
+            case PLACE_BEHIND:
+                extendPlaceBehind();
+
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
+            case PLACE_FRONT:
+                extendPlaceFront();
+
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
+            case RETRACT_FROM_PLACE_BEHIND:
+                retractFromFront();
+
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
         }
 
 
@@ -319,8 +378,32 @@ public class NewOuttake extends SubSystem {
         slideTimer.reset();
         prevSlideError = error;
 
-        hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
-        hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
+        if (Math.abs(motorPower-actualMotorPower)>.04) {
+            hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
+            hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
+
+            actualMotorPower = motorPower;
+        }
+
+
+        if (Math.abs(targetClawPitch-actualClawPitch)>.01) {
+            hardwareQueue.add(() -> clawPitchServo.setPosition(targetClawPitch));
+
+            actualClawPitch = targetClawPitch;
+        }
+
+        if (Math.abs(targetV4BPos-actualV4BPos)>.04) {
+            hardwareQueue.add(() -> leftOuttakeServo.setPosition(targetV4BPos));
+            hardwareQueue.add(() -> rightOuttakeServo.setPosition(targetV4BPos));
+
+            actualV4BPos = targetV4BPos;
+        }
+
+        if (updateClawPosition) {
+            hardwareQueue.add(() -> clawServo.setPosition(clawPosition.pos));
+        }
+
+
 
         switch (outtakeState) {
             case EXTENDING_PLACE_BEHIND:
@@ -336,60 +419,66 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case PLACING_BEHIND:
+                if (outtakeTimer.seconds()>.1) {
+                    targetV4BPos = V4BarPos.TRANSFER.pos;
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.WAITING_CLEAR_BUCKET;
+                }
+                break;
+            case WAITING_CLEAR_BUCKET:
                 if (outtakeTimer.seconds()>.3) {
-                    retractFromPlaceBehind();
+                    retractFromFront();
                 }
                 break;
             case RETRACTING_FROM_PLACE_BEHIND:
-                if (outtakeTimer.seconds()>1.4) {
-                    targetSlidePos = VerticalSlide.WAIT_FOR_TRANSFER.length;
-
+                if (outtakeTimer.seconds()>.2 && absError<.5) {
                     outtakeState = OuttakeState.WAITING_FOR_TRANSFER;
                 }
                 break;
-            case WAITING_FOR_TRANSFER:
-                if (transfer) {
-                    targetSlidePos = VerticalSlide.TRANSFER.length;
-                    targetV4BPos = V4BarPos.TRANSFER.pos;
-                    targetClawPitch = ClawPitch.TRANSFER.pos;
+
+
+            case RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE:
+                if (outtakeTimer.seconds()>.4) {
+                    targetClawPitch = ClawPitch.BACK_ANGLED_DOWN.pos;
 
                     outtakeTimer.reset();
-                    transfer = false;
-
-                    outtakeState = OuttakeState.MOVING_TO_TRANSFER;
+                    outtakeState = OuttakeState.EXTENDING_TO_DROP_SAMPLE;
                 }
                 break;
-            case MOVING_TO_TRANSFER:
-                if (outtakeTimer.seconds()>.2) {
-                    clawPosition = ClawPosition.CLOSED;
-                    outtakeTimer.reset();
+            case EXTENDING_TO_DROP_SAMPLE:
+                if (outtakeTimer.seconds()>.5) {
+                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
 
-                    outtakeState = OuttakeState.GRABBING_FROM_TRANSFER;
+                    outtakeState = OuttakeState.WAITING_DROP_SAMPLE;
                 }
                 break;
-            case GRABBING_FROM_TRANSFER:
-                if (outtakeTimer.seconds()>.2) {
-                    targetSlidePos = VerticalSlide.EXTRACT_FROM_TRANSFER.length;
-                    targetV4BPos = V4BarPos.EXTRACT_FROM_TRANSFER.pos;
-                    targetClawPitch = ClawPitch.EXTRACT_FROM_TRANSFER.pos;
-
-                    outtakeTimer.reset();
-
-                    outtakeState = OuttakeState.EXTRACTING_FROM_TRANSFER;
-                }
-                break;
-            case EXTRACTING_FROM_TRANSFER:
-                if (outtakeTimer.seconds()>.2) {
-                    if (autoExtendSlides) {
-                        extendPlaceBehind();
-                    } else {
-                        outtakeState = OuttakeState.IDLE;
+            case WAITING_DROP_SAMPLE:
+                if (clawPosition == ClawPosition.OPEN || clawPosition == ClawPosition.EXTRA_OPEN) {
+                    if (clawPosition != ClawPosition.EXTRA_OPEN) {
+                        clawPosition = ClawPosition.EXTRA_OPEN;
+                        updateClawPosition = true;
                     }
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.DROPPING_SAMPLE;
+                }
+                 break;
+            case DROPPING_SAMPLE:
+                if (outtakeTimer.seconds()>.2) {
+                    targetClawPitch = ClawPitch.BACK.pos;
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;
                 }
                 break;
-
-
-
+            case MOVING_TO_GRAB_SPECIMEN:
+                if (outtakeTimer.seconds()>.2) {
+                    outtakeState = OuttakeState.WAITING_GRAB_SPECIMEN;
+                }
+                break;
             case WAITING_GRAB_SPECIMEN:
                 if (clawPosition == ClawPosition.CLOSED && autoRetractSlides) {
                     outtakeTimer.reset();
@@ -397,10 +486,10 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case GRABBING_SPECIMEN:
-                if (outtakeTimer.seconds()>.2) {
-                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length+1;
-                    targetV4BPos = V4BarPos.EXTRACT_FROM_GRAB_BACK.pos;
-                    targetClawPitch = ClawPitch.EXTRACT_FROM_TRANSFER.pos;
+                if (outtakeTimer.seconds()>.3) {
+                    targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length+4;
+//                    targetV4BPos = V4BarPos.EXTRACT_FROM_GRAB_BACK.pos;
+//                    targetClawPitch = ClawPitch.EXTRACT_FROM_TRANSFER.pos;
 
                     outtakeTimer.reset();
 
@@ -410,22 +499,20 @@ public class NewOuttake extends SubSystem {
 
             case REMOVING_SPECIMEN_FROM_WALL:
                 if (outtakeTimer.seconds()>.3) {
-                    targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
-
-                    outtakeState = OuttakeState.EXTENDING_CLEAR_TRANSFER;
+                    extendPlaceFront();
                 }
                 break;
-            case EXTENDING_CLEAR_TRANSFER:
-                if (slidePos>VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length) {
-                    targetV4BPos = V4BarPos.PLACE_BACK.pos;
-
-                    outtakeTimer.reset();
-
-                    outtakeState = OuttakeState.EXTENDING_PLACE_BEHIND;
-                }
-                break;
+//            case EXTENDING_CLEAR_TRANSFER:
+//                if (slidePos>VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length) {
+//                    targetV4BPos = V4BarPos.PLACE_BACK.pos;
+//
+//                    outtakeTimer.reset();
+//
+//                    outtakeState = OuttakeState.EXTENDING_PLACE_BEHIND;
+//                }
+//                break;
             case EXTENDING_PLACE_FRONT:
-                if (outtakeTimer.seconds()>.6) {
+                if (absError<.5) {
                     outtakeState = OuttakeState.WAITING_PLACE_FRONT;
                 }
                 break;
@@ -437,8 +524,65 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case PLACING_FRONT:
-                if (outtakeTimer.seconds()>.2) {
+                if (outtakeTimer.seconds()>.1) {
+                    targetV4BPos = V4BarPos.CLEAR_FRONT_BAR.pos;
+                    outtakeTimer.reset();
 
+                    outtakeState = OuttakeState.MOVING_TO_CLEAR_FRONT_BAR;
+                }
+                break;
+            case MOVING_TO_CLEAR_FRONT_BAR:
+                if (outtakeTimer.seconds()>.3) {
+                    targetSlidePos = VerticalSlide.CLEAR_SPECIMEN_BAR.length;
+
+                    outtakeState = OuttakeState.MOVING_DOWN_TO_RETRACT;
+                }
+                break;
+            case MOVING_DOWN_TO_RETRACT:
+                if (absError<.5) {
+                    targetV4BPos = V4BarPos.TRANSFER.pos;
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.MOVING_ARM_BACK;
+                }
+                break;
+            case MOVING_ARM_BACK:
+                if (outtakeTimer.seconds()>.4) {
+                    retractFromFront();
+                }
+                break;
+            case WAITING_FOR_TRANSFER:
+                if (transfer) {
+                    transfer = false;
+
+                    clawPosition = ClawPosition.CLOSED;
+                    updateClawPosition = true;
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.GRABBING_FROM_TRANSFER;
+                }
+                break;
+            case GRABBING_FROM_TRANSFER:
+                if (outtakeTimer.seconds()>.2) {
+                    targetSlidePos = VerticalSlide.EXTRACT_FROM_TRANSFER.length;
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.EXTRACTING_FROM_TRANSFER;
+                }
+                break;
+            case EXTRACTING_FROM_TRANSFER:
+                if (outtakeTimer.seconds()>.3) {
+                    if (autoExtendSlides) {
+                        if (cycleSpecimen) {
+                            grabBehind();
+                        } else {
+                            extendPlaceBehind();
+                        }
+                    } else {
+                        outtakeState = OuttakeState.IDLE;
+                    }
                 }
                 break;
 
@@ -464,56 +608,54 @@ public class NewOuttake extends SubSystem {
     }
 
     private void extendPlaceBehind() {
-        targetV4BPos = V4BarPos.PLACE_BACK.pos;
-        targetClawPitch = ClawPitch.BACK.pos;
-
         targetSlidePos = VerticalSlide.HIGH_BUCKET.length;
+
+        targetV4BPos = V4BarPos.PLACE_BACK.pos;
+
+        targetClawPitch = ClawPitch.BACK2.pos;
 
         outtakeState = OuttakeState.EXTENDING_PLACE_BEHIND;
     }
 
     private void extendPlaceFront() {
+        targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
+
         targetV4BPos = V4BarPos.PLACE_FRONT.pos;
-        targetClawPitch = ClawPitch.FRONT.pos;
 
-        targetSlidePos = VerticalSlide.SPECIMEN_BAR.length;
+        targetClawPitch = ClawPitch.DOWN.pos;
 
-        outtakeState = OuttakeState.PLACING_FRONT;
+        outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
     }
 
 //    private void extend
 
     private void grabBehind() {
         targetV4BPos = V4BarPos.GRAB_BACK.pos;
-        targetClawPitch = ClawPitch.BACK.pos;
-
-        if (clawPosition != ClawPosition.OPEN) {
-            clawPosition = ClawPosition.OPEN;
-            updateClawPosition = true;
-        }
+        targetClawPitch = ClawPitch.FRONT.pos;
 
         //set to this so V4B has room to rotate, set lower after v4b is clear
         targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
 
         outtakeTimer.reset();
 
-        outtakeState = OuttakeState.RETRACTING_TO_GRAB_SPECIMEN;
+        outtakeState = OuttakeState.RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE;
     }
 
-    private void retractFromPlaceBehind() {
-        targetV4BPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
-        targetClawPitch = ClawPitch.BACK.pos;
+    private void retractFromFront() {
+        targetSlidePos = VerticalSlide.TRANSFER.length;
+
+        targetV4BPos = V4BarPos.TRANSFER.pos;
+
+        targetClawPitch = ClawPitch.TRANSFER.pos;
 
         if (clawPosition != ClawPosition.OPEN) {
             clawPosition = ClawPosition.OPEN;
             updateClawPosition = true;
         }
 
-        //set to this so V4B has room to rotate, set lower after v4b is clear
+        outtakeState = OuttakeState.RETRACTING_FROM_PLACE_BEHIND;
 
         outtakeTimer.reset();
-
-        outtakeState = OuttakeState.RETRACTING_FROM_PLACE_BEHIND;
     }
 
     public void transfer() {

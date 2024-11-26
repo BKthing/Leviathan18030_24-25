@@ -167,7 +167,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.4*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.3*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }

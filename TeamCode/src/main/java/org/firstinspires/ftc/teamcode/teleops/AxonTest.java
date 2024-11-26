@@ -149,7 +149,7 @@ public class AxonTest extends LinearOpMode {
                 rightSpinnerServo.setPower(0);
             }
 
-            breakBeamTelem.setValue(breakBeam.getValue());
+            breakBeamTelem.setValue(breakBeam.isPressed());
 
 
 //            if (gamepad2.a) {

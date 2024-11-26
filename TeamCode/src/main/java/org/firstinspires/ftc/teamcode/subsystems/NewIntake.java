@@ -8,13 +8,14 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.PassData;
-import org.firstinspires.ftc.teamcode.depricated.Transfer;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
@@ -23,10 +24,12 @@ public class NewIntake extends SubSystem {
 
     public enum IntakeState {
         EXTENDING,
-        DROP_INTAKE,
+        DROPPING_INTAKE,
         INTAKING,
         RETRACTING_INTAKE,
         RETRACTING,
+        WAITING_AFTER_RETRACTING,
+        WAITING_FOR_TRANSFER,
         TRANSFERING,
         MOVING_TO_REST,
         RESTING
@@ -34,11 +37,35 @@ public class NewIntake extends SubSystem {
 
     private IntakeState intakeState = IntakeState.RESTING;
 
+    public enum IntakingState {
+        INTAKING,
+        FINISH_INTAKING,
+        MANUAL_EJECTING,
+        START_EJECTING,
+        FINISH_EJECTING,
+        IDLE
+    }
+
+    private IntakingState intakingState = IntakingState.IDLE;
+
     private final ElapsedTimer intakeTimer = new ElapsedTimer();
 
     private final Telemetry.Item slidePosTelem;
 
-    public enum ToIntakeState{
+
+    public enum SampleColor{
+        RED,
+        BLUE,
+        YELLOW,
+        NONE
+    }
+
+    SampleColor sampleColor = SampleColor.NONE;
+
+    public enum ToIntakeState {
+        DROP_INTAKE,
+        RAISE_INTAKE,
+        RETRACT,
         IDLE
     }
 
@@ -48,10 +75,12 @@ public class NewIntake extends SubSystem {
 
     private boolean changedToIntakeState = true;
 
+    private boolean blueAlliance = true;
+
 
     public enum HorizontalSlide {
         //18.9 max
-        EXTRA_IN(-1.5),
+        EXTRA_IN(-1),
         IN(0),
         AUTO_PRESET1(12),
         AUTO_PRESET2(4),
@@ -75,9 +104,12 @@ public class NewIntake extends SubSystem {
 
     private final DcMotorEx horizontalLeftMotor, horizontalRightMotor;
 
+    private double actualMotorPower = 0;
+
     public enum IntakePos {
         UP(.07),//.69
-        DOWN(.17);//.05
+        PARTIAL_UP(.13),
+        DOWN(.165);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -92,13 +124,29 @@ public class NewIntake extends SubSystem {
     private final Servo leftIntakeServo, rightIntakeServo;
     private final CRServo leftSpinnerServo, rightSpinnerServo;
 
+    private NormalizedColorSensor colorSensor;
+
+    private TouchSensor breakBeam;
+
+    private boolean isBreakBeam = false;
+    private boolean prevIsBreakBeam = false;
+
     private final ElapsedTimer slideTimer = new ElapsedTimer();
 
-    private boolean holdingSample = true;
+    private boolean holdingSample = false;
+
+    private boolean transfer = false;
 
     private final boolean teleOpControls = true;
 
+    NormalizedRGBA colors;
+    NormalizedRGBA newColors;
+
+    private boolean checkColor = false;
+
     Gamepad oldGamePad2 = new Gamepad();
+
+    Telemetry.Item colorTelem;
 
     public NewIntake(SubSystemData data, boolean teleOpControls) {
         super(data);
@@ -135,8 +183,11 @@ public class NewIntake extends SubSystem {
 
         leftSpinnerServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
 
+        breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
+        colorTelem = telemetry.addData("Color Telem", "");
         //initiating slide encoder
         slidePos = ticksToInches(horizontalSlideEncoder.getCurrentPosition());
 
@@ -170,6 +221,18 @@ public class NewIntake extends SubSystem {
 //        }
 //
         slideTicks = horizontalSlideEncoder.getCurrentPosition();
+
+        isBreakBeam = breakBeam.isPressed();
+
+        if (newColors != null && checkColor) {
+            colors = newColors;
+        }
+
+        if ((isBreakBeam && !prevIsBreakBeam) && !checkColor && intakingState == IntakingState.INTAKING) {
+            colors = colorSensor.getNormalizedColors();
+            checkColor = true;
+        }
+
 //
 //        if(changedTargetSlidePos) {
 //            targetSlidePos = newTargetSlidePos;
@@ -198,25 +261,79 @@ public class NewIntake extends SubSystem {
     //trying to add to things to hardware queue asap so their more time for it to be called
     @Override
     public void loop() {
+        colorTelem.setValue(checkColor + " cur:" + isBreakBeam + " prev:" + prevIsBreakBeam);
         if (teleOpControls) {
-            if (gamepad2.dpad_down && !oldGamePad2.dpad_down) {
-                targetSlidePos = HorizontalSlide.IN.length;
-//                intake.retract();
-            } else if (gamepad2.dpad_right && !oldGamePad2.dpad_right) {
-                targetSlidePos = HorizontalSlide.CLOSE.length;
-            } else if (gamepad2.dpad_left && !oldGamePad2.dpad_left) {
-                targetSlidePos = HorizontalSlide.MEDIUM.length;
-            } else if (gamepad2.dpad_up && !oldGamePad2.dpad_up) {
-                targetSlidePos = HorizontalSlide.FAR.length;
-            } else if (Math.abs(gamepad2.left_stick_y) > .05) {
-                if (!gamepad2.start) {
-                    targetIntakePos = MathUtil.clip(targetIntakePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75), -.5, 18.5);
-//                    intake.setTargetSlidePos(intake.getTargetSlidePos() + 10 * loopTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75));
-                } else {
-//                    intake.setTargetIntakePos(intake.getTargetIntakePos() + gamepad2.left_stick_y * .0002 * loopTimer.milliSeconds());
+            if (gamepad2.back) {
+                if (gamepad2.dpad_down) {
+                    horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+                    targetSlidePos = 0;
+                }
+
+                if (Math.abs(gamepad2.left_stick_y)>.05) {
+                    targetSlidePos = targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75);
+                }
+            } else {
+                if (gamepad2.dpad_down && !oldGamePad2.dpad_down) {
+                    toIntakeState = ToIntakeState.RETRACT;
+                    if (intakingState != IntakingState.FINISH_INTAKING) {
+                        intakingState = IntakingState.IDLE;
+                        targetIntakeSpeed = 0;
+                    }
+                } else if (gamepad2.dpad_right && !oldGamePad2.dpad_right) {
+                    targetSlidePos = HorizontalSlide.CLOSE.length;
+                } else if (gamepad2.dpad_left && !oldGamePad2.dpad_left) {
+                    targetSlidePos = HorizontalSlide.MEDIUM.length;
+                } else if (gamepad2.dpad_up && !oldGamePad2.dpad_up) {
+                    targetSlidePos = HorizontalSlide.FAR.length;
+                } else if (Math.abs(gamepad2.left_stick_y) > .05) {
+                    if (!gamepad2.start) {
+                        targetSlidePos = MathUtil.clip(targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75), -.5, 18.5);
+    //                    intake.setTargetSlidePos(intake.getTargetSlidePos() + 10 * loopTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75));
+                    } else {
+    //                    intake.setTargetIntakePos(intake.getTargetIntakePos() + gamepad2.left_stick_y * .0002 * loopTimer.milliSeconds());
+                    }
+            }
+            }
+
+            if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
+                toIntakeState = ToIntakeState.DROP_INTAKE;
+                intakingState = IntakingState.INTAKING;
+                targetIntakeSpeed = 1;
+            } else if (gamepad2.left_trigger>.2 && oldGamePad2.left_trigger<=.2) {
+                targetIntakeSpeed = -1;
+                intakingState = IntakingState.MANUAL_EJECTING;
+            } else if ((!gamepad2.left_bumper && oldGamePad2.left_bumper) || (oldGamePad2.left_trigger>.2 && gamepad2.left_trigger<=.2)) {
+                if (intakingState == IntakingState.INTAKING || intakingState == IntakingState.MANUAL_EJECTING || intakingState == IntakingState.FINISH_INTAKING) {
+                    targetIntakeSpeed = 0;
+                    intakingState = IntakingState.IDLE;
+                    checkColor = false;
                 }
             }
         }
+
+        switch (toIntakeState) {
+            case DROP_INTAKE:
+                targetIntakePos = IntakePos.DOWN.pos;
+
+                toIntakeState = ToIntakeState.IDLE;
+                break;
+            case RAISE_INTAKE:
+                targetIntakePos = IntakePos.UP.pos;
+
+                toIntakeState = ToIntakeState.IDLE;
+                break;
+            case RETRACT:
+                targetIntakePos = IntakePos.UP.pos;
+                intakeTimer.reset();
+
+                intakeState = IntakeState.RETRACTING_INTAKE;
+
+                toIntakeState = ToIntakeState.IDLE;
+                break;
+        }
+
+
 
         //slide PID
         slidePos = ticksToInches(slideTicks);
@@ -239,7 +356,7 @@ public class NewIntake extends SubSystem {
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
             p = error*.35;
-            d = ((prevSlideError-error) / elapsedTime) * .008;//.007
+            d = ((prevSlideError-error) / elapsedTime) * .01;//.007
             f=.15*Math.signum(error);
         }
 
@@ -250,14 +367,111 @@ public class NewIntake extends SubSystem {
         slideTimer.reset();
         prevSlideError = error;
 
-        hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
-        hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
 
-//        if (gamepad1.right_bumper) {
-//            holdingSample = true;
-//        } else if (gamepad1.left_bumper) {
-//            holdingSample = false;
-//        }
+        if (Math.abs(motorPower-actualMotorPower)>.04) {
+            hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
+            hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
+
+            actualMotorPower = motorPower;
+        }
+
+
+
+        if (Math.abs(targetIntakePos-actualIntakePos)>.01) {
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos));
+            hardwareQueue.add(() -> rightIntakeServo.setPosition(targetIntakePos));
+
+            actualIntakePos = targetIntakePos;
+        }
+
+        if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.04) {
+            hardwareQueue.add(() -> leftSpinnerServo.setPower(targetIntakeSpeed));
+            hardwareQueue.add(() -> rightSpinnerServo.setPower(targetIntakeSpeed));
+
+            actualIntakeSpeed = targetIntakeSpeed;
+        }
+
+        switch (intakingState) {
+            case INTAKING:
+                if (checkColor) {
+                    sampleColor = getSampleColor();
+
+                    if (sampleColor == SampleColor.NONE) {
+                        hardwareQueue.add(() -> {
+                            newColors = colorSensor.getNormalizedColors();
+                        });
+                        break;
+                    }
+
+                    checkColor = false;
+                    if (!blueAlliance) {
+                        if (sampleColor == SampleColor.BLUE) {
+                            targetIntakeSpeed = -1;
+                            targetIntakePos = IntakePos.PARTIAL_UP.pos;
+                            intakingState = IntakingState.START_EJECTING;
+                            intakeTimer.reset();
+                        } else if (sampleColor == SampleColor.RED || sampleColor == SampleColor.YELLOW) {
+//                            targetIntakeSpeed = 1;
+
+                            targetIntakePos = IntakePos.UP.pos;
+
+                            intakeState = IntakeState.RETRACTING_INTAKE;
+
+                            intakingState = IntakingState.FINISH_INTAKING;
+
+                            intakeTimer.reset();
+                        }
+
+                    }
+                    else {
+                        if (sampleColor == SampleColor.RED) {
+                            targetIntakeSpeed = -1;
+                            targetIntakePos = IntakePos.PARTIAL_UP.pos;
+                            intakingState = IntakingState.START_EJECTING;
+                            intakeTimer.reset();
+                        } else if (sampleColor == SampleColor.BLUE || sampleColor == SampleColor.YELLOW) {
+                            targetIntakeSpeed = 1;
+
+                            targetIntakePos = IntakePos.UP.pos;
+
+                            intakeState = IntakeState.RETRACTING_INTAKE;
+
+                            intakingState = IntakingState.FINISH_INTAKING;
+
+                            intakeTimer.reset();
+                        }
+
+                    }
+
+
+                }
+                break;
+            case FINISH_INTAKING:
+                if (intakeTimer.seconds()>1 || targetIntakeSpeed == 0) {
+                    targetIntakeSpeed = 0;
+
+                    intakingState = IntakingState.IDLE;
+                }
+                break;
+            case START_EJECTING:
+                if (!isBreakBeam || intakeTimer.seconds()>1) {
+                    intakeTimer.reset();
+
+                    intakingState = IntakingState.FINISH_EJECTING;
+                }
+                break;
+            case FINISH_EJECTING:
+                if (intakeTimer.seconds()>1.5) {
+                    targetIntakeSpeed = 0;
+                    targetIntakePos = IntakePos.DOWN.pos;
+                    intakingState = IntakingState.IDLE;
+                }
+                break;
+            case MANUAL_EJECTING:
+
+                break;
+        }
+
 
         switch (intakeState) {
             case EXTENDING:
@@ -267,19 +481,21 @@ public class NewIntake extends SubSystem {
                     targetIntakePos = IntakePos.DOWN.pos;
                     intakeTimer.reset();
 
-                    intakeState = IntakeState.DROP_INTAKE;
+                    intakeState = IntakeState.DROPPING_INTAKE;
                 }
                 break;
-            case DROP_INTAKE:
+            case DROPPING_INTAKE:
                 //if intake has finished dropping start intaking
-                if (intakeTimer.seconds()>.5) {
-                    targetIntakeSpeed = 1;
+                if (intakeTimer.seconds()>.3) {
+                    targetIntakeSpeed = .6;
+
+
 
                     intakeState = IntakeState.INTAKING;
                 }
 
             case INTAKING:
-                if (holdingSample()) {
+                if (holdingSample) {
                     targetIntakeSpeed = .1;
 
                     targetIntakePos = IntakePos.UP.pos;
@@ -300,44 +516,43 @@ public class NewIntake extends SubSystem {
                 break;
             case RETRACTING:
                 //if fully retracted and holding sample start transferring else rest
-                if (slidePos<.5 && intakeTimer.seconds()>.6) {
-                    if (holdingSample()) {
-                        targetIntakeSpeed = -1;
-                        intakeTimer.reset();
+                if (slidePos<.4 || intakeTimer.seconds()>1) {
+                    intakeTimer.reset();
 
-                        targetSlidePos = HorizontalSlide.IN.length;
+                    intakeState = IntakeState.WAITING_AFTER_RETRACTING;
+                }
+                break;
+            case WAITING_AFTER_RETRACTING:
+                if (intakeTimer.seconds()>.2) {
+                    targetSlidePos = HorizontalSlide.IN.length;
+
+                    if (intakingState == IntakingState.IDLE) {
+                        targetIntakeSpeed = 0;
+                        transfer = true;
 
                         intakeState = IntakeState.TRANSFERING;
                     } else {
-                        targetIntakeSpeed = 0;
-                        targetIntakePos = IntakePos.UP.pos;
-
-                        intakeState = IntakeState.RESTING;
+                        intakeState = IntakeState.WAITING_FOR_TRANSFER;
                     }
+                }
+                break;
+            case WAITING_FOR_TRANSFER:
+                if (intakingState == IntakingState.IDLE) {
+                    intakeState = IntakeState.TRANSFERING;
+                    transfer = true;
                 }
                 break;
             case TRANSFERING:
                 //if transferred go to resting position, add more logic later
-                if (intakeTimer.seconds()>.5) {
-                    targetIntakeSpeed = .2;
-                    targetIntakePos = IntakePos.UP.pos;
-
-                    intakeState = IntakeState.MOVING_TO_REST;
-
-                    intakeTimer.reset();
-                }
-                break;
-            case MOVING_TO_REST:
-                if (intakeTimer.seconds()>.2) {
-//                    updateTransfered = true;
-
-                    targetIntakeSpeed = 0;
-
+                if (!transfer) {
                     intakeState = IntakeState.RESTING;
+
                 }
                 break;
         }
 
+
+        prevIsBreakBeam = isBreakBeam;
         oldGamePad2.copy(gamepad2);
     }
 
@@ -350,77 +565,42 @@ public class NewIntake extends SubSystem {
         return super.dashboard(packet);
     }
 
+    private SampleColor getSampleColor() {
+        if (colors.red > .006 && colors.green < .01) {
+//            throw new RuntimeException("Not red");
+            return SampleColor.RED;
+        }
+        else if (colors.blue > .009) {
+            return SampleColor.BLUE;
+        }
+        else if (colors.green > .01) {
+//            throw new RuntimeException("Not yellow");
+            return SampleColor.YELLOW;
+        }
+        else {
+//            throw new RuntimeException("Not nothing");
+            return SampleColor.NONE;
+        }
+    }
+
     private boolean holdingSample() {
-        return holdingSample;
+//        if ()
+        return breakBeam.isPressed();
     }
 
     private double ticksToInches(int ticks) {
         return (ticks/145.1)*4.72;
     }
 
-//    public void setTargetSlidePos(HorizontalSlide targetPos) {
-//        setTargetSlidePos(targetPos.length);
-//    }
 
-//    public void setTargetSlidePos(double targetPos) {
-//        changedTargetSlidePos = true;
-//        newTargetSlidePos = MathUtil.clip(targetPos, 0, 18.5);//18.5
-//    }
-//
-//    public void setTargetIntakePos(IntakePos targetIntakePos) {
-//        setTargetIntakePos(targetIntakePos.pos);
-//    }
-//
-//    public void setTargetIntakePos(double intakePos) {
-//        changedIntakePos = true;
-//        newIntakePos = MathUtil.clip(intakePos, .1, .46);
-//    }
-//
-//    public double getTargetIntakePos() {
-//        return newIntakePos;
-//    }
-//
-//    public double getTargetSlidePos() {
-//        return prevTargetSlidePos;
-//    }
-//
-//    public void setTargetIntakeSpeed(double intakeSpeed) {
-//        changedIntakeSpeed = true;
-//        newIntakeSpeed = intakeSpeed;
-//    }
+    //only call during priority data to avoid threading issues
+    public boolean transfer() {
+        if (transfer) {
+            transfer = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    //changing intake states
-//    public void extendAndIntake(HorizontalSlide targetPos) {
-//        extendAndIntake(targetPos.length);
-//    }
-//    public void extendAndIntake(double targetPos) {
-//        setTargetSlidePos(targetPos);
-//
-//        setIntakeState(IntakeState.EXTENDING);
-//    }
-
-//    public void retract() {
-//        setTargetIntakeSpeed(.1);
-//        setTargetIntakePos(IntakePos.UP);
-////        setTargetSlidePos(HorizontalSlide.IN);
-//
-//        setIntakeState(IntakeState.RETRACTING_INTAKE);
-//
-//        intakeTimer.reset();
-//    }
-//
-//    public void setIntakeState(IntakeState intakeState) {
-//        newIntakeState = intakeState;
-//
-//        changedIntakeState = true;
-//    }
-//
-//    public boolean transfered() {
-//        if (transfered) {
-//            transfered = false;
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
 }

@@ -46,7 +46,7 @@ public class TeleTest extends LinearOpMode {
 
         intake = new NewIntake(masterThread.getData(), true);
 //        transfer = new Transfer(masterThread.getData());
-            outtake = new NewOuttake(masterThread.getData(), true, true, true);
+            outtake = new NewOuttake(masterThread.getData(), intake, true, true, true);
 
 //        teleopController = new TeleopController(intake, transfer, outtake, masterThread.getData());
 
