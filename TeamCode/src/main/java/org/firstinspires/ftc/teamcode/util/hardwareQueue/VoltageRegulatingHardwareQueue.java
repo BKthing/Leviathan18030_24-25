@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.util.hardwareQueue;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;

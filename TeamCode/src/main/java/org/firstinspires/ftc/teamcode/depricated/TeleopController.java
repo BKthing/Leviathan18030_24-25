@@ -1,9 +1,12 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.depricated;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
+import org.firstinspires.ftc.teamcode.depricated.Intake;
+import org.firstinspires.ftc.teamcode.depricated.Outtake;
 import org.firstinspires.ftc.teamcode.depricated.Transfer;
+import org.firstinspires.ftc.teamcode.subsystems.SubSystem;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class TeleopController extends SubSystem {

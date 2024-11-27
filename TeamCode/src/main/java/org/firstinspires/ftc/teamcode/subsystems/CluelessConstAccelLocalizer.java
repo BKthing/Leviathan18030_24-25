@@ -30,7 +30,7 @@ import java.util.function.DoubleSupplier;
 
 public class CluelessConstAccelLocalizer extends SubSystem{
     CluelessTwoWheelLocalizer localizer;
-    ReusableHardwareAction imuAction;
+//    ReusableHardwareAction imuAction;
 
     public static double TICKS_PER_REV = 8192;
     public static double WHEEL_RADIUS = 0.69; // in
@@ -39,8 +39,8 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
 
-    public static double PARALLEL_Y = -2.56890; // Y is the strafe direction 5.8
-    public static double PERPENDICULAR_X = -5.98040;//2.246
+    public static double PARALLEL_Y = -2.57; //2.57
+    public static double PERPENDICULAR_X = -6.49;//6.49
 
     private final Encoder perpendicularWheel, parallelWheel;
 
@@ -71,14 +71,14 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
         localizer = new CluelessTwoWheelLocalizer(PERPENDICULAR_X, PARALLEL_Y);
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
 
 
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;
         getParallelWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * parallelWheel.getCurrentPosition() * PARALLEL_MULTIPLIER / TICKS_PER_REV;
 
-        imuAction = new ReusableHardwareAction(data.getHardwareQueue());
+//        imuAction = new ReusableHardwareAction(data.getHardwareQueue());
 
         imu = hardwareMap.get(BNO055IMUNew.class, "imu");
 
@@ -90,7 +90,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 //        imuAction.setAction(() -> {
 //            imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)*Math.PI/180;
 //            position.setValue("imu updated");
-//        });
+//        });`
 
     }
 
