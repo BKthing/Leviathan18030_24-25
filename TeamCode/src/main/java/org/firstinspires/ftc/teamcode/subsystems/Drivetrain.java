@@ -64,7 +64,7 @@ public class Drivetrain extends SubSystem {
     private Pose2d poseVelocity;
     private Pose2d poseAcceleration;
 
-    private boolean fieldCentric = true;
+    private boolean fieldCentric = false;
     private double headingOffset = 0;
 
     public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {

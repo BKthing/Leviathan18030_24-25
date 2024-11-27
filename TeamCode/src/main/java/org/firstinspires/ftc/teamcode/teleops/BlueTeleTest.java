@@ -7,17 +7,13 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Outtake;
-import org.firstinspires.ftc.teamcode.subsystems.TeleopController;
-import org.firstinspires.ftc.teamcode.depricated.Transfer;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @TeleOp
-public class TeleTest extends LinearOpMode {
+public class BlueTeleTest extends LinearOpMode {
     Drivetrain drivetrain;
     OldLocalizer oldLocalizer;
     NewIntake intake;
@@ -25,6 +21,8 @@ public class TeleTest extends LinearOpMode {
     MasterThread masterThread;
     Telemetry.Item loopTime;
     Telemetry.Item temporalCount;
+
+    boolean blueAlliance = true;
 
 
 
@@ -44,13 +42,14 @@ public class TeleTest extends LinearOpMode {
 
 
 
-        intake = new NewIntake(masterThread.getData(), true);
+        intake = new NewIntake(masterThread.getData(), blueAlliance, true);
 //        transfer = new Transfer(masterThread.getData());
-            outtake = new NewOuttake(masterThread.getData(), intake, true, true, true);
+            outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true);
 
 //        teleopController = new TeleopController(intake, transfer, outtake, masterThread.getData());
 
 
+        //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
                 drivetrain,
                 oldLocalizer,

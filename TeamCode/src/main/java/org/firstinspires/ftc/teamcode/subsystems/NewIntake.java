@@ -31,24 +31,43 @@ public class NewIntake extends SubSystem {
         WAITING_AFTER_RETRACTING,
         WAITING_FOR_TRANSFER,
         TRANSFERING,
-        MOVING_TO_REST,
         RESTING
     }
 
     private IntakeState intakeState = IntakeState.RESTING;
 
+    private IntakeState newIntakeState = intakeState;
+
+    private boolean updateIntakeState = false;
+
+
     public enum IntakingState {
         INTAKING,
         FINISH_INTAKING,
+        HOLDING_SAMPLE,
         MANUAL_EJECTING,
         START_EJECTING,
         FINISH_EJECTING,
+
+        START_REINTAKING,
+        FINISH_REINTAKING,
+
+        START_UNJAMMING,
+        UNJAMMING_SPIN_OUT,
+        UNJAMMING_SPIN_IN,
+        UNJAMMING_FINNISH_SPIN_IN,
         IDLE
     }
 
     private IntakingState intakingState = IntakingState.IDLE;
 
+    private IntakingState newIntakingState = intakingState;
+
+    private boolean updateIntakingState = false;
+
     private final ElapsedTimer intakeTimer = new ElapsedTimer();
+
+    private final ElapsedTimer intakingTimer = new ElapsedTimer();
 
     private final Telemetry.Item slidePosTelem;
 
@@ -73,9 +92,9 @@ public class NewIntake extends SubSystem {
 
     private ToIntakeState newToIntakeState = toIntakeState;
 
-    private boolean changedToIntakeState = true;
+    private boolean changedToIntakeState = false;
 
-    private boolean blueAlliance = true;
+    private final boolean blueAlliance;
 
 
     public enum HorizontalSlide {
@@ -133,11 +152,9 @@ public class NewIntake extends SubSystem {
 
     private final ElapsedTimer slideTimer = new ElapsedTimer();
 
-    private boolean holdingSample = false;
-
     private boolean transfer = false;
 
-    private final boolean teleOpControls = true;
+    private final boolean teleOpControls;
 
     NormalizedRGBA colors;
     NormalizedRGBA newColors;
@@ -146,10 +163,14 @@ public class NewIntake extends SubSystem {
 
     Gamepad oldGamePad2 = new Gamepad();
 
+    Telemetry.Item intakeTelem;
     Telemetry.Item colorTelem;
 
-    public NewIntake(SubSystemData data, boolean teleOpControls) {
+    public NewIntake(SubSystemData data, boolean blueAlliance, boolean teleOpControls) {
         super(data);
+
+        this.teleOpControls = teleOpControls;
+        this.blueAlliance = blueAlliance;
 
         //Motors
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -187,6 +208,7 @@ public class NewIntake extends SubSystem {
 
         breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
+        intakeTelem = telemetry.addData("Intake state", intakeState.name());
         colorTelem = telemetry.addData("Color Telem", "");
         //initiating slide encoder
         slidePos = ticksToInches(horizontalSlideEncoder.getCurrentPosition());
@@ -233,6 +255,18 @@ public class NewIntake extends SubSystem {
             checkColor = true;
         }
 
+        if (updateIntakeState) {
+            intakeState = newIntakeState;
+
+            updateIntakeState = false;
+        }
+
+        if (updateIntakingState) {
+            intakingState = newIntakingState;
+
+            updateIntakingState = false;
+        }
+
 //
 //        if(changedTargetSlidePos) {
 //            targetSlidePos = newTargetSlidePos;
@@ -261,13 +295,14 @@ public class NewIntake extends SubSystem {
     //trying to add to things to hardware queue asap so their more time for it to be called
     @Override
     public void loop() {
-        colorTelem.setValue(checkColor + " cur:" + isBreakBeam + " prev:" + prevIsBreakBeam);
         if (teleOpControls) {
             if (gamepad2.back) {
                 if (gamepad2.dpad_down) {
                     horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
                     targetSlidePos = 0;
+                } else if (gamepad2.dpad_up) {
+                    intakingState = IntakingState.START_UNJAMMING;
                 }
 
                 if (Math.abs(gamepad2.left_stick_y)>.05) {
@@ -299,12 +334,12 @@ public class NewIntake extends SubSystem {
             if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
                 toIntakeState = ToIntakeState.DROP_INTAKE;
                 intakingState = IntakingState.INTAKING;
-                targetIntakeSpeed = 1;
+                targetIntakeSpeed = .6;
             } else if (gamepad2.left_trigger>.2 && oldGamePad2.left_trigger<=.2) {
                 targetIntakeSpeed = -1;
                 intakingState = IntakingState.MANUAL_EJECTING;
             } else if ((!gamepad2.left_bumper && oldGamePad2.left_bumper) || (oldGamePad2.left_trigger>.2 && gamepad2.left_trigger<=.2)) {
-                if (intakingState == IntakingState.INTAKING || intakingState == IntakingState.MANUAL_EJECTING || intakingState == IntakingState.FINISH_INTAKING) {
+                if (intakingState == IntakingState.INTAKING || intakingState == IntakingState.MANUAL_EJECTING) {
                     targetIntakeSpeed = 0;
                     intakingState = IntakingState.IDLE;
                     checkColor = false;
@@ -394,7 +429,7 @@ public class NewIntake extends SubSystem {
         switch (intakingState) {
             case INTAKING:
                 if (checkColor) {
-                    sampleColor = getSampleColor();
+                    sampleColor = findSampleColor();
 
                     if (sampleColor == SampleColor.NONE) {
                         hardwareQueue.add(() -> {
@@ -404,64 +439,41 @@ public class NewIntake extends SubSystem {
                     }
 
                     checkColor = false;
-                    if (!blueAlliance) {
-                        if (sampleColor == SampleColor.BLUE) {
-                            targetIntakeSpeed = -1;
-                            targetIntakePos = IntakePos.PARTIAL_UP.pos;
-                            intakingState = IntakingState.START_EJECTING;
-                            intakeTimer.reset();
-                        } else if (sampleColor == SampleColor.RED || sampleColor == SampleColor.YELLOW) {
+
+                    if ((sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {
+                        targetIntakeSpeed = -1;
+                        targetIntakePos = IntakePos.PARTIAL_UP.pos;
+                        intakingState = IntakingState.START_EJECTING;
+                        intakingTimer.reset();
+                    } else {
 //                            targetIntakeSpeed = 1;
+                        targetIntakePos = IntakePos.UP.pos;
 
-                            targetIntakePos = IntakePos.UP.pos;
+                        intakeState = IntakeState.RETRACTING_INTAKE;
 
-                            intakeState = IntakeState.RETRACTING_INTAKE;
+                        intakingState = IntakingState.FINISH_INTAKING;
 
-                            intakingState = IntakingState.FINISH_INTAKING;
-
-                            intakeTimer.reset();
-                        }
-
+                        intakingTimer.reset();
                     }
-                    else {
-                        if (sampleColor == SampleColor.RED) {
-                            targetIntakeSpeed = -1;
-                            targetIntakePos = IntakePos.PARTIAL_UP.pos;
-                            intakingState = IntakingState.START_EJECTING;
-                            intakeTimer.reset();
-                        } else if (sampleColor == SampleColor.BLUE || sampleColor == SampleColor.YELLOW) {
-                            targetIntakeSpeed = 1;
-
-                            targetIntakePos = IntakePos.UP.pos;
-
-                            intakeState = IntakeState.RETRACTING_INTAKE;
-
-                            intakingState = IntakingState.FINISH_INTAKING;
-
-                            intakeTimer.reset();
-                        }
-
-                    }
-
 
                 }
                 break;
             case FINISH_INTAKING:
-                if (intakeTimer.seconds()>1 || targetIntakeSpeed == 0) {
+                if (intakingTimer.seconds()>1 || targetIntakeSpeed == 0) {
                     targetIntakeSpeed = 0;
 
-                    intakingState = IntakingState.IDLE;
+                    intakingState = IntakingState.HOLDING_SAMPLE;
                 }
                 break;
             case START_EJECTING:
-                if (!isBreakBeam || intakeTimer.seconds()>1) {
-                    intakeTimer.reset();
+                if (!isBreakBeam || intakingTimer.seconds()>1) {
+                    intakingTimer.reset();
 
                     intakingState = IntakingState.FINISH_EJECTING;
                 }
                 break;
             case FINISH_EJECTING:
-                if (intakeTimer.seconds()>1.5) {
+                if (intakingTimer.seconds()>1) {
                     targetIntakeSpeed = 0;
                     targetIntakePos = IntakePos.DOWN.pos;
                     intakingState = IntakingState.IDLE;
@@ -469,6 +481,47 @@ public class NewIntake extends SubSystem {
                 break;
             case MANUAL_EJECTING:
 
+                break;
+
+
+            case START_REINTAKING:
+                targetIntakeSpeed = 1;
+                intakingTimer.reset();
+
+                intakingState = IntakingState.FINISH_INTAKING;
+                break;
+            case FINISH_REINTAKING:
+                if (intakingTimer.seconds()>1.5) {
+                    targetIntakeSpeed = 0;
+
+                    intakingState = IntakingState.HOLDING_SAMPLE;
+                }
+                break;
+
+
+            case START_UNJAMMING:
+                intakingTimer.reset();
+                targetIntakeSpeed = -1;
+                intakingState = IntakingState.UNJAMMING_SPIN_OUT;
+                break;
+            case UNJAMMING_SPIN_OUT:
+                if (intakingTimer.seconds()>.25) {
+                    targetIntakeSpeed = 1;
+                    intakingState = IntakingState.UNJAMMING_SPIN_IN;
+                    intakingTimer.reset();
+                }
+                break;
+            case UNJAMMING_SPIN_IN:
+                if (isBreakBeam || intakingTimer.seconds() > .5) {
+                    intakingTimer.reset();
+                    intakingState = IntakingState.UNJAMMING_FINNISH_SPIN_IN;
+                }
+                break;
+            case UNJAMMING_FINNISH_SPIN_IN:
+                if (intakingTimer.seconds()>1.5) {
+                    targetIntakeSpeed = 0;
+                    intakingState = IntakingState.HOLDING_SAMPLE;
+                }
                 break;
         }
 
@@ -495,17 +548,17 @@ public class NewIntake extends SubSystem {
                 }
 
             case INTAKING:
-                if (holdingSample) {
-                    targetIntakeSpeed = .1;
-
-                    targetIntakePos = IntakePos.UP.pos;
-
-//                    targetSlidePos = HorizontalSlide.IN.length;
-
-                    intakeState = IntakeState.RETRACTING_INTAKE;
-
-                    intakeTimer.reset();
-                }
+//                if (holdingSample) {
+//                    targetIntakeSpeed = .1;
+//
+//                    targetIntakePos = IntakePos.UP.pos;
+//
+////                    targetSlidePos = HorizontalSlide.IN.length;
+//
+//                    intakeState = IntakeState.RETRACTING_INTAKE;
+//
+//                    intakeTimer.reset();
+//                }
                 break;
             case RETRACTING_INTAKE:
                 if (intakeTimer.seconds()>.2) {
@@ -523,34 +576,45 @@ public class NewIntake extends SubSystem {
                 }
                 break;
             case WAITING_AFTER_RETRACTING:
-                if (intakeTimer.seconds()>.2) {
+                if (intakeTimer.seconds()>.3) {
                     targetSlidePos = HorizontalSlide.IN.length;
 
-                    if (intakingState == IntakingState.IDLE) {
+                    if (intakingState == IntakingState.HOLDING_SAMPLE || (isBreakBeam && intakingState == IntakingState.IDLE)) {
                         targetIntakeSpeed = 0;
-                        transfer = true;
+                        if (isBreakBeam) {
+                            transfer = true;
+                            intakeState = IntakeState.TRANSFERING;
+                        } else {
+                            intakeState = IntakeState.WAITING_FOR_TRANSFER;
+                            intakingState = IntakingState.START_UNJAMMING;
+                        }
 
-                        intakeState = IntakeState.TRANSFERING;
                     } else {
                         intakeState = IntakeState.WAITING_FOR_TRANSFER;
                     }
                 }
                 break;
             case WAITING_FOR_TRANSFER:
-                if (intakingState == IntakingState.IDLE) {
-                    intakeState = IntakeState.TRANSFERING;
-                    transfer = true;
+                if (intakingState == IntakingState.HOLDING_SAMPLE) {
+                    if (isBreakBeam) {
+                        transfer = true;
+                        intakeState = IntakeState.TRANSFERING;
+                    } else {
+                        intakingState = IntakingState.START_UNJAMMING;
+                    }
                 }
                 break;
             case TRANSFERING:
                 //if transferred go to resting position, add more logic later
                 if (!transfer) {
                     intakeState = IntakeState.RESTING;
-
+                    intakingState = IntakingState.IDLE;
                 }
                 break;
         }
 
+        intakeTelem.setValue(intakeState.name());
+        colorTelem.setValue(checkColor + " cur:" + isBreakBeam + " prev:" + prevIsBreakBeam);
 
         prevIsBreakBeam = isBreakBeam;
         oldGamePad2.copy(gamepad2);
@@ -565,15 +629,15 @@ public class NewIntake extends SubSystem {
         return super.dashboard(packet);
     }
 
-    private SampleColor getSampleColor() {
-        if (colors.red > .006 && colors.green < .01) {
+    private SampleColor findSampleColor() {
+        if (colors.red > .01 && colors.green < .012) {
 //            throw new RuntimeException("Not red");
             return SampleColor.RED;
         }
         else if (colors.blue > .009) {
             return SampleColor.BLUE;
         }
-        else if (colors.green > .01) {
+        else if (colors.green > .015) {
 //            throw new RuntimeException("Not yellow");
             return SampleColor.YELLOW;
         }
@@ -583,8 +647,7 @@ public class NewIntake extends SubSystem {
         }
     }
 
-    private boolean holdingSample() {
-//        if ()
+    public boolean holdingSample() {
         return breakBeam.isPressed();
     }
 
@@ -601,6 +664,22 @@ public class NewIntake extends SubSystem {
         } else {
             return false;
         }
+    }
+
+    public SampleColor getSampleColor() {
+        return sampleColor;
+    }
+
+
+    //single thread safe
+    public void setIntakingState(IntakingState intakingState) {
+        newIntakingState = intakingState;
+        updateIntakingState = true;
+    }
+
+    public void setIntakeState(IntakeState intakeState) {
+        newIntakeState = intakeState;
+        updateIntakeState = true;
     }
 
 }

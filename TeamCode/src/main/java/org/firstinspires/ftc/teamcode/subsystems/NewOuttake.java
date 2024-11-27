@@ -12,8 +12,6 @@ import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
-import java.util.function.BooleanSupplier;
-
 public class NewOuttake extends SubSystem {
 
     public enum OuttakeState {
@@ -22,10 +20,6 @@ public class NewOuttake extends SubSystem {
         PLACING_BEHIND,
         WAITING_CLEAR_BUCKET,
         RETRACTING_FROM_PLACE_BEHIND,
-        WAITING_FOR_TRANSFER,
-        MOVING_TO_TRANSFER,
-        GRABBING_FROM_TRANSFER,
-        EXTRACTING_FROM_TRANSFER,
 
         EXTENDING_TO_DROP_SAMPLE,
         WAITING_DROP_SAMPLE,
@@ -34,7 +28,6 @@ public class NewOuttake extends SubSystem {
         WAITING_GRAB_SPECIMEN,
         GRABBING_SPECIMEN,
         REMOVING_SPECIMEN_FROM_WALL,
-        EXTENDING_CLEAR_TRANSFER,
         EXTENDING_PLACE_FRONT,
         WAITING_PLACE_FRONT,
         PLACING_FRONT,
@@ -43,6 +36,16 @@ public class NewOuttake extends SubSystem {
         MOVING_ARM_BACK,
         RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE,
 
+        START_RETRACTING_FROM_BEHIND,
+        RETRACTING_FROM_BEHIND,
+
+        WAITING_FOR_TRANSFER,
+        GRABBING_FROM_TRANSFER,
+        EXTRACTING_FROM_TRANSFER,
+        VERIFYING_EXTRACTION,
+
+        MOVING_TO_EJECTION,
+        EJECTING,
         INIT_POSITION,
         IDLE
     }
@@ -102,8 +105,10 @@ public class NewOuttake extends SubSystem {
         PLACE_FRONT(.53),
         CLEAR_FRONT_BAR(.72),
 //        WAIT_FOR_TRANSFER(.35),
-        TRANSFER(.28),
+        MID_POSITION_CUTOFF(.2),
+        TRANSFER(.285),
 //        EXTRACT_FROM_TRANSFER(.35),
+        EJECT_OUT_FRONT(.33),
         GRAB_BACK(.0),
         EXTRACT_FROM_GRAB_BACK(.1),
         PLACE_BACK(1),
@@ -176,7 +181,7 @@ public class NewOuttake extends SubSystem {
 
     private boolean transfer = false;
 
-    private boolean updateTransfer = false;
+//    private boolean updateTransfer = false;
 
     private final boolean teleOpControls;
     private final boolean autoExtendSlides, autoRetractSlides;
@@ -191,19 +196,31 @@ public class NewOuttake extends SubSystem {
 
     private Gamepad oldGamePad2 = new Gamepad();
 
-    private final BooleanSupplier doTransfer;
+    private final NewIntake intake;
 
+    private NewIntake.SampleColor sampleColor = NewIntake.SampleColor.NONE;
+
+    private final boolean blueAlliance;
+
+    private boolean intakeHoldingSample = false;
+    private boolean updateIntakeHoldingSample = false;
+
+    private double transferAttemptCounter = 0;
+
+    private final double maxTransferAttempts = 2;
 
     private final Servo clawServo, clawPitchServo, leftOuttakeServo, rightOuttakeServo;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
+    public NewOuttake(SubSystemData data, NewIntake intake, boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
         super(data);
 
         this.teleOpControls = teleOpControls;
         this.autoExtendSlides = autoExtendSlides;
         this.autoRetractSlides = autoRetractSlides;
 
-        doTransfer = intake::transfer;
+        this.blueAlliance = blueAlliance;
+
+        this.intake = intake;
 
         //motors
         verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
@@ -266,12 +283,21 @@ public class NewOuttake extends SubSystem {
     public void priorityData() {
         slideTicks = verticalSlideEncoder.getCurrentPosition();
 
-        if (updateTransfer) {
+        if (intake.transfer()) {
             transfer = true;
-            updateTransfer = false;
         }
 
-        transfer = doTransfer.getAsBoolean();
+        if (transfer) {
+            sampleColor = intake.getSampleColor();
+//            transfer = true;
+//            updateTransfer = false;
+        }
+
+        if (updateIntakeHoldingSample) {
+            intakeHoldingSample = intake.holdingSample();
+            updateIntakeHoldingSample = false;
+        }
+
     }
 
     @Override
@@ -296,14 +322,21 @@ public class NewOuttake extends SubSystem {
                 if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
                     transfer = true;
                 } else if (gamepad2.a && !oldGamePad2.a) {
-                    toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
+                    if (targetV4BPos>V4BarPos.MID_POSITION_CUTOFF.pos) {
+                        toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
+                    } else {
+                        retractFromGrabBehind();
+                    }
                 } else if (gamepad2.b && !oldGamePad2.b) {
                     toOuttakeState = ToOuttakeState.PLACE_FRONT;
                 } else if (gamepad2.x && !oldGamePad2.x) {
-                    targetSlidePos = VerticalSlide.LOW_BUCKET_HEIGHT.length;
-//                outtake.setTargetSlidePos(Outtake.VerticalSlide.LOW_BUCKET_HEIGHT);
+//                    if (clawPosition == ClawPosition.CLOSED) {
+                        dropBehind();
+//                    } else if (clawPosition == ClawPosition.OPEN) {
+//                        clawPosition = ClawPosition.EXTRA_OPEN;
+//                        updateClawPosition = true;
 
-//            outtake.toOuttakeState(Outtake.ToOuttakeState.EXTEND_PLACE_FRONT);
+//                    }
                 } else if (gamepad2.y && !oldGamePad2.y) {
                     toOuttakeState = ToOuttakeState.PLACE_BEHIND;
                 } else if (Math.abs(gamepad2.right_stick_y) > .05) {
@@ -433,7 +466,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case RETRACTING_FROM_PLACE_BEHIND:
-                if (outtakeTimer.seconds()>.2 && absError<.5) {
+                if (outtakeTimer.seconds()>.3 && absError<.5) {
                     outtakeState = OuttakeState.WAITING_FOR_TRANSFER;
                 }
                 break;
@@ -498,7 +531,7 @@ public class NewOuttake extends SubSystem {
                 break;
 
             case REMOVING_SPECIMEN_FROM_WALL:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.2) {
                     extendPlaceFront();
                 }
                 break;
@@ -551,6 +584,30 @@ public class NewOuttake extends SubSystem {
                     retractFromFront();
                 }
                 break;
+
+            case START_RETRACTING_FROM_BEHIND:
+                if (outtakeTimer.seconds()>.3) {
+                    targetV4BPos = V4BarPos.TRANSFER.pos;
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.RETRACTING_FROM_BEHIND;
+                }
+                break;
+            case RETRACTING_FROM_BEHIND:
+                if (outtakeTimer.seconds()>.3) {
+                    clawPosition = ClawPosition.OPEN;
+                    updateClawPosition = true;
+
+                    targetSlidePos = VerticalSlide.TRANSFER.length;
+
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.RETRACTING_FROM_PLACE_BEHIND;
+                }
+                break;
+
+
             case WAITING_FOR_TRANSFER:
                 if (transfer) {
                     transfer = false;
@@ -574,24 +631,72 @@ public class NewOuttake extends SubSystem {
                 break;
             case EXTRACTING_FROM_TRANSFER:
                 if (outtakeTimer.seconds()>.3) {
-                    if (autoExtendSlides) {
-                        if (cycleSpecimen) {
-                            grabBehind();
+                    updateIntakeHoldingSample = true;
+                    outtakeState = OuttakeState.VERIFYING_EXTRACTION;
+                }
+                break;
+            case VERIFYING_EXTRACTION:
+                    //trys to grab sample again if first grab fails
+                    if (intakeHoldingSample) {//intakeHoldingSample
+                        if (transferAttemptCounter == 0) {
+                            retractFromFront();
+
+                            intake.setIntakingState(NewIntake.IntakingState.START_REINTAKING);
+                            intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
+
+                            transferAttemptCounter++;
+                        } else if (transferAttemptCounter < maxTransferAttempts) {
+                            retractFromFront();
+                            intake.setIntakingState(NewIntake.IntakingState.START_UNJAMMING);
+                            intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
+
+                            transferAttemptCounter++;
+                        } else {
+                            retractFromFront();
+
+                            transferAttemptCounter = 0;
+                        }
+
+                        break;
+                    }
+
+                    transferAttemptCounter = 0;
+
+                    if ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)) {
+                        targetSlidePos = VerticalSlide.TRANSFER.length + 2;
+                        targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
+                        targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
+
+                        outtakeTimer.reset();
+
+                        outtakeState = OuttakeState.MOVING_TO_EJECTION;
+                    } else if (autoExtendSlides) {
+                        if (cycleSpecimen && sampleColor != NewIntake.SampleColor.YELLOW) {
+                            dropBehind();
                         } else {
                             extendPlaceBehind();
                         }
                     } else {
                         outtakeState = OuttakeState.IDLE;
                     }
-                }
                 break;
 
 
-//                    PLACING_FRONT,
-//                    MOVING_TO_CLEAR_BAR,
-//                    RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE,
-//                    RETRACTING_TO_GRAB_SPECIMEN,
+            case MOVING_TO_EJECTION:
+                if (outtakeTimer.seconds()>.3) {
+                    clawPosition = ClawPosition.OPEN;
+                    updateClawPosition = true;
 
+                    outtakeTimer.reset();
+
+                    outtakeState = OuttakeState.EJECTING;
+                }
+                break;
+            case EJECTING:
+                if (outtakeTimer.seconds()>.2) {
+                    retractFromFront();
+                }
+                break;
         }
 
         oldGamePad2.copy(gamepad2);
@@ -629,7 +734,7 @@ public class NewOuttake extends SubSystem {
 
 //    private void extend
 
-    private void grabBehind() {
+    private void dropBehind() {
         targetV4BPos = V4BarPos.GRAB_BACK.pos;
         targetClawPitch = ClawPitch.FRONT.pos;
 
@@ -658,7 +763,22 @@ public class NewOuttake extends SubSystem {
         outtakeTimer.reset();
     }
 
-    public void transfer() {
-        updateTransfer = true;
+    private void retractFromGrabBehind() {
+        targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;
+
+        targetClawPitch = ClawPitch.TRANSFER.pos;
+
+        if (clawPosition != ClawPosition.CLOSED) {
+            clawPosition = ClawPosition.CLOSED;
+            updateClawPosition = true;
+        }
+
+        outtakeTimer.reset();
+
+        outtakeState = OuttakeState.START_RETRACTING_FROM_BEHIND;
     }
+
+//    public void transfer() {
+//        updateTransfer = true;
+//    }
 }
