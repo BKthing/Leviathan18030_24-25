@@ -20,7 +20,6 @@ public class BlueTeleTest extends LinearOpMode {
     NewOuttake outtake;
     MasterThread masterThread;
     Telemetry.Item loopTime;
-    Telemetry.Item temporalCount;
 
     boolean blueAlliance = true;
 
@@ -30,7 +29,6 @@ public class BlueTeleTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         ElapsedTimer loopTimer = new ElapsedTimer();
         loopTime = telemetry.addData("Loop time:", loopTimer.milliSeconds());
-        temporalCount = telemetry.addData("Temporal data", "");
 
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
@@ -41,12 +39,8 @@ public class BlueTeleTest extends LinearOpMode {
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);
 
 
-
         intake = new NewIntake(masterThread.getData(), blueAlliance, true);
-//        transfer = new Transfer(masterThread.getData());
-            outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true);
-
-//        teleopController = new TeleopController(intake, transfer, outtake, masterThread.getData());
+        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true);
 
 
         //its important that outtake is added after intake for update order purposes
@@ -54,9 +48,7 @@ public class BlueTeleTest extends LinearOpMode {
                 drivetrain,
                 oldLocalizer,
                 intake,
-//                transfer,
                 outtake
-//                teleopController
         );
 
 
@@ -65,7 +57,6 @@ public class BlueTeleTest extends LinearOpMode {
         oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
 
         while ( !isStopRequested()) {
-
             masterThread.unThreadedUpdate();
 
             loopTime.setValue(loopTimer.milliSeconds());

@@ -58,6 +58,7 @@ public class NewOuttake extends SubSystem {
         RETRACT_FROM_PLACE_BEHIND,
         WAIT_PLACE_BEHIND,
         PLACE_BEHIND,
+        WAIT_DROP_BEHIND,
         INIT_POSITION,
         IDLE
     }
@@ -106,7 +107,7 @@ public class NewOuttake extends SubSystem {
         CLEAR_FRONT_BAR(.72),
 //        WAIT_FOR_TRANSFER(.35),
         MID_POSITION_CUTOFF(.2),
-        TRANSFER(.285),
+        TRANSFER(.28),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.33),
         GRAB_BACK(.0),
@@ -164,6 +165,10 @@ public class NewOuttake extends SubSystem {
     }
 
     private ClawPosition clawPosition = ClawPosition.CLOSED;
+
+    private ClawPosition newClawPosition = clawPosition;
+
+    private boolean changedClawPosition = false;
 
     private boolean updateClawPosition = false;
 
@@ -298,6 +303,17 @@ public class NewOuttake extends SubSystem {
             updateIntakeHoldingSample = false;
         }
 
+        if (changedToOuttakeState) {
+            toOuttakeState = newToOuttakeState;
+            changedToOuttakeState = false;
+        }
+
+        if (changedClawPosition) {
+            clawPosition = newClawPosition;
+            updateClawPosition = true;
+            changedClawPosition = false;
+        }
+
     }
 
     @Override
@@ -373,6 +389,10 @@ public class NewOuttake extends SubSystem {
             case RETRACT_FROM_PLACE_BEHIND:
                 retractFromFront();
 
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
+            case WAIT_DROP_BEHIND:
+                dropBehind();
                 toOuttakeState = ToOuttakeState.IDLE;
                 break;
         }
@@ -778,7 +798,14 @@ public class NewOuttake extends SubSystem {
         outtakeState = OuttakeState.START_RETRACTING_FROM_BEHIND;
     }
 
-//    public void transfer() {
-//        updateTransfer = true;
-//    }
+
+    public void toOuttakeState(ToOuttakeState toOuttakeState) {
+        newToOuttakeState = toOuttakeState;
+        changedToOuttakeState = true;
+    }
+
+    public void toClawPosition(ClawPosition clawPosition) {
+        newClawPosition = clawPosition;
+        changedClawPosition = true;
+    }
 }

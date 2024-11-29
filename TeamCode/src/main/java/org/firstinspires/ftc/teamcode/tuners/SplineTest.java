@@ -10,6 +10,7 @@ import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
@@ -52,17 +53,26 @@ public class SplineTest extends LinearOpMode {
 
 
         TrajectorySequence spline = new TrajectorySequenceBuilder(new Pose2d(0, 0, Math.toRadians(90)), RobotConstants.constraints)
-                .splineToSplineHeading(new Pose2d(16, 48, Math.toRadians(270)), Math.toRadians(90))
-                .lineToConstantHeading(new Vector2d(16, 64))
+                .splineToSplineHeading(new Pose2d(16, 44, Math.toRadians(270)), Math.toRadians(90))
+                .lineToConstantHeading(new Vector2d(16, 56))
+                .setTargetEndDistance(5)
                 .build();
 
 
+        TrajectorySequence spline2 = new TrajectorySequenceBuilder(new Pose2d(0, 0, 0), RobotConstants.constraints)
+                .back(1)
+                .splineToConstantHeading(new Vector2d(-18.5, -25), Math.toRadians(180))
+                .back(2)
+                .build();
+
+//        drivetrain.setForwardComponent(0);
+
 
         waitForStart();
-        drivetrain.followTrajectorySequence(spline);
+        drivetrain.followTrajectorySequence(spline2);
 
         masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(spline.startPos());
+        oldLocalizer.getLocalizer().setPoseEstimate(spline2.startPos());
 
 
 

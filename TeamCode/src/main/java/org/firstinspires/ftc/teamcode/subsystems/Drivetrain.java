@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.headingPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.lateralPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.naturalDecel;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.pointPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.trackWidth;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -49,6 +50,9 @@ public class Drivetrain extends SubSystem {
 
     private final Telemetry.Item forwardComponentTelemetry;
 
+    private final Telemetry.Item radiansPerInch;
+
+
     //how much a motor power must change to warrant an update
     private final double minPowerChange = .03;
 
@@ -78,7 +82,7 @@ public class Drivetrain extends SubSystem {
 
         this.driveState = driveState;
 
-        runner = new TrajectorySequenceRunner(lateralPID, headingPID, naturalDecel, trackWidth, RobotConstants.constraints);
+        runner = new TrajectorySequenceRunner(trackWidth, RobotConstants.constraints);
 
         frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
         frontRight = hardwareMap.get(DcMotorEx.class, "fr");//
@@ -106,6 +110,8 @@ public class Drivetrain extends SubSystem {
         targetMotionState = telemetry.addData("Motion state", "");
 
         forwardComponentTelemetry = telemetry.addData("Forward component", "");
+
+        radiansPerInch = telemetry.addData("rad per inch", "");
 
     }
 
@@ -272,6 +278,8 @@ public class Drivetrain extends SubSystem {
                 //drawing where the robot predicts it will stop at
                 DashboardUtil.drawRobot(packet.fieldOverlay(), runner.getEndpointController().getEstimatedEndPos());
             }
+
+            radiansPerInch.setValue(runner.getTrajectorySequence().getCurrentTrajectory().getRadiansPerInch(4));
 
             //drawing robots motor powers as a vector
             Pose2d driveTrainMovement = MotorPowers.powersToPose(lastPowers);

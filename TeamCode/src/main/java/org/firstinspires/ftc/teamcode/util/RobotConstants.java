@@ -9,12 +9,15 @@ import com.reefsharklibrary.data.VelConstraint;
 
 @Config
 public class RobotConstants {
-    public static PIDCoeficients lateralPID = new PIDCoeficients(.15, .18, .006, 0, 0, 0);//.24, 0.08, 0.011, 0, 0.06, .0006
+    public static PIDCoeficients lateralPID = new PIDCoeficients(.16, .0, .016, 0, 0, 0);//.18 .014
 
+    public static PIDCoeficients pointPID = new PIDCoeficients(.2, 0, .02, 0, 0, 0);//.08
 
-    public static PIDCoeficients headingPID = new PIDCoeficients(.06, .0, 0.0004);//.17, .07, 0.005 //0.0013 .1
+    public static PIDCoeficients headingPID = new PIDCoeficients(.05, .0, 0.0003);//.17, .07, 0.005 //0.0013 .1
 
-    public static Pose2d naturalDecel = new Pose2d(380, 380, Math.toRadians(5000));//new Pose2d(210, 210, Math.toRadians(2000))
+    public static PIDCoeficients headingPointPID = new PIDCoeficients(.06, 0, 0.0015);//.002
+
+    public static Pose2d naturalDecel = new Pose2d(250, 250, Math.toRadians(600));//400, 400
 
     public static double trackWidth = 16;
 
@@ -22,5 +25,5 @@ public class RobotConstants {
 
     public static final AngVelConstraint angVelConstraint = new AngVelConstraint(Math.toRadians(300), Math.toRadians(300), Math.toRadians(300));
 
-    public static final ConstraintSet constraints = new ConstraintSet(lateralPID, headingPID, velConstraint, angVelConstraint, naturalDecel, trackWidth, 1.1, .15);
+    public static final ConstraintSet constraints = new ConstraintSet(lateralPID, pointPID, headingPID, headingPointPID, velConstraint, angVelConstraint, naturalDecel, trackWidth, 1.1, .15);
 }

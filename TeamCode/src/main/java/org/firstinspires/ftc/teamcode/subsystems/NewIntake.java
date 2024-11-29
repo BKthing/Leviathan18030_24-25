@@ -56,12 +56,21 @@ public class NewIntake extends SubSystem {
         UNJAMMING_SPIN_OUT,
         UNJAMMING_SPIN_IN,
         UNJAMMING_FINNISH_SPIN_IN,
+
+        START_PARTIAL_GRAB,
+        INTAKING_PARTIAL_GRAB,
+
+        START_EJECTING_PARTIAL_GRAB,
+        EJECTING_PARTIAL_GRAB,
+
         IDLE
     }
 
     private IntakingState intakingState = IntakingState.IDLE;
 
     private IntakingState newIntakingState = intakingState;
+
+    private IntakingState prevIntakingState = intakingState;
 
     private boolean updateIntakingState = false;
 
@@ -84,6 +93,7 @@ public class NewIntake extends SubSystem {
     public enum ToIntakeState {
         DROP_INTAKE,
         RAISE_INTAKE,
+        PARTIAL_RAISE_INTAKE,
         RETRACT,
         IDLE
     }
@@ -101,7 +111,7 @@ public class NewIntake extends SubSystem {
         //18.9 max
         EXTRA_IN(-1),
         IN(0),
-        AUTO_PRESET1(12),
+        AUTO_PRESET1(13.5),
         AUTO_PRESET2(4),
         CLOSE(7),
         MEDIUM(12),
@@ -113,6 +123,8 @@ public class NewIntake extends SubSystem {
 
     private double targetSlidePos = 0;
     private double newTargetSlidePos;
+    private boolean changedTargetSlidePos = false;
+
     private double slidePos;//inches
     private double prevSlideError = 0;
 
@@ -267,29 +279,17 @@ public class NewIntake extends SubSystem {
             updateIntakingState = false;
         }
 
-//
-//        if(changedTargetSlidePos) {
-//            targetSlidePos = newTargetSlidePos;
-//            changedTargetSlidePos = false;
-//        }
-//
-//        if (changedIntakePos && targetIntakePos != newIntakePos) {
-//            targetIntakePos = newIntakePos;
-////            updateIntakePos = true;
-//            changedIntakePos = false;
-//        }
-//
-//        if (changedIntakeSpeed) {
-//            targetIntakeSpeed = newIntakeSpeed;
-//            changedIntakeSpeed = false;
-//        }
-//
-//        if (updateTransfered) {
-//            transfered = true;
-//            updateTransfered = false;
-//        }
-//
-//        prevTargetSlidePos = targetSlidePos;
+        if (changedToIntakeState) {
+            toIntakeState = newToIntakeState;
+            changedToIntakeState = false;
+        }
+
+        if (changedTargetSlidePos) {
+            targetSlidePos = newTargetSlidePos;
+            changedTargetSlidePos = false;
+        }
+
+        prevIntakingState = intakingState;
     }
 
     //trying to add to things to hardware queue asap so their more time for it to be called
@@ -349,6 +349,13 @@ public class NewIntake extends SubSystem {
 
         switch (toIntakeState) {
             case DROP_INTAKE:
+                targetIntakePos = IntakePos.DOWN.pos;
+
+                intakeState = IntakeState.INTAKING;
+
+                toIntakeState = ToIntakeState.IDLE;
+                break;
+            case PARTIAL_RAISE_INTAKE:
                 targetIntakePos = IntakePos.DOWN.pos;
 
                 toIntakeState = ToIntakeState.IDLE;
@@ -454,6 +461,7 @@ public class NewIntake extends SubSystem {
                         intakingState = IntakingState.FINISH_INTAKING;
 
                         intakingTimer.reset();
+                        intakeTimer.reset();
                     }
 
                 }
@@ -523,6 +531,32 @@ public class NewIntake extends SubSystem {
                     intakingState = IntakingState.HOLDING_SAMPLE;
                 }
                 break;
+
+
+            case START_PARTIAL_GRAB:
+                targetIntakeSpeed = .3;
+                intakingState = IntakingState.INTAKING_PARTIAL_GRAB;
+                intakingTimer.reset();
+                break;
+            case INTAKING_PARTIAL_GRAB:
+                if (isBreakBeam || intakingTimer.seconds()>1) {
+                    targetIntakeSpeed = 0;
+                    intakingState = IntakingState.IDLE;
+                }
+                break;
+
+            case START_EJECTING_PARTIAL_GRAB:
+                targetIntakeSpeed = -1;
+                targetIntakePos = IntakePos.PARTIAL_UP.pos;
+                intakingState = IntakingState.INTAKING_PARTIAL_GRAB;
+                intakingTimer.reset();
+                break;
+            case EJECTING_PARTIAL_GRAB:
+                if (intakingTimer.seconds()>.3) {
+                    targetIntakeSpeed = 0;
+                    intakingState = IntakingState.IDLE;
+                }
+                break;
         }
 
 
@@ -539,7 +573,7 @@ public class NewIntake extends SubSystem {
                 break;
             case DROPPING_INTAKE:
                 //if intake has finished dropping start intaking
-                if (intakeTimer.seconds()>.3) {
+                if (intakeTimer.seconds()>.2) {
                     targetIntakeSpeed = .6;
 
 
@@ -561,7 +595,7 @@ public class NewIntake extends SubSystem {
 //                }
                 break;
             case RETRACTING_INTAKE:
-                if (intakeTimer.seconds()>.2) {
+                if (intakeTimer.seconds()>.3) {
                     targetSlidePos = HorizontalSlide.EXTRA_IN.length;
 
                     intakeState = IntakeState.RETRACTING;
@@ -634,7 +668,7 @@ public class NewIntake extends SubSystem {
 //            throw new RuntimeException("Not red");
             return SampleColor.RED;
         }
-        else if (colors.blue > .009) {
+        else if (colors.blue > .01) {
             return SampleColor.BLUE;
         }
         else if (colors.green > .015) {
@@ -680,6 +714,20 @@ public class NewIntake extends SubSystem {
     public void setIntakeState(IntakeState intakeState) {
         newIntakeState = intakeState;
         updateIntakeState = true;
+    }
+
+    public void toIntakeState(ToIntakeState toIntakeState) {
+        newToIntakeState = toIntakeState;
+        changedToIntakeState = true;
+    }
+
+    public void setTargetSlidePos(double distance) {
+        newTargetSlidePos = distance;
+        changedTargetSlidePos = true;
+    }
+
+    public IntakingState getPrevIntakingState() {
+        return prevIntakingState;
     }
 
 }

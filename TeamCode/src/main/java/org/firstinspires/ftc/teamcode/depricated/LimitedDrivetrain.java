@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.depricated;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.headingPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.lateralPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.naturalDecel;
+import static org.firstinspires.ftc.teamcode.util.RobotConstants.pointPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.trackWidth;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -76,7 +77,7 @@ public class LimitedDrivetrain extends SubSystem {
 
         this.driveState = driveState;
 
-        runner = new TrajectorySequenceRunner(lateralPID, headingPID, naturalDecel, trackWidth, RobotConstants.constraints);
+        runner = new TrajectorySequenceRunner(trackWidth, RobotConstants.constraints);
 
         frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
         frontRight = hardwareMap.get(DcMotorEx.class, "fr");//
