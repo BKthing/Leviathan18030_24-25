@@ -42,6 +42,7 @@ public class NewIntake extends SubSystem {
 
 
     public enum IntakingState {
+        START_INTAKING,
         INTAKING,
         FINISH_INTAKING,
         HOLDING_SAMPLE,
@@ -94,6 +95,7 @@ public class NewIntake extends SubSystem {
         DROP_INTAKE,
         RAISE_INTAKE,
         PARTIAL_RAISE_INTAKE,
+        RAISE_TO_AUTO_HEIGHT,
         RETRACT,
         IDLE
     }
@@ -104,7 +106,7 @@ public class NewIntake extends SubSystem {
 
     private boolean changedToIntakeState = false;
 
-    private final boolean blueAlliance;
+    private final Boolean blueAlliance;
 
 
     public enum HorizontalSlide {
@@ -139,6 +141,7 @@ public class NewIntake extends SubSystem {
 
     public enum IntakePos {
         UP(.07),//.69
+        AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
         DOWN(.165);//.05
 
@@ -178,7 +181,7 @@ public class NewIntake extends SubSystem {
     Telemetry.Item intakeTelem;
     Telemetry.Item colorTelem;
 
-    public NewIntake(SubSystemData data, boolean blueAlliance, boolean teleOpControls) {
+    public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -263,7 +266,9 @@ public class NewIntake extends SubSystem {
         }
 
         if ((isBreakBeam && !prevIsBreakBeam) && !checkColor && intakingState == IntakingState.INTAKING) {
-            colors = colorSensor.getNormalizedColors();
+            if (blueAlliance != null) {
+                colors = colorSensor.getNormalizedColors();
+            }
             checkColor = true;
         }
 
@@ -356,7 +361,12 @@ public class NewIntake extends SubSystem {
                 toIntakeState = ToIntakeState.IDLE;
                 break;
             case PARTIAL_RAISE_INTAKE:
-                targetIntakePos = IntakePos.DOWN.pos;
+                targetIntakePos = IntakePos.PARTIAL_UP.pos;
+
+                toIntakeState = ToIntakeState.IDLE;
+                break;
+            case RAISE_TO_AUTO_HEIGHT:
+                targetIntakePos = IntakePos.AUTO_HEIGHT.pos;
 
                 toIntakeState = ToIntakeState.IDLE;
                 break;
@@ -434,8 +444,27 @@ public class NewIntake extends SubSystem {
         }
 
         switch (intakingState) {
+            case START_INTAKING:
+                targetIntakeSpeed = .6;
+                intakingState = IntakingState.INTAKING;
+                break;
             case INTAKING:
                 if (checkColor) {
+                    if (blueAlliance == null) {
+                        targetIntakePos = IntakePos.UP.pos;
+
+                        intakeState = IntakeState.RETRACTING_INTAKE;
+
+                        intakingState = IntakingState.FINISH_INTAKING;
+
+                        intakingTimer.reset();
+                        intakeTimer.reset();
+
+                        checkColor = false;
+
+                        break;
+                    }
+
                     sampleColor = findSampleColor();
 
                     if (sampleColor == SampleColor.NONE) {

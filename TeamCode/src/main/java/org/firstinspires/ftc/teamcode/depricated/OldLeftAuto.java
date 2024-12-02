@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @Disabled
 @Autonomous
-public class LeftAuto extends LinearOpMode {
+public class OldLeftAuto extends LinearOpMode {
 
     private enum AutoState{
         PLACING_PRELOAD,

@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.teamcode.PassData;
+import org.firstinspires.ftc.teamcode.depricated.Outtake;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
@@ -51,6 +52,8 @@ public class NewOuttake extends SubSystem {
     }
 
     private OuttakeState outtakeState = OuttakeState.INIT_POSITION;
+
+    private OuttakeState prevOuttakeState = outtakeState;
 
     public enum ToOuttakeState {
         WAIT_PLACE_FRONT,
@@ -131,12 +134,14 @@ public class NewOuttake extends SubSystem {
         DOWN(.22),
         BACK(0.135),
         BACK_ANGLED_DOWN(.17),
+        BACK_45(.18),
         BACK2(.45),
         WAIT_FOR_TRANSFER(.3),
         TRANSFER(.26),
         EXTRACT_FROM_TRANSFER(.3),
         FRONT_ANGLED_UP(.3),
         FRONT_ANGELED_DOWN(.3),
+        FRONT_45(.27),
 
         FRONT(.32);
 
@@ -155,7 +160,7 @@ public class NewOuttake extends SubSystem {
     public enum ClawPosition {
         EXTRA_OPEN(.6),
         OPEN(.4),
-        CLOSED(.1);
+        CLOSED(.09);
 
         public final double pos;
 
@@ -205,7 +210,7 @@ public class NewOuttake extends SubSystem {
 
     private NewIntake.SampleColor sampleColor = NewIntake.SampleColor.NONE;
 
-    private final boolean blueAlliance;
+    private final Boolean blueAlliance;
 
     private boolean intakeHoldingSample = false;
     private boolean updateIntakeHoldingSample = false;
@@ -216,7 +221,7 @@ public class NewOuttake extends SubSystem {
 
     private final Servo clawServo, clawPitchServo, leftOuttakeServo, rightOuttakeServo;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
+    public NewOuttake(SubSystemData data, NewIntake intake, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -292,7 +297,7 @@ public class NewOuttake extends SubSystem {
             transfer = true;
         }
 
-        if (transfer) {
+        if (transfer && blueAlliance != null) {
             sampleColor = intake.getSampleColor();
 //            transfer = true;
 //            updateTransfer = false;
@@ -314,6 +319,7 @@ public class NewOuttake extends SubSystem {
             changedClawPosition = false;
         }
 
+        prevOuttakeState = outtakeState;
     }
 
     @Override
@@ -521,7 +527,7 @@ public class NewOuttake extends SubSystem {
                  break;
             case DROPPING_SAMPLE:
                 if (outtakeTimer.seconds()>.2) {
-                    targetClawPitch = ClawPitch.BACK.pos;
+                    targetClawPitch = ClawPitch.BACK_45.pos;
                     outtakeTimer.reset();
 
                     outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;
@@ -658,7 +664,7 @@ public class NewOuttake extends SubSystem {
             case VERIFYING_EXTRACTION:
                     //trys to grab sample again if first grab fails
                     if (intakeHoldingSample) {//intakeHoldingSample
-                        if (transferAttemptCounter == 0) {
+                        if (transferAttemptCounter == 0) {//transferAttemptCounter == 0
                             retractFromFront();
 
                             intake.setIntakingState(NewIntake.IntakingState.START_REINTAKING);
@@ -682,7 +688,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)) {
+                    if (blueAlliance != null && (sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)) {
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
@@ -691,7 +697,7 @@ public class NewOuttake extends SubSystem {
 
                         outtakeState = OuttakeState.MOVING_TO_EJECTION;
                     } else if (autoExtendSlides) {
-                        if (cycleSpecimen && sampleColor != NewIntake.SampleColor.YELLOW) {
+                        if ( cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
                             dropBehind();
                         } else {
                             extendPlaceBehind();
@@ -747,7 +753,7 @@ public class NewOuttake extends SubSystem {
 
         targetV4BPos = V4BarPos.PLACE_FRONT.pos;
 
-        targetClawPitch = ClawPitch.DOWN.pos;
+        targetClawPitch = ClawPitch.FRONT_45.pos;
 
         outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
     }
@@ -807,5 +813,9 @@ public class NewOuttake extends SubSystem {
     public void toClawPosition(ClawPosition clawPosition) {
         newClawPosition = clawPosition;
         changedClawPosition = true;
+    }
+
+    public OuttakeState getOuttakeState() {
+        return prevOuttakeState;
     }
 }

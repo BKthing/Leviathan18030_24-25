@@ -21,7 +21,7 @@ public class BlueTeleTest extends LinearOpMode {
     MasterThread masterThread;
     Telemetry.Item loopTime;
 
-    boolean blueAlliance = true;
+    Boolean blueAlliance = true;
 
 
 

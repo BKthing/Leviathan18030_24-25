@@ -13,31 +13,24 @@ import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
-import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @Autonomous
-public class BlueFourSpecimenAuto extends LinearOpMode {
+public class Right5plus0Auto extends LinearOpMode {
 
     private enum AutoState {
-        DRIVING_TO_PRELOAD,
+        DRIVING_TO_PLACE_PRELOAD,
         RELEASING_PRELOAD,
         MOVING_TO_GRAB_BLOCK_1,
-        EXTENDING_TO_GRAB_BLOCK_1,
-        MOVING_TO_DROP_BLOCK_1,
-        START_DROPPING_BLOCK_1,
-        DROPPING_BLOCK_1,
+        GRABBING_BLOCK_1,
+//        MOVING_TO_DROP_BLOCK_1,
         MOVING_TO_GRAB_BLOCK_2,
-        EXTENDING_TO_GRAB_BLOCK_2,
-        START_DROPPING_BLOCK_2,
-        MOVING_TO_DROP_BLOCK_2,
-        DROPPING_BLOCK_2,
+        GRABBING_BLOCK_2,
+//        MOVING_TO_DROP_BLOCK_2,
         MOVING_TO_GRAB_BLOCK_3,
-        EXTENDING_TO_GRAB_BLOCK_3,
-        START_DROPPING_BLOCK_3,
-        MOVING_TO_DROP_BLOCK_3,
-        DROPPING_BLOCK_3,
+        GRABBING_BLOCK_3,
+//        MOVING_TO_DROP_BLOCK_3,
 
         MOVING_TO_GRAB_SPECIMEN_1,
         GRABBING_SPECIMEN_1,
@@ -53,11 +46,18 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
         GRABBING_SPECIMEN_3,
         MOVING_TO_PLACE_SPECIMEN_3,
         PLACING_SPECIMEN_3,
+
+        MOVING_TO_GRAB_SPECIMEN_4,
+        GRABBING_SPECIMEN_4,
+        MOVING_TO_PLACE_SPECIMEN_4,
+        PLACING_SPECIMEN_4,
+
         PARKING,
+        TRANSITION,
         FINISHED
     }
 
-    AutoState autoState = AutoState.DRIVING_TO_PRELOAD;
+    AutoState autoState = AutoState.DRIVING_TO_PLACE_PRELOAD;
 
     private final ElapsedTimer autoTimer = new ElapsedTimer();
 
@@ -68,7 +68,7 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
     MasterThread masterThread;
     Telemetry.Item loopTime;
 
-    boolean blueAlliance = true;
+    Boolean blueAlliance = null;
 
     double extensionDistance = 0;
 
@@ -111,88 +111,86 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
 
         TrajectorySequence movingToGrabBlock1 = new TrajectorySequenceBuilder(preload.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToSplineHeading(new Pose2d(-28, 46, Math.toRadians(215)), Math.toRadians(180))
-                .callMarkerFromEnd(4, () -> {
-                    intake.setTargetSlidePos(NewIntake.HorizontalSlide.AUTO_PRESET1.length);
-                    intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
-                    intake.setIntakingState(NewIntake.IntakingState.START_PARTIAL_GRAB);
-                    extensionDistance = NewIntake.HorizontalSlide.AUTO_PRESET1.length;
+                .splineToSplineHeading(new Pose2d(-29, 46, Math.toRadians(237)), Math.toRadians(180))
+                .callMarkerFromEnd(5, () -> {
+                    intake.setTargetSlidePos(18.5);
+                    intake.toIntakeState(NewIntake.ToIntakeState.RAISE_TO_AUTO_HEIGHT);
+                })
+                .build();
+
+
+        Pose2d movingToDropBlock1EndPose = new Pose2d(-30, 47, Math.toRadians(160));
+
+        TrajectorySequence movingToGrabBlock2 = new TrajectorySequenceBuilder(movingToDropBlock1EndPose, RobotConstants.constraints)
+                .lineToSplineHeading(new Pose2d(-37, 46, Math.toRadians(240)))
+                .callMarkerFromEnd(1, () -> {
+                    intake.setTargetSlidePos(18.5);
                 })
                 .build();
 
         TrajectorySequence movingToDropBlock1 = new TrajectorySequenceBuilder(movingToGrabBlock1.endPose(), RobotConstants.constraints)
-//                .lineToConstantHeading(movingToGrabBlock1.endPose().getVector2d().plus(new Vector2d(1, Math.toRadians(180), true)))
-                .lineToSplineHeading(new Pose2d(-30, 47, Math.toRadians(150)))
-                .callMarkerFromEnd(5, () -> {
-                    intake.setTargetSlidePos(14);
-                    extensionDistance = 14;
-                })
-                .callMarkerFromEnd(1, () -> {
-                    intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
-                    autoTimer.reset();
+                .lineToSplineHeading(movingToDropBlock1EndPose)
+                .callMarkerFromEnd(0.1, () -> {
+                    drivetrain.followTrajectorySequence(movingToGrabBlock2);
+                    intake.toIntakeState(NewIntake.ToIntakeState.RAISE_TO_AUTO_HEIGHT);
+                    intake.setTargetSlidePos(12);
+
+                    autoState = AutoState.MOVING_TO_GRAB_BLOCK_2;
                 })
                 .build();
 
 
 
-        TrajectorySequence movingToGrabBlock2 = new TrajectorySequenceBuilder(movingToDropBlock1.endPose(), RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-40, 46, Math.toRadians(215)))
-                .callMarkerFromEnd(4, () -> {
-                    intake.setTargetSlidePos(NewIntake.HorizontalSlide.AUTO_PRESET1.length);
-                    intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
-                    intake.setIntakingState(NewIntake.IntakingState.START_PARTIAL_GRAB);
-                    extensionDistance = NewIntake.HorizontalSlide.AUTO_PRESET1.length;
+        Pose2d movingToDropBlock2EndPose = new Pose2d(-36, 47, Math.toRadians(160));
+
+        TrajectorySequence movingToGrabBlock3 = new TrajectorySequenceBuilder(movingToDropBlock2EndPose, RobotConstants.constraints)
+                .lineToSplineHeading(new Pose2d(-42, 46, Math.toRadians(235)))
+                .callMarkerFromEnd(2, () -> {
+                    intake.setTargetSlidePos(18.5);
                 })
                 .build();
 
         TrajectorySequence movingToDropBlock2 = new TrajectorySequenceBuilder(movingToGrabBlock2.endPose(), RobotConstants.constraints)
-//                .lineToConstantHeading(movingToGrabBlock2.endPose().getVector2d().plus(new Vector2d(1, Math.toRadians(180), true)))
-                .lineToSplineHeading(new Pose2d(-41, 47, Math.toRadians(150)))
-                .callMarkerFromEnd(5, () -> {
-                    intake.setTargetSlidePos(14);
-                    extensionDistance = 14;
-                })
-                .callMarkerFromEnd(1, () -> {
-                    intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
-                    autoTimer.reset();
+                .lineToSplineHeading(movingToDropBlock2EndPose)
+                .callMarkerFromEnd(0.1, () -> {
+                    drivetrain.followTrajectorySequence(movingToGrabBlock3);
+                    intake.toIntakeState(NewIntake.ToIntakeState.RAISE_TO_AUTO_HEIGHT);
+                    intake.setTargetSlidePos(12);
+
+                    autoState = AutoState.MOVING_TO_GRAB_BLOCK_3;
                 })
                 .build();
 
 
 
-        TrajectorySequence movingToGrabBlock3 = new TrajectorySequenceBuilder(movingToDropBlock2.endPose(), RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-42, 46, Math.toRadians(215)))
-                .callMarkerFromEnd(2, () -> {
-                    intake.setTargetSlidePos(NewIntake.HorizontalSlide.AUTO_PRESET1.length);
-                    intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
-                    intake.setIntakingState(NewIntake.IntakingState.START_PARTIAL_GRAB);
-                    extensionDistance = NewIntake.HorizontalSlide.AUTO_PRESET1.length;
-                })
-                .build();
+        Pose2d movingToDropBlock3EndPose = new Pose2d(-36, 47, Math.toRadians(160));
 
-        TrajectorySequence movingToDropBlock3 = new TrajectorySequenceBuilder(movingToGrabBlock2.endPose(), RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-36, 47, Math.toRadians(150)))
-                .callMarkerFromEnd(5, () -> {
-                    intake.setTargetSlidePos(14);
-                    extensionDistance = 14;
-                })
-                .callMarkerFromEnd(1, () -> {
-                    intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
-                    autoTimer.reset();
-                })
-                .build();
-
-
-        TrajectorySequence movingToGrabSpecimen1 = new TrajectorySequenceBuilder(movingToDropBlock3.endPose(), RobotConstants.constraints)
+        TrajectorySequence movingToGrabSpecimen1 = new TrajectorySequenceBuilder(movingToDropBlock3EndPose, RobotConstants.constraints)
                 .lineToSplineHeading(new Pose2d(-30, 61, Math.toRadians(270)))
                 .setEndDelay(.5)
                 .back(2)
                 .build();
 
+        TrajectorySequence movingToDropBlock3 = new TrajectorySequenceBuilder(movingToGrabBlock2.endPose(), RobotConstants.constraints)
+                .lineToSplineHeading(movingToDropBlock3EndPose)
+                .callMarkerFromEnd(0.1, () -> {
+                    drivetrain.followTrajectorySequence(movingToGrabSpecimen1);
+                    intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
+                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
+
+                    autoState = AutoState.MOVING_TO_GRAB_SPECIMEN_1;
+                })
+                .build();
+
+
+
+
         TrajectorySequence movingToPlaceSpecimen1 = new TrajectorySequenceBuilder(movingToGrabSpecimen1.endPose(), RobotConstants.constraints)
                 .forward(1)
                 .splineToConstantHeading(new Vector2d(-10, 36), Math.toRadians(270))
                 .build();
+
+
 
         TrajectorySequence movingToGrabSpecimen2 = new TrajectorySequenceBuilder(movingToPlaceSpecimen1.endPose(), RobotConstants.constraints)
                 .back(1)
@@ -208,6 +206,8 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(-11.5, 36), Math.toRadians(270))
                 .build();
 
+
+
         TrajectorySequence movingToGrabSpecimen3 = new TrajectorySequenceBuilder(movingToPlaceSpecimen2.endPose(), RobotConstants.constraints)
                 .back(1)
                 .splineToConstantHeading(new Vector2d(-30, 61), Math.toRadians(90))
@@ -222,9 +222,26 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(-13, 36), Math.toRadians(270))
                 .build();
 
-        TrajectorySequence park = new TrajectorySequenceBuilder(movingToPlaceSpecimen3.endPose(), RobotConstants.constraints)
+
+
+        TrajectorySequence movingToGrabSpecimen4 = new TrajectorySequenceBuilder(movingToPlaceSpecimen3.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToLineHeading(new Pose2d(-20, 50, Math.toRadians(155)), Math.toRadians(170))
+                .splineToConstantHeading(new Vector2d(-30, 61), Math.toRadians(90))
+                .callMarker(5, () -> {
+                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
+                })
+                .back(2)
+                .build();
+
+        TrajectorySequence movingToPlaceSpecimen4 = new TrajectorySequenceBuilder(movingToGrabSpecimen4.endPose(), RobotConstants.constraints)
+                .forward(1)
+                .splineToConstantHeading(new Vector2d(-14.5, 36), Math.toRadians(270))
+                .build();
+
+
+        TrajectorySequence park = new TrajectorySequenceBuilder(movingToPlaceSpecimen4.endPose(), RobotConstants.constraints)
+                .back(1)
+                .splineToLineHeading(new Pose2d(-22, 50, Math.toRadians(155)), Math.toRadians(170))
                 .callMarker(8, () -> {
                     intake.setTargetSlidePos(18.5);
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
@@ -240,11 +257,11 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
         masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(-16.8, 62.1, Math.toRadians(270)));
 
-        while ( !isStopRequested()) {
+        while (!isStopRequested()) {
             masterThread.unThreadedUpdate();
 
             switch (autoState) {
-                case DRIVING_TO_PRELOAD:
+                case DRIVING_TO_PLACE_PRELOAD:
                     if (drivetrain.isFinished()) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
 
@@ -260,127 +277,61 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                         autoState = AutoState.MOVING_TO_GRAB_BLOCK_1;
                     }
                     break;
+
+
                 case MOVING_TO_GRAB_BLOCK_1:
                     if (drivetrain.isFinished()) {
-                        autoState = AutoState.EXTENDING_TO_GRAB_BLOCK_1;
+                        intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
+
+                        autoTimer.reset();
+
+                        autoState = AutoState.GRABBING_BLOCK_1;
                     }
                         break;
-                case EXTENDING_TO_GRAB_BLOCK_1:
-                    extensionDistance = MathUtil.clip(extensionDistance + 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.setTargetSlidePos(10);
-                        intake.toIntakeState(NewIntake.ToIntakeState.PARTIAL_RAISE_INTAKE);
+                case GRABBING_BLOCK_1:
+                    if (autoTimer.seconds()>.15) {
                         drivetrain.followTrajectorySequence(movingToDropBlock1);
 
-                        autoState = AutoState.MOVING_TO_DROP_BLOCK_1;
-                    }
-                    break;
-                case MOVING_TO_DROP_BLOCK_1:
-                    if (drivetrain.isFinished()) {
-                        autoState = AutoState.START_DROPPING_BLOCK_1;
-                    }
-                    break;
-                case START_DROPPING_BLOCK_1:
-                    if (autoTimer.seconds()>.3) {
-                        autoState = AutoState.DROPPING_BLOCK_1;
-                    }
-                    break;
-                case DROPPING_BLOCK_1:
-                    extensionDistance = MathUtil.clip(extensionDistance - 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.setTargetSlidePos(Math.max(0, extensionDistance-2));
-                        drivetrain.followTrajectorySequence(movingToGrabBlock2);
-
-                        autoState = AutoState.MOVING_TO_GRAB_BLOCK_2;
+                        autoState = AutoState.TRANSITION;
                     }
                     break;
 
 
                 case MOVING_TO_GRAB_BLOCK_2:
                     if (drivetrain.isFinished()) {
-                        autoState = AutoState.EXTENDING_TO_GRAB_BLOCK_2;
+                        intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
+
+                        autoTimer.reset();
+
+                        autoState = AutoState.GRABBING_BLOCK_2;
                     }
                     break;
-                case EXTENDING_TO_GRAB_BLOCK_2:
-                    extensionDistance = MathUtil.clip(extensionDistance + 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.setTargetSlidePos(10);
-                        intake.toIntakeState(NewIntake.ToIntakeState.PARTIAL_RAISE_INTAKE);
+                case GRABBING_BLOCK_2:
+                    if (autoTimer.seconds()>.15) {
                         drivetrain.followTrajectorySequence(movingToDropBlock2);
 
-                        autoState = AutoState.MOVING_TO_DROP_BLOCK_2;
+                        autoState = AutoState.TRANSITION;
                     }
                     break;
-                case MOVING_TO_DROP_BLOCK_2:
-                    if (drivetrain.isFinished()) {
-                        autoState = AutoState.START_DROPPING_BLOCK_2;
-                    }
-                    break;
-                case START_DROPPING_BLOCK_2:
-                    if (autoTimer.seconds()>.3) {
-                        autoState = AutoState.DROPPING_BLOCK_2;
-                    }
-                    break;
-                case DROPPING_BLOCK_2:
-                    extensionDistance = MathUtil.clip(extensionDistance - 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.setTargetSlidePos(Math.max(0, extensionDistance-2));
-                        drivetrain.followTrajectorySequence(movingToGrabBlock3);
-
-                        autoState = AutoState.MOVING_TO_GRAB_BLOCK_3;
-                    }
-                    break;
-
 
 
                 case MOVING_TO_GRAB_BLOCK_3:
                     if (drivetrain.isFinished()) {
-                        autoState = AutoState.EXTENDING_TO_GRAB_BLOCK_3;
+                        intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
+
+                        autoTimer.reset();
+
+                        autoState = AutoState.GRABBING_BLOCK_3;
                     }
                     break;
-                case EXTENDING_TO_GRAB_BLOCK_3:
-                    extensionDistance = MathUtil.clip(extensionDistance + 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.setTargetSlidePos(10);
-                        intake.toIntakeState(NewIntake.ToIntakeState.PARTIAL_RAISE_INTAKE);
+                case GRABBING_BLOCK_3:
+                    if (autoTimer.seconds()>.15) {
                         drivetrain.followTrajectorySequence(movingToDropBlock3);
-
-                        autoState = AutoState.MOVING_TO_DROP_BLOCK_3;
+                        autoState = AutoState.TRANSITION;
                     }
                     break;
-                case MOVING_TO_DROP_BLOCK_3:
-                    if (drivetrain.isFinished()) {
-                        autoState = AutoState.START_DROPPING_BLOCK_3;
-                    }
-                    break;
-                case START_DROPPING_BLOCK_3:
-                    if (autoTimer.seconds()>.3) {
-                        autoState = AutoState.DROPPING_BLOCK_3;
-                    }
-                    break;
-                case DROPPING_BLOCK_3:
-                    extensionDistance = MathUtil.clip(extensionDistance - 10 * loopTimer.seconds(), -.5, 18.5);
-                    intake.setTargetSlidePos(extensionDistance);
-
-                    if (intake.getPrevIntakingState() == NewIntake.IntakingState.IDLE) {
-                        intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
-                        outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
-                        drivetrain.followTrajectorySequence(movingToGrabSpecimen1);
 
 
-                        autoState = AutoState.MOVING_TO_GRAB_SPECIMEN_1;
-                    }
-                    break;
                 case MOVING_TO_GRAB_SPECIMEN_1:
                     if (drivetrain.isFinished()) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED);
@@ -410,6 +361,8 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                         autoState = AutoState.MOVING_TO_GRAB_SPECIMEN_2;
                     }
                     break;
+
+
                 case MOVING_TO_GRAB_SPECIMEN_2:
                     if (drivetrain.isFinished()) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED);
@@ -439,6 +392,8 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                         autoState = AutoState.MOVING_TO_GRAB_SPECIMEN_3;
                     }
                     break;
+
+
                 case MOVING_TO_GRAB_SPECIMEN_3:
                     if (drivetrain.isFinished()) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED);
@@ -464,10 +419,43 @@ public class BlueFourSpecimenAuto extends LinearOpMode {
                     break;
                 case PLACING_SPECIMEN_3:
                     if (autoTimer.seconds()>.1) {
+                        drivetrain.followTrajectorySequence(movingToGrabSpecimen4);
+                        autoState = AutoState.MOVING_TO_GRAB_SPECIMEN_4;
+                    }
+                    break;
+
+
+                case MOVING_TO_GRAB_SPECIMEN_4:
+                    if (drivetrain.isFinished()) {
+                        outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED);
+                        autoTimer.reset();
+
+                        autoState = AutoState.GRABBING_SPECIMEN_4;
+                    }
+                    break;
+                case GRABBING_SPECIMEN_4:
+                    if (autoTimer.seconds()>.3) {
+                        drivetrain.followTrajectorySequence(movingToPlaceSpecimen4);
+
+                        autoState = AutoState.MOVING_TO_PLACE_SPECIMEN_4;
+                    }
+                    break;
+                case MOVING_TO_PLACE_SPECIMEN_4:
+                    if (drivetrain.isFinished()) {
+                        outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
+                        autoTimer.reset();
+
+                        autoState = AutoState.PLACING_SPECIMEN_4;
+                    }
+                    break;
+                case PLACING_SPECIMEN_4:
+                    if (autoTimer.seconds()>.1) {
                         drivetrain.followTrajectorySequence(park);
                         autoState = AutoState.PARKING;
                     }
                     break;
+
+
                 case PARKING:
                     if (drivetrain.isFinished()) {
                         autoState = AutoState.FINISHED;
