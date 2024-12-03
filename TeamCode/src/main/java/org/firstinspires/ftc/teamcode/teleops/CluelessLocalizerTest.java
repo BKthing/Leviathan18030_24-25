@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 @TeleOp
 public class CluelessLocalizerTest extends LinearOpMode {
     Drivetrain drivetrain;
-    CluelessTwoWheelLocalizer cluelessTwoWheelLocalizer;
     OldLocalizer oldLocalizer;
     //    TwoWheel twoWheel;
 //    Intake intake;

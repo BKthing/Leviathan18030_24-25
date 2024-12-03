@@ -73,8 +73,8 @@ public class Outtake extends SubSystem {
         //28.35in max
         EXTRA_DOWN(-.3),
         DOWN(0),
-        WAIT_FOR_TRANSFER(5),
-        TRANSFER(-.5),
+        WAIT_FOR_TRANSFER(4.5),
+//        TRANSFER(-.5),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(6),
         SPECIMEN_BAR(8),
@@ -112,8 +112,8 @@ public class Outtake extends SubSystem {
 
     public enum V4BarPos {
         PLACE_FRONT(.37),
-        WAIT_FOR_TRANSFER(.15),
-        TRANSFER(.128),
+//        WAIT_FOR_TRANSFER(.16),
+        TRANSFER(.27),//.27
         GRAB_BACK(.0),
         PLACE_BACK(.8);
 
@@ -611,7 +611,7 @@ public class Outtake extends SubSystem {
                     targetWristPitch = WristPitch.DOWN.pos;
                     targetWristRoll = WristRoll.ZERO.pos;
 
-                    targetSlidePos = VerticalSlide.TRANSFER.length;
+                    targetSlidePos = VerticalSlide.WAIT_FOR_TRANSFER.length;
 
                     outtakeTimer.reset();
 
@@ -631,9 +631,10 @@ public class Outtake extends SubSystem {
             case WAIT_FOR_PICK_UP_FROM_TRANSFER:
                 if (outtakeTimer.seconds()>.3) {
                     if (autoExtendSlides) {
-                        extendPlaceBehind();
+                        outtakeState = OuttakeState.IDLE;
+//                        extendPlaceBehind();
                     } else {
-                        targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
+                        targetV4BarPos = V4BarPos.TRANSFER.pos;
                         targetWristPitch = WristPitch.DOWN.pos;
                         targetWristRoll = WristRoll.ZERO.pos;
 
@@ -710,7 +711,7 @@ public class Outtake extends SubSystem {
     private void retractFromPlaceBehind() {
         targetWristPitch = WristPitch.WAIT_FOR_TRANSFER.pos;
         targetWristRoll = WristRoll.ZERO.pos;
-        targetV4BarPos = V4BarPos.WAIT_FOR_TRANSFER.pos;
+        targetV4BarPos = V4BarPos.TRANSFER.pos;
 
         if (clawPosition != ClawPosition.OPEN) {
             clawPosition = ClawPosition.OPEN;

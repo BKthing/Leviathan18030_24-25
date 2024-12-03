@@ -63,6 +63,7 @@ public class NewOuttake extends SubSystem {
         PLACE_BEHIND,
         WAIT_DROP_BEHIND,
         INIT_POSITION,
+        TOUCH_BAR,
         IDLE
     }
 
@@ -80,7 +81,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_DOWN(-.3),
         DOWN(0),
         WAIT_FOR_TRANSFER(5),
-        TRANSFER(4),
+        TRANSFER(3.7),
         EXTRACT_FROM_TRANSFER(7),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(1),
@@ -110,7 +111,7 @@ public class NewOuttake extends SubSystem {
         CLEAR_FRONT_BAR(.72),
 //        WAIT_FOR_TRANSFER(.35),
         MID_POSITION_CUTOFF(.2),
-        TRANSFER(.28),
+        TRANSFER(.3),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.33),
         GRAB_BACK(.0),
@@ -401,6 +402,12 @@ public class NewOuttake extends SubSystem {
                 dropBehind();
                 toOuttakeState = ToOuttakeState.IDLE;
                 break;
+            case TOUCH_BAR:
+                targetV4BPos = V4BarPos.PLACE_FRONT.pos;
+                targetClawPitch = ClawPitch.DOWN.pos;
+                targetSlidePos = 4;
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
         }
 
 
@@ -527,7 +534,7 @@ public class NewOuttake extends SubSystem {
                  break;
             case DROPPING_SAMPLE:
                 if (outtakeTimer.seconds()>.2) {
-                    targetClawPitch = ClawPitch.BACK_45.pos;
+                    targetClawPitch = ClawPitch.BACK.pos;
                     outtakeTimer.reset();
 
                     outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;

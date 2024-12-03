@@ -59,7 +59,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     private final ElapsedTimer timer = new ElapsedTimer();
 
-    TwoWheel twoWheel;
+//    TwoWheel twoWheel;
 
     public CluelessConstAccelLocalizer(SubSystemData data) {
         super(data);
@@ -85,7 +85,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
         imu.resetYaw();
 
-        twoWheel = new TwoWheel(PERPENDICULAR_X, PARALLEL_Y);
+//        twoWheel = new TwoWheel(PERPENDICULAR_X, PARALLEL_Y);
 
 //        imuAction.setAction(() -> {
 //            imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)*Math.PI/180;
@@ -106,8 +106,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     @Override
     public void loop() {
         localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
-//        localizer.update(0, 0, 0, 1);
-        twoWheel.update(new Point(parallelWheelDistance, timer.seconds()), new Point(perpendicularWheelDistance, timer.seconds()), new Point(imuAngle, timer.seconds()));
+//        twoWheel.update(new Point(parallelWheelDistance, timer.seconds()), new Point(perpendicularWheelDistance, timer.seconds()), new Point(imuAngle, timer.seconds()));
         //request an imu call, only gets called if it is not already queued
 //        imuAction.queueAction();
         data.getHardwareQueue().add(() -> {
@@ -154,5 +153,5 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         return localizer;
     }
 
-    public TwoWheel getTwoWheel() {return twoWheel;}
+//    public TwoWheel getTwoWheel() {return twoWheel;}
 }

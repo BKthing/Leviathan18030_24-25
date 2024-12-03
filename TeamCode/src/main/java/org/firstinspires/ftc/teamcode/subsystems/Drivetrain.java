@@ -66,7 +66,7 @@ public class Drivetrain extends SubSystem {
 
     private Pose2d poseEstimate;
     private Pose2d poseVelocity;
-    private Pose2d poseAcceleration;
+//    private Pose2d poseAcceleration;
 
     private boolean fieldCentric = false;
     private double headingOffset = 0;
@@ -123,7 +123,7 @@ public class Drivetrain extends SubSystem {
                 //getting the data before the localizer starts updating it
                 poseEstimate = localizer.getPoseEstimate();
                 poseVelocity = localizer.getPoseVelocity();
-                poseAcceleration = localizer.getPoseAcceleration();
+//                poseAcceleration = localizer.getPoseAcceleration();
 
                 if (!poseVelocity.isFinite()) {
                     throw new RuntimeException("Invalid velocity:" + poseVelocity);
@@ -133,7 +133,7 @@ public class Drivetrain extends SubSystem {
                 //getting the data before the localizer starts updating it
                 poseEstimate = localizer.getPoseEstimate();
                 poseVelocity = localizer.getPoseVelocity();
-                poseAcceleration = localizer.getPoseAcceleration();
+//                poseAcceleration = localizer.getPoseAcceleration();
 
                 if (!poseVelocity.isFinite()) {
                     throw new RuntimeException("Invalid velocity:" + poseVelocity);
@@ -146,7 +146,7 @@ public class Drivetrain extends SubSystem {
     public void loop() {
         switch (driveState) {
             case FOLLOW_PATH:
-                setDrivePower(runner.update(poseEstimate, poseVelocity, poseAcceleration));
+                setDrivePower(runner.update(poseEstimate, poseVelocity));
 
                 break;
             case DRIVER_CONTROL:

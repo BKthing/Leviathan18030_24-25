@@ -37,8 +37,8 @@ public class ConstAccelLocalizer extends SubSystem{
 
     public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
 
-    public static double PARALLEL_Y = -2.56890; // Y is the strafe direction 5.8
-    public static double PERPENDICULAR_X = -5.98040;//2.246
+    public static double PARALLEL_Y = 99;//-2.56890; // Y is the strafe direction 5.8
+    public static double PERPENDICULAR_X = 99;//-5.98040;//2.246
 
     private final Encoder perpendicularWheel, parallelWheel;
 
