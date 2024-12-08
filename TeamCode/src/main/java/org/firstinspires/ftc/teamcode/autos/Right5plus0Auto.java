@@ -9,6 +9,7 @@ import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
@@ -62,7 +63,7 @@ public class Right5plus0Auto extends LinearOpMode {
     private final ElapsedTimer autoTimer = new ElapsedTimer();
 
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer localizer;
     NewIntake intake;
     NewOuttake outtake;
     MasterThread masterThread;
@@ -80,20 +81,20 @@ public class Right5plus0Auto extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);
 
 
-        intake = new NewIntake(masterThread.getData(), blueAlliance, false);
-        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, false, true, true);
+        intake = new NewIntake(masterThread.getData(), blueAlliance, false, true);
+        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, false, true, true, true);
 
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
                 drivetrain,
-                oldLocalizer,
+                localizer,
                 intake,
                 outtake
         );
@@ -251,11 +252,12 @@ public class Right5plus0Auto extends LinearOpMode {
 
         drivetrain.followTrajectorySequence(preload);
 
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(-16.8, 62.1, Math.toRadians(270)));
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(-16.8, 62.1, Math.toRadians(270)));
 
         waitForStart();
-        masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(-16.8, 62.1, Math.toRadians(270)));
+        masterThread.clearBulkCache();
+
+        localizer.clearDeltas();
 
         while (!isStopRequested()) {
             masterThread.unThreadedUpdate();

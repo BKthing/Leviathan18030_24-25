@@ -43,7 +43,7 @@ public class CluelessLocalizerTest extends LinearOpMode {
 
 
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), cluelessConstAccelLocalizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);
 
 //        twoWheel = new TwoWheel(-5.98040, -2.56890);
@@ -57,10 +57,17 @@ public class CluelessLocalizerTest extends LinearOpMode {
         );
 
 
-        waitForStart();
-        masterThread.unThreadedUpdate();
         oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
         cluelessConstAccelLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
+
+
+        waitForStart();
+
+        masterThread.clearBulkCache();
+
+        oldLocalizer.clearDeltas();
+        cluelessConstAccelLocalizer.clearDeltas();
+
 
         while ( !isStopRequested()) {
 

@@ -5,11 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
+import com.reefsharklibrary.localizers.Localizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
@@ -41,7 +43,7 @@ public class OldLeftAuto extends LinearOpMode {
     ElapsedTimer autoTimer = new ElapsedTimer();
 
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer localizer;
     Intake intake;
     Outtake outtake;
 //    TeleopController teleopController;
@@ -61,9 +63,9 @@ public class OldLeftAuto extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);
 
         intake = new Intake(masterThread.getData());
@@ -75,7 +77,7 @@ public class OldLeftAuto extends LinearOpMode {
 
         masterThread.addSubSystems(
                 drivetrain,
-                oldLocalizer,
+                localizer,
                 intake,
                 transfer,
                 outtake
@@ -226,10 +228,10 @@ public class OldLeftAuto extends LinearOpMode {
         waitForStart();
         drivetrain.followTrajectorySequence(preload);
 
-        oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
+        localizer.getLocalizer().setPoseEstimate(preload.startPos());
 
         masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(preload.startPos());
+        localizer.getLocalizer().setPoseEstimate(preload.startPos());
 
 
         //--------------- DOING EVERYTHING IN THE AUTO THAT ISN'T THE PRELOAD PROCESS --------------

@@ -14,6 +14,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.reefsharklibrary.data.MotorPowers;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
+import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
+import com.reefsharklibrary.localizers.Localizer;
 import com.reefsharklibrary.localizers.OldLocalizer;
 import com.reefsharklibrary.pathing.EndpointEstimator;
 import com.reefsharklibrary.pathing.TrajectoryInterface;
@@ -60,7 +62,7 @@ public class Drivetrain extends SubSystem {
     private final VoltageSensor batteryVoltageSensor;
     private double voltage = 0;
 
-    private final com.reefsharklibrary.localizers.OldLocalizer localizer;
+    private final CluelessTwoWheelLocalizer localizer;
 
     private final TrajectorySequenceRunner runner;
 
@@ -71,11 +73,11 @@ public class Drivetrain extends SubSystem {
     private boolean fieldCentric = false;
     private double headingOffset = 0;
 
-    public Drivetrain(SubSystemData data, com.reefsharklibrary.localizers.OldLocalizer localizer) {
+    public Drivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer) {
         this(data, localizer, DriveState.FOLLOW_PATH);
     }
 
-    public Drivetrain(SubSystemData data, OldLocalizer localizer, DriveState driveState) {
+    public Drivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer, DriveState driveState) {
         super(data);
 
         this.localizer = localizer;
@@ -173,7 +175,7 @@ public class Drivetrain extends SubSystem {
 
                 double turn;
                 if (Math.abs(gamepad1.right_stick_x)>.02) {
-                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.3*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
+                    turn = -gamepad1.right_stick_x*gamepad1.right_stick_x*gamepad1.right_stick_x*.4*speedMultiplier; //(gamepad1.right_stick_x*Math.abs(gamepad1.right_stick_x))*.7;
                 } else {
                     turn = 0;
                 }

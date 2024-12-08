@@ -80,10 +80,14 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
 //        imuAction = new ReusableHardwareAction(data.getHardwareQueue());
 
-        imu = hardwareMap.get(BNO055IMUNew.class, "imu");
+//        imu = hardwareMap.get(BNO055IMUNew.class, "imu");
 
-        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
-        imu.resetYaw();
+//        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
+//        imu.resetYaw();
+        imu = hardwareMap.get(BNO055IMUNew.class, "expansionImu");
+
+
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
 
 //        twoWheel = new TwoWheel(PERPENDICULAR_X, PARALLEL_Y);
 
@@ -117,6 +121,16 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     public void update() {
 //        localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.nanoSeconds());
 //        localizer.update(0, 0, 0, 1);
+    }
+
+    public void clearDeltas() {
+        updatedImuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+        imuAngle = updatedImuAngle;
+
+        perpendicularWheelDistance = getPerpendicularWheelDistance.getAsDouble();
+        parallelWheelDistance = getParallelWheelDistance.getAsDouble();
+
+        localizer.clearDeltas(parallelWheelDistance, perpendicularWheelDistance, imuAngle);
     }
 
     @Override

@@ -225,8 +225,8 @@ public class AxonTest extends LinearOpMode {
 
 //
 
-//            telemetry.addData("Pos", targetPos);
-//            telemetry.addData("Roll Pos", clawRollPos);
+            telemetry.addData("Pos", targetPos);
+            telemetry.addData("Pitch Pos", targetPitchPos);
 
             loopTime.setValue(timer.seconds());
 

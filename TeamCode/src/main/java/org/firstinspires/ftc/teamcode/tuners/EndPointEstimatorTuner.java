@@ -6,6 +6,7 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.EndPointEstimatorSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
@@ -14,7 +15,7 @@ import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 @TeleOp
 public class EndPointEstimatorTuner extends LinearOpMode {
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer oldLocalizer;
 
     EndPointEstimatorSubsystem endPointEstimatorSubsystem;
     MasterThread masterThread;
@@ -33,7 +34,7 @@ public class EndPointEstimatorTuner extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        oldLocalizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
         drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);

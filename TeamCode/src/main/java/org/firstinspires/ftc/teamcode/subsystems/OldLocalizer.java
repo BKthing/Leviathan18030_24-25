@@ -39,7 +39,7 @@ public class OldLocalizer extends SubSystem{
 
     private final Encoder perpendicularWheel, parallelWheel;
 
-    private final IMU externalImu, expansionImu, controlImu;
+    private final IMU /*externalImu,*/ expansionImu/*, controlImu*/;
 
 
     private enum CurrentImu{
@@ -48,7 +48,7 @@ public class OldLocalizer extends SubSystem{
         CONTROL_IMU;
     }
 
-    CurrentImu currentImu = CurrentImu.EXTERNAL_IMU;
+    CurrentImu currentImu = CurrentImu.EXPANSION_IMU;
 
 
     private double imuAngle = 0;
@@ -86,17 +86,21 @@ public class OldLocalizer extends SubSystem{
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;
         getParallelWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * parallelWheel.getCurrentPosition() * PARALLEL_MULTIPLIER / TICKS_PER_REV;
 
-        externalImu = hardwareMap.get(BNO055IMUNew.class, "imu");
+//        externalImu = hardwareMap.get(BNO055IMUNew.class, "imu");
         expansionImu = hardwareMap.get(BNO055IMUNew.class, "expansionImu");
-        controlImu = hardwareMap.get(BHI260IMU.class, "controlImu");
+//        controlImu = hardwareMap.get(BHI260IMU.class, "controlImu");
 
-        externalImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
-        externalImu.resetYaw();
+//        externalImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(xyzOrientation(270, 0, 0))));//new RevHubOrientationOnRobot(xyzOrientation(0, 0, 0)) new Orientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES,0, 0, 0, 0)
+//        externalImu.resetYaw();
 
-        expansionImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.DOWN, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+        expansionImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+//        expansionImu.resetYaw();
 
-        controlImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.DOWN, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+//        imuOffsetAngle = expansionImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
 
+
+//        controlImu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.DOWN, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+//        controlImu.resetYaw();
 //        imuAction.setAction(() -> {
 //            imuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)*Math.PI/180;
 //            position.setValue("imu updated");
@@ -110,11 +114,11 @@ public class OldLocalizer extends SubSystem{
         parallelWheelDistance = getParallelWheelDistance.getAsDouble();
         //is set here to prevent threading conflicts
 
-        if (Double.isNaN(updatedImuAngle)) {
-            changeImu();
-        } else {
-            imuAngle = updatedImuAngle + imuOffsetAngle;
-        }
+//        if (Double.isNaN(updatedImuAngle)) {
+//            changeImu();
+//        } else {
+            imuAngle = updatedImuAngle;
+//        }
 
 
         }
@@ -126,28 +130,38 @@ public class OldLocalizer extends SubSystem{
 
         //request an imu call, only gets called if it is not already queued
 //        imuAction.queueAction();
-        switch (currentImu) {
-            case EXTERNAL_IMU:
-                data.getHardwareQueue().add(() -> {
-                    updatedImuAngle = externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
-                });
-                break;
-            case EXPANSION_IMU:
+//        switch (currentImu) {
+//            case EXTERNAL_IMU:
+//                data.getHardwareQueue().add(() -> {
+//                    updatedImuAngle = externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+//                });
+//                break;
+//            case EXPANSION_IMU:
                 data.getHardwareQueue().add(() -> {
                     updatedImuAngle = expansionImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
                 });
-                break;
-            case CONTROL_IMU:
-                data.getHardwareQueue().add(() -> {
-                    updatedImuAngle = controlImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
-                });
-                break;
-        }
+//                break;
+//            case CONTROL_IMU:
+//                data.getHardwareQueue().add(() -> {
+//                    updatedImuAngle = controlImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+//                });
+//                break;
+//        }
 
     }
 
     public void update() {
-        localizer.update(getPerpendicularWheelDistance.getAsDouble(), getParallelWheelDistance.getAsDouble(), externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+//        localizer.update(getPerpendicularWheelDistance.getAsDouble(), getParallelWheelDistance.getAsDouble(), externalImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+    }
+
+    public void clearDeltas() {
+        updatedImuAngle = expansionImu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
+        imuAngle = updatedImuAngle;
+
+        perpendicularWheelDistance = getPerpendicularWheelDistance.getAsDouble();
+        parallelWheelDistance = getParallelWheelDistance.getAsDouble();
+
+        localizer.clearDeltas(parallelWheelDistance, perpendicularWheelDistance, imuAngle);
     }
 
     @Override
@@ -182,37 +196,37 @@ public class OldLocalizer extends SubSystem{
     }
 
     private void changeImu() {
-            if (currentImu != CurrentImu.EXTERNAL_IMU) {
-                double testIMUAngle = externalImu.getRobotYawPitchRollAngles().getYaw();
-                if (!Double.isNaN(testIMUAngle)) {
-                    currentImu = CurrentImu.EXTERNAL_IMU;
-                    //imuAngle = testImuangle + offset
-                    imuOffsetAngle = imuAngle-testIMUAngle;
-                    imuType.setValue(currentImu);
-                    return;
-                }
-            }
-
-            if (currentImu != CurrentImu.EXPANSION_IMU) {
-                double testIMUAngle = expansionImu.getRobotYawPitchRollAngles().getYaw();
-                if (!Double.isNaN(testIMUAngle)) {
-                    currentImu = CurrentImu.EXPANSION_IMU;
-
-                    imuOffsetAngle = imuAngle-testIMUAngle;
-                    imuType.setValue(currentImu);
-                    return;
-                }
-            }
-
-            if (currentImu != CurrentImu.CONTROL_IMU) {
-                double testIMUAngle = controlImu.getRobotYawPitchRollAngles().getYaw();
-                if (!Double.isNaN(testIMUAngle)) {
-                    currentImu = CurrentImu.CONTROL_IMU;
-
-                    imuOffsetAngle = imuAngle-testIMUAngle;
-                    imuType.setValue(currentImu);
-                    return;
-                }
-            }
+//            if (currentImu != CurrentImu.EXTERNAL_IMU) {
+//                double testIMUAngle = externalImu.getRobotYawPitchRollAngles().getYaw();
+//                if (!Double.isNaN(testIMUAngle)) {
+//                    currentImu = CurrentImu.EXTERNAL_IMU;
+//                    //imuAngle = testImuangle + offset
+//                    imuOffsetAngle = imuAngle-testIMUAngle;
+//                    imuType.setValue(currentImu);
+//                    return;
+//                }
+//            }
+//
+//            if (currentImu != CurrentImu.EXPANSION_IMU) {
+//                double testIMUAngle = expansionImu.getRobotYawPitchRollAngles().getYaw();
+//                if (!Double.isNaN(testIMUAngle)) {
+//                    currentImu = CurrentImu.EXPANSION_IMU;
+//
+//                    imuOffsetAngle = imuAngle-testIMUAngle;
+//                    imuType.setValue(currentImu);
+//                    return;
+//                }
+//            }
+//
+//            if (currentImu != CurrentImu.CONTROL_IMU) {
+//                double testIMUAngle = controlImu.getRobotYawPitchRollAngles().getYaw();
+//                if (!Double.isNaN(testIMUAngle)) {
+//                    currentImu = CurrentImu.CONTROL_IMU;
+//
+//                    imuOffsetAngle = imuAngle-testIMUAngle;
+//                    imuType.setValue(currentImu);
+//                    return;
+//                }
+//            }
     }
 }

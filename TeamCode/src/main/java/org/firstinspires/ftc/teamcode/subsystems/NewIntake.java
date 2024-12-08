@@ -149,7 +149,7 @@ public class NewIntake extends SubSystem {
         IntakePos(double pos) {this.pos = pos;}
     }
     private double targetIntakePos = IntakePos.UP.pos;
-    private double actualIntakePos = IntakePos.UP.pos;
+    private double actualIntakePos = -1;
 
     private double targetIntakeSpeed = 0;
     private double actualIntakeSpeed = 0;
@@ -181,7 +181,7 @@ public class NewIntake extends SubSystem {
     Telemetry.Item intakeTelem;
     Telemetry.Item colorTelem;
 
-    public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls) {
+    public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls, boolean init) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -210,9 +210,10 @@ public class NewIntake extends SubSystem {
         leftIntakeServo.scaleRange(.34, .965);
         rightIntakeServo.scaleRange(.34, .965);
 
-        leftIntakeServo.setPosition(targetIntakePos);
-        rightIntakeServo.setPosition(targetIntakePos);
-
+        if (init) {
+            leftIntakeServo.setPosition(targetIntakePos);
+            rightIntakeServo.setPosition(targetIntakePos);
+        }
 
         leftSpinnerServo = hardwareMap.get(CRServo.class, "leftSpinnerServo");
         rightSpinnerServo = hardwareMap.get(CRServo.class, "rightSpinnerServo");

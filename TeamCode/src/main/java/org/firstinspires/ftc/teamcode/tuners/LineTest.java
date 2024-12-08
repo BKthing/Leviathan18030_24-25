@@ -8,6 +8,7 @@ import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
@@ -19,7 +20,7 @@ public class LineTest extends LinearOpMode {
     ElapsedTimer autoTimer = new ElapsedTimer();
 
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer oldLocalizer;
 
     MasterThread masterThread;
     Telemetry.Item loopTime;
@@ -37,7 +38,7 @@ public class LineTest extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        oldLocalizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
         drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);

@@ -6,6 +6,7 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.ConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
@@ -14,7 +15,7 @@ import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 @TeleOp
 public class NewLocalizerTesting extends LinearOpMode {
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer oldLocalizer;
     ConstAccelLocalizer localizer;
 //    TwoWheel twoWheel;
 //    Intake intake;
@@ -38,7 +39,7 @@ public class NewLocalizerTesting extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        oldLocalizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
         localizer = new ConstAccelLocalizer(masterThread.getData());
 

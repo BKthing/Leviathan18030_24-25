@@ -9,6 +9,7 @@ import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
@@ -44,7 +45,7 @@ public class Left1plus3Auto extends LinearOpMode {
     private final ElapsedTimer autoTimer = new ElapsedTimer();
 
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer localizer;
     NewIntake intake;
     NewOuttake outtake;
     MasterThread masterThread;
@@ -63,26 +64,26 @@ public class Left1plus3Auto extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);
 
 
-        intake = new NewIntake(masterThread.getData(), blueAlliance, false);
-        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, false, true, true);
+        intake = new NewIntake(masterThread.getData(), blueAlliance, false, true);
+        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, false, true, true, true);
 
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
                 drivetrain,
-                oldLocalizer,
+                localizer,
                 intake,
                 outtake
         );
 
         TrajectorySequence movingToPlacePreload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(10, 33), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(6, 31), Math.toRadians(270))
                 .callMarker(2, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
                 })
@@ -139,7 +140,7 @@ public class Left1plus3Auto extends LinearOpMode {
         TrajectorySequence movingToPark = new TrajectorySequenceBuilder(movingToScoreBlock3.endPose(), RobotConstants.constraints)
                 .splineToLineHeading(new Pose2d(34, 15, Math.toRadians(180)), Math.toRadians(180))
                 .forward(16)
-                .callMarkerFromEnd(15, () -> {
+                .callMarkerFromEnd(20, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.TOUCH_BAR);
                 })
                 .build();
@@ -148,11 +149,12 @@ public class Left1plus3Auto extends LinearOpMode {
 
         drivetrain.followTrajectorySequence(movingToPlacePreload);
 
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
 
         waitForStart();
-        masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
+        masterThread.clearBulkCache();
+
+        localizer.clearDeltas();
 
         while (!isStopRequested()) {
             masterThread.unThreadedUpdate();
@@ -198,7 +200,7 @@ public class Left1plus3Auto extends LinearOpMode {
                     }
                     break;
                 case SCORING_BLOCK_1:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToGrabBlock2);
                         autoState = AutoState.MOVING_TO_GRAB_BLOCK_2;
@@ -232,7 +234,7 @@ public class Left1plus3Auto extends LinearOpMode {
                     }
                     break;
                 case SCORING_BLOCK_2:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToGrabBlock3);
                         autoState = AutoState.MOVING_TO_GRAB_BLOCK_3;
@@ -266,7 +268,7 @@ public class Left1plus3Auto extends LinearOpMode {
                     }
                     break;
                 case SCORING_BLOCK_3:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToPark);
 

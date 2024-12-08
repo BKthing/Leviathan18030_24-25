@@ -10,13 +10,13 @@ import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class EndPointEstimatorSubsystem extends SubSystem {
 
-    private final OldLocalizer localizer;
+    private final CluelessConstAccelLocalizer localizer;
     private final EndpointEstimator endpointEstimator;
 
     private Pose2d poseEstimate;// = new Pose2d(0, 0, 0);
     private Pose2d poseVelocity;// = new Pose2d(0 , 0, 0);
 
-    public EndPointEstimatorSubsystem(SubSystemData data, OldLocalizer localizer) {
+    public EndPointEstimatorSubsystem(SubSystemData data, CluelessConstAccelLocalizer localizer) {
         super(data);
 
         this.localizer = localizer;

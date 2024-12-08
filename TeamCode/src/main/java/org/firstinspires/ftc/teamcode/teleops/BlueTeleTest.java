@@ -6,6 +6,7 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
@@ -15,7 +16,7 @@ import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 @TeleOp
 public class BlueTeleTest extends LinearOpMode {
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer localizer;
     NewIntake intake;
     NewOuttake outtake;
     MasterThread masterThread;
@@ -33,28 +34,31 @@ public class BlueTeleTest extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);
 
 
-        intake = new NewIntake(masterThread.getData(), blueAlliance, true);
-        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true);
+        intake = new NewIntake(masterThread.getData(), blueAlliance, true, false);
+        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true, false);
 
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
                 drivetrain,
-                oldLocalizer,
+                localizer,
                 intake,
                 outtake
         );
 
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
 
         waitForStart();
-        masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
+        masterThread.clearBulkCache();
+
+        localizer.clearDeltas();
+
 
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();

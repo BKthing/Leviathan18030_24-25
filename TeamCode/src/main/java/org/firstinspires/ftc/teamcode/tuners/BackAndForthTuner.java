@@ -8,6 +8,7 @@ import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
@@ -19,7 +20,7 @@ public class BackAndForthTuner extends LinearOpMode {
     ElapsedTimer autoTimer = new ElapsedTimer();
 
     Drivetrain drivetrain;
-    OldLocalizer oldLocalizer;
+    CluelessConstAccelLocalizer localizer;
 
     MasterThread masterThread;
     Telemetry.Item loopTime;
@@ -37,15 +38,15 @@ public class BackAndForthTuner extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
-        oldLocalizer = new OldLocalizer(masterThread.getData());
+        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
 
-        drivetrain = new Drivetrain(masterThread.getData(), oldLocalizer.getLocalizer());
+        drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);
 
 
         masterThread.addSubSystems(
                 drivetrain,
-                oldLocalizer
+                localizer
         );
 
 
@@ -62,7 +63,7 @@ public class BackAndForthTuner extends LinearOpMode {
         drivetrain.followTrajectorySequence(forward);
 
         masterThread.unThreadedUpdate();
-        oldLocalizer.getLocalizer().setPoseEstimate(forward.startPos());
+        localizer.getLocalizer().setPoseEstimate(forward.startPos());
 
 
 
