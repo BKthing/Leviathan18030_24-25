@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.HardwareQueue;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -44,6 +45,9 @@ public class MasterThread {
 
     private final Telemetry.Item queueSize;
 
+    private final Telemetry.Item threadUpdateTime;
+    private final ElapsedTimer threadUpdateTimer = new ElapsedTimer();
+
     public MasterThread(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad1, Gamepad gamepad2) {
         this.hardwareMap = hardwareMap;
 
@@ -55,6 +59,8 @@ public class MasterThread {
         this.gamepad2 = gamepad2;
 
         queueSize = telemetry.addData("Queue Size", 0);
+
+        threadUpdateTime = telemetry.addData("Thread update time", "");
 
         this.data = new SubSystemData(hardwareMap, hardwareQueue, telemetry, gamepad1Instance, gamepad2Instance);
 
@@ -85,6 +91,8 @@ public class MasterThread {
         }
 
 //        es.shutdown();
+
+        threadUpdateTimer.reset();
 
         //updates the data in the bulkCache
         clearBulkCache();
@@ -157,6 +165,8 @@ public class MasterThread {
 
         dashboard.sendTelemetryPacket(packet);
         dashboard.getTelemetry().update();
+
+        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds());
 
         telemetry.update();
 

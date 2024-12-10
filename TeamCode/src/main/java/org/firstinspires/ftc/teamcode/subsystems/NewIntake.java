@@ -178,8 +178,12 @@ public class NewIntake extends SubSystem {
 
     Gamepad oldGamePad2 = new Gamepad();
 
-    Telemetry.Item intakeTelem;
-    Telemetry.Item colorTelem;
+    private final Telemetry.Item intakeTelem;
+    private final Telemetry.Item colorTelem;
+
+    private final ElapsedTimer intakeLoopTimer = new ElapsedTimer();
+
+    private final Telemetry.Item intakeLoopTime;
 
     public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls, boolean init) {
         super(data);
@@ -248,6 +252,7 @@ public class NewIntake extends SubSystem {
 
         slidePosTelem = telemetry.addData("Slide position", "");
 
+        intakeLoopTime = telemetry.addData("Intake loop time", "");
 
     }
 
@@ -271,6 +276,8 @@ public class NewIntake extends SubSystem {
                 colors = colorSensor.getNormalizedColors();
             }
             checkColor = true;
+        } else {
+            checkColor = false;
         }
 
         if (updateIntakeState) {
@@ -301,6 +308,8 @@ public class NewIntake extends SubSystem {
     //trying to add to things to hardware queue asap so their more time for it to be called
     @Override
     public void loop() {
+        intakeLoopTimer.reset();
+
         if (teleOpControls) {
             if (gamepad2.back) {
                 if (gamepad2.dpad_down) {
@@ -468,16 +477,16 @@ public class NewIntake extends SubSystem {
 
                     sampleColor = findSampleColor();
 
-                    if (sampleColor == SampleColor.NONE) {
-                        hardwareQueue.add(() -> {
-                            newColors = colorSensor.getNormalizedColors();
-                        });
-                        break;
-                    }
+//                    if (sampleColor == SampleColor.NONE) {
+//                        hardwareQueue.add(() -> {
+//                            newColors = colorSensor.getNormalizedColors();
+//                        });
+//                        break;
+//                    }
 
                     checkColor = false;
 
-                    if ((sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {
+                    if (false) {//(sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)
                         targetIntakeSpeed = -1;
                         targetIntakePos = IntakePos.PARTIAL_UP.pos;
                         intakingState = IntakingState.START_EJECTING;
@@ -682,6 +691,8 @@ public class NewIntake extends SubSystem {
 
         prevIsBreakBeam = isBreakBeam;
         oldGamePad2.copy(gamepad2);
+
+        intakeLoopTime.setValue(intakeLoopTimer.milliSeconds());
     }
 
     @SuppressLint("DefaultLocale")
@@ -694,11 +705,11 @@ public class NewIntake extends SubSystem {
     }
 
     private SampleColor findSampleColor() {
-        if (colors.red > .01 && colors.green < .012) {
+        if (colors.red > .008 && colors.green < .012) {
 //            throw new RuntimeException("Not red");
             return SampleColor.RED;
         }
-        else if (colors.blue > .01) {
+        else if (colors.blue > .0075) {
             return SampleColor.BLUE;
         }
         else if (colors.green > .015) {

@@ -29,6 +29,10 @@ public class AxonTest extends LinearOpMode {
 
     Telemetry.Item loopTime;
 
+    Telemetry.Item posTelem;
+
+    Telemetry.Item pitchPosTelem;
+
 
 
     ElapsedTimer timer = new ElapsedTimer();
@@ -60,6 +64,8 @@ public class AxonTest extends LinearOpMode {
 
         breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
+        telemetry.setAutoClear(false);
+
         breakBeamTelem = telemetry.addData("Block", true);
 
         leftOuttake = hardwareMap.get(Servo.class, "leftOuttakeServo");
@@ -71,6 +77,9 @@ public class AxonTest extends LinearOpMode {
         rightOuttake.setDirection(Servo.Direction.REVERSE);
 
         clawPitchServo = hardwareMap.get(Servo.class, "clawPitchServo"); // control hub 1
+
+        posTelem = telemetry.addData("Pos", "");
+        pitchPosTelem = telemetry.addData("Pitch Pos", "");
 //        leftOuttake.scaleRange(.34, .965);
 //        rightOuttake.scaleRange(1-.965, 1-.34);
 //
@@ -114,13 +123,13 @@ public class AxonTest extends LinearOpMode {
 
             colorTelem.setValue(colors.red + " " + colors.green + " " + colors.blue);
 
-            if (colors.red > .006 && colors.green < .01) {
+            if (colors.red > .008 && colors.green < .012) {
                 sampleColorTelem.setValue("red");
             }
-            else if (colors.blue > .006) {
+            else if (colors.blue > .007) {
                 sampleColorTelem.setValue("blue");
             }
-            else if (colors.green > .01) {
+            else if (colors.green > .015) {
                 sampleColorTelem.setValue("yellow");
             }
             else {
@@ -225,10 +234,10 @@ public class AxonTest extends LinearOpMode {
 
 //
 
-            telemetry.addData("Pos", targetPos);
-            telemetry.addData("Pitch Pos", targetPitchPos);
+            posTelem.setValue(targetPos);
+            pitchPosTelem.setValue(targetPitchPos);
 
-            loopTime.setValue(timer.seconds());
+            loopTime.setValue(timer.milliSeconds());
 
             telemetry.update();
 

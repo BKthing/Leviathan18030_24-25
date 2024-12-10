@@ -100,10 +100,10 @@ public class Right5plus0Auto extends LinearOpMode {
         );
 
 
-        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(-16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(-8, 33), Math.toRadians(270))
+        TrajectorySequence preload = new TrajectorySequenceBuilder(new Pose2d(-5.5, 62.1, Math.toRadians(270)), RobotConstants.constraints)
+                .splineToConstantHeading(new Vector2d(-1, 30.2), Math.toRadians(270))
                 .callMarker(2, () -> {
-
+//hi brett
                     /* rotates the outtake 4bar to a position where it can place the preloaded
                     specimen onto the top rung, and rotates the claw to hold the specimen right side up  */
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
@@ -112,10 +112,10 @@ public class Right5plus0Auto extends LinearOpMode {
 
         TrajectorySequence movingToGrabBlock1 = new TrajectorySequenceBuilder(preload.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToSplineHeading(new Pose2d(-29, 46, Math.toRadians(237)), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(-29, 44, Math.toRadians(240)), Math.toRadians(180))
                 .callMarkerFromEnd(5, () -> {
                     intake.setTargetSlidePos(18.5);
-                    intake.toIntakeState(NewIntake.ToIntakeState.RAISE_TO_AUTO_HEIGHT);
+                    intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                 })
                 .build();
 
@@ -123,7 +123,7 @@ public class Right5plus0Auto extends LinearOpMode {
         Pose2d movingToDropBlock1EndPose = new Pose2d(-30, 47, Math.toRadians(160));
 
         TrajectorySequence movingToGrabBlock2 = new TrajectorySequenceBuilder(movingToDropBlock1EndPose, RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-37, 46, Math.toRadians(240)))
+                .lineToSplineHeading(new Pose2d(-38, 46, Math.toRadians(240)))
                 .callMarkerFromEnd(1, () -> {
                     intake.setTargetSlidePos(18.5);
                 })
@@ -145,9 +145,9 @@ public class Right5plus0Auto extends LinearOpMode {
         Pose2d movingToDropBlock2EndPose = new Pose2d(-36, 47, Math.toRadians(160));
 
         TrajectorySequence movingToGrabBlock3 = new TrajectorySequenceBuilder(movingToDropBlock2EndPose, RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-42, 46, Math.toRadians(235)))
+                .lineToSplineHeading(new Pose2d(-43, 43, Math.toRadians(235)))
                 .callMarkerFromEnd(2, () -> {
-                    intake.setTargetSlidePos(18.5);
+                    intake.setTargetSlidePos(16.5);
                 })
                 .build();
 
@@ -164,11 +164,11 @@ public class Right5plus0Auto extends LinearOpMode {
 
 
 
-        Pose2d movingToDropBlock3EndPose = new Pose2d(-36, 47, Math.toRadians(160));
+        Pose2d movingToDropBlock3EndPose = new Pose2d(-36, 47, Math.toRadians(150));
 
         TrajectorySequence movingToGrabSpecimen1 = new TrajectorySequenceBuilder(movingToDropBlock3EndPose, RobotConstants.constraints)
-                .lineToSplineHeading(new Pose2d(-30, 61, Math.toRadians(270)))
-                .setEndDelay(.5)
+                .lineToSplineHeading(new Pose2d(-30, 63, Math.toRadians(270)))
+                .setEndDelay(.2)
                 .back(2)
                 .build();
 
@@ -188,14 +188,14 @@ public class Right5plus0Auto extends LinearOpMode {
 
         TrajectorySequence movingToPlaceSpecimen1 = new TrajectorySequenceBuilder(movingToGrabSpecimen1.endPose(), RobotConstants.constraints)
                 .forward(1)
-                .splineToConstantHeading(new Vector2d(-10, 36), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-.5, 36), Math.toRadians(270))
                 .build();
 
 
 
         TrajectorySequence movingToGrabSpecimen2 = new TrajectorySequenceBuilder(movingToPlaceSpecimen1.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToConstantHeading(new Vector2d(-30, 61), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-30, 63), Math.toRadians(90))
                 .callMarker(5, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
@@ -204,14 +204,14 @@ public class Right5plus0Auto extends LinearOpMode {
 
         TrajectorySequence movingToPlaceSpecimen2 = new TrajectorySequenceBuilder(movingToGrabSpecimen2.endPose(), RobotConstants.constraints)
                 .forward(1)
-                .splineToConstantHeading(new Vector2d(-11.5, 36), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-1.5, 36), Math.toRadians(270))
                 .build();
 
 
 
         TrajectorySequence movingToGrabSpecimen3 = new TrajectorySequenceBuilder(movingToPlaceSpecimen2.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToConstantHeading(new Vector2d(-30, 61), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-30, 63), Math.toRadians(90))
                 .callMarker(5, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
@@ -220,14 +220,14 @@ public class Right5plus0Auto extends LinearOpMode {
 
         TrajectorySequence movingToPlaceSpecimen3 = new TrajectorySequenceBuilder(movingToGrabSpecimen3.endPose(), RobotConstants.constraints)
                 .forward(1)
-                .splineToConstantHeading(new Vector2d(-13, 36), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-2, 36), Math.toRadians(270))
                 .build();
 
 
 
         TrajectorySequence movingToGrabSpecimen4 = new TrajectorySequenceBuilder(movingToPlaceSpecimen3.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToConstantHeading(new Vector2d(-30, 61), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-30, 63), Math.toRadians(90))
                 .callMarker(5, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
@@ -236,7 +236,7 @@ public class Right5plus0Auto extends LinearOpMode {
 
         TrajectorySequence movingToPlaceSpecimen4 = new TrajectorySequenceBuilder(movingToGrabSpecimen4.endPose(), RobotConstants.constraints)
                 .forward(1)
-                .splineToConstantHeading(new Vector2d(-14.5, 36), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-4, 36), Math.toRadians(270))
                 .build();
 
 
@@ -252,7 +252,7 @@ public class Right5plus0Auto extends LinearOpMode {
 
         drivetrain.followTrajectorySequence(preload);
 
-        localizer.getLocalizer().setPoseEstimate(new Pose2d(-16.8, 62.1, Math.toRadians(270)));
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(-5.5, 62.1, Math.toRadians(270)));
 
         waitForStart();
         masterThread.clearBulkCache();
@@ -283,7 +283,7 @@ public class Right5plus0Auto extends LinearOpMode {
 
                 case MOVING_TO_GRAB_BLOCK_1:
                     if (drivetrain.isFinished()) {
-                        intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
+//                        intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
 
                         autoTimer.reset();
 

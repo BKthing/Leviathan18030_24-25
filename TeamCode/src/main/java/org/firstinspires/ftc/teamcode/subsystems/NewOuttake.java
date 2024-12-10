@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PassData;
 import org.firstinspires.ftc.teamcode.depricated.Outtake;
 import org.firstinspires.ftc.teamcode.util.Encoder;
@@ -167,7 +168,7 @@ public class NewOuttake extends SubSystem {
     public enum ClawPosition {
         EXTRA_OPEN(.2),
         OPEN(.15),
-        CLOSED(.04);
+        CLOSED(.03);
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -220,6 +221,10 @@ public class NewOuttake extends SubSystem {
     private final double maxTransferAttempts = 2;
 
     private final Servo clawServo, clawPitchServo, leftOuttakeServo, rightOuttakeServo;
+
+    private final ElapsedTimer outtakeLoopTimer = new ElapsedTimer();
+
+    private final Telemetry.Item outtakeLoopTime;
 
     public NewOuttake(SubSystemData data, NewIntake intake, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
         super(data);
@@ -288,6 +293,8 @@ public class NewOuttake extends SubSystem {
 
         }
 
+        outtakeLoopTime = telemetry.addData("Outtake Time", "");
+
     }
 
 
@@ -326,6 +333,8 @@ public class NewOuttake extends SubSystem {
 
     @Override
     public void loop() {
+        outtakeLoopTimer.reset();
+
         if (teleOpControls) {
             if (gamepad2.back) {
                 if (gamepad2.y && !oldGamePad2.y) {
@@ -746,7 +755,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {
+                    if (false) {//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
@@ -785,6 +794,7 @@ public class NewOuttake extends SubSystem {
 
         oldGamePad2.copy(gamepad2);
 
+        outtakeLoopTime.setValue(outtakeLoopTimer.milliSeconds());
     }
 
     @Override

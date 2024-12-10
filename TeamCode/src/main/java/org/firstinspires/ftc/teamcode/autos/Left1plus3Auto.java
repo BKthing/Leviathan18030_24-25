@@ -195,12 +195,19 @@ public class Left1plus3Auto extends LinearOpMode {
                     break;
                 case MOVING_TO_SCORE_BLOCK_1:
                     if (drivetrain.isFinished()) {
-                        autoTimer.reset();
-                        autoState = AutoState.SCORING_BLOCK_1;
+                        if (intake.getPrevIntakingState() == NewIntake.IntakingState.INTAKING) {
+//                            outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
+                            intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
+                            drivetrain.followTrajectorySequence(movingToGrabBlock2);
+                            autoState = AutoState.MOVING_TO_GRAB_BLOCK_2;
+                        } else {
+                            autoTimer.reset();
+                            autoState = AutoState.SCORING_BLOCK_1;
+                        }
                     }
                     break;
                 case SCORING_BLOCK_1:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToGrabBlock2);
                         autoState = AutoState.MOVING_TO_GRAB_BLOCK_2;
@@ -229,12 +236,19 @@ public class Left1plus3Auto extends LinearOpMode {
                     break;
                 case MOVING_TO_SCORE_BLOCK_2:
                     if (drivetrain.isFinished()) {
-                        autoTimer.reset();
-                        autoState = AutoState.SCORING_BLOCK_2;
+                        if (intake.getPrevIntakingState() == NewIntake.IntakingState.INTAKING) {
+//                            outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
+                            intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
+                            drivetrain.followTrajectorySequence(movingToGrabBlock3);
+                            autoState = AutoState.MOVING_TO_GRAB_BLOCK_3;
+                        } else {
+                            autoTimer.reset();
+                            autoState = AutoState.SCORING_BLOCK_2;
+                        }
                     }
                     break;
                 case SCORING_BLOCK_2:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToGrabBlock3);
                         autoState = AutoState.MOVING_TO_GRAB_BLOCK_3;
@@ -263,10 +277,16 @@ public class Left1plus3Auto extends LinearOpMode {
                     break;
                 case MOVING_TO_SCORE_BLOCK_3:
                     if (drivetrain.isFinished()) {
-                        autoTimer.reset();
-                        autoState = AutoState.SCORING_BLOCK_3;
+                        if (intake.getPrevIntakingState() == NewIntake.IntakingState.INTAKING) {
+//                            outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
+                            intake.setIntakingState(NewIntake.IntakingState.START_EJECTING_PARTIAL_GRAB);
+                            drivetrain.followTrajectorySequence(movingToPark);
+                            autoState = AutoState.MOVING_TO_PARK;
+                        } else {
+                            autoTimer.reset();
+                            autoState = AutoState.SCORING_BLOCK_3;
+                        }
                     }
-                    break;
                 case SCORING_BLOCK_3:
                     if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);

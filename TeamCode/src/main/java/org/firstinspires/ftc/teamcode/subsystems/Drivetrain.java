@@ -17,6 +17,7 @@ import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
 import com.reefsharklibrary.localizers.Localizer;
 import com.reefsharklibrary.localizers.OldLocalizer;
+import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.EndpointEstimator;
 import com.reefsharklibrary.pathing.TrajectoryInterface;
 import com.reefsharklibrary.pathing.TrajectorySequence;
@@ -73,6 +74,10 @@ public class Drivetrain extends SubSystem {
     private boolean fieldCentric = false;
     private double headingOffset = 0;
 
+    private final Telemetry.Item driveTrainLoopTime;
+
+    private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
+
     public Drivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer) {
         this(data, localizer, DriveState.FOLLOW_PATH);
     }
@@ -115,6 +120,7 @@ public class Drivetrain extends SubSystem {
 
         radiansPerInch = telemetry.addData("rad per inch", "");
 
+        driveTrainLoopTime = telemetry.addData("Drivetrain loop time", "");
     }
 
     @Override
@@ -146,6 +152,8 @@ public class Drivetrain extends SubSystem {
 
     @Override
     public void loop() {
+        driveTrainLoopTimer.reset();
+
         switch (driveState) {
             case FOLLOW_PATH:
                 setDrivePower(runner.update(poseEstimate, poseVelocity));
@@ -206,6 +214,8 @@ public class Drivetrain extends SubSystem {
                 setDrivePower(powers);
                 break;
         }
+
+        driveTrainLoopTime.setValue(driveTrainLoopTimer.milliSeconds());
     }
 
     @Override

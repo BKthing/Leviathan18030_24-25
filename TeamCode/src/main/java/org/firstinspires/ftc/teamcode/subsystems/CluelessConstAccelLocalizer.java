@@ -59,6 +59,10 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     private final ElapsedTimer timer = new ElapsedTimer();
 
+    private final Telemetry.Item localizerLoopTime;
+
+    private final ElapsedTimer localizerLoopTimer = new ElapsedTimer();
+
 //    TwoWheel twoWheel;
 
     public CluelessConstAccelLocalizer(SubSystemData data) {
@@ -89,6 +93,8 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
 
+
+        localizerLoopTime = telemetry.addData("Localizer loop time", "");
 //        twoWheel = new TwoWheel(PERPENDICULAR_X, PARALLEL_Y);
 
 //        imuAction.setAction(() -> {
@@ -109,6 +115,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     @SuppressLint("DefaultLocale")
     @Override
     public void loop() {
+        localizerLoopTimer.reset();
         localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
 //        twoWheel.update(new Point(parallelWheelDistance, timer.seconds()), new Point(perpendicularWheelDistance, timer.seconds()), new Point(imuAngle, timer.seconds()));
         //request an imu call, only gets called if it is not already queued
@@ -116,6 +123,8 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         data.getHardwareQueue().add(() -> {
             updatedImuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
         });
+
+        localizerLoopTime.setValue(localizerLoopTimer.milliSeconds());
     }
 
     public void update() {
