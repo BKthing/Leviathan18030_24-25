@@ -9,7 +9,7 @@ import com.reefsharklibrary.data.VelConstraint;
 
 @Config
 public class RobotConstants {
-    public static PIDCoeficients lateralPID = new PIDCoeficients(.17, .0, .022, 0, 0, 0);//.17, .0, .022,
+    public static PIDCoeficients lateralPID = new PIDCoeficients(.15, .0, .02, 0, 0, 0);//.17, .0, .022,
 
     public static PIDCoeficients pointPID = new PIDCoeficients(.18, 0, .01, 0, 0, 0);//.2, 0, .02
 

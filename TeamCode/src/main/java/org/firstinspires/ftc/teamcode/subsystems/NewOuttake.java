@@ -18,6 +18,7 @@ public class NewOuttake extends SubSystem {
 
     public enum OuttakeState {
         EXTENDING_PLACE_BEHIND,
+        EXTENDING_V4BAR_PLACE_BEHIND,
         WAITING_PLACE_BEHIND,
         PLACING_BEHIND,
         WAITING_CLEAR_BUCKET,
@@ -93,7 +94,7 @@ public class NewOuttake extends SubSystem {
         SPECIMEN_PICKUP(2),
         CLEAR_SPECIMEN_BAR(4.7),
         SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(13.5),
+        PLACE_SPECIMEN_BAR(13.7),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(25);
@@ -116,14 +117,16 @@ public class NewOuttake extends SubSystem {
         PLACE_FRONT(.345),
         CLEAR_FRONT_BAR(.29),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.56),
+        RELEASE_HANG_HOOKS(.57),
         MID_POSITION_CUTOFF(.55),
+        WAITING_FOR_HANG_DEPLOY(.51),
         TRANSFER(.49),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
         GRAB_BACK(.64),
-        PLACE_BACK(.065),
-        HANG_POS(.2),
+        WAIT_PLACE_BACK(.14),
+        PLACE_BACK(.07),
+        HANG_POS(.25),
         IDLE_POSITION(.41);
 
         public final double pos;
@@ -167,8 +170,9 @@ public class NewOuttake extends SubSystem {
 
     public enum ClawPosition {
         EXTRA_OPEN(.2),
+        HANG_DEPLOY(.18),
         OPEN(.15),
-        CLOSED(.03);
+        CLOSED(.02);
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -430,14 +434,15 @@ public class NewOuttake extends SubSystem {
             case TOUCH_BAR:
                 targetV4BPos = V4BarPos.PLACE_FRONT.pos;
                 targetClawPitch = ClawPitch.DOWN.pos;
-                targetSlidePos = 6;
+                targetSlidePos = 7;
                 toOuttakeState = ToOuttakeState.IDLE;
+                outtakeState = OuttakeState.IDLE;
                 break;
             case HANG:
                 targetSlidePos = VerticalSlide.HANG_HEIGHT.length;
-                targetV4BPos = V4BarPos.TRANSFER.pos;
+                targetV4BPos = V4BarPos.WAITING_FOR_HANG_DEPLOY.pos;
                 targetClawPitch = ClawPitch.DOWN.pos;
-                clawPosition = ClawPosition.EXTRA_OPEN;
+                clawPosition = ClawPosition.HANG_DEPLOY;
                 updateClawPosition = true;
 
                 outtakeState = OuttakeState.MOVING_TO_DROP_HANG_HOOKS;
@@ -512,7 +517,13 @@ public class NewOuttake extends SubSystem {
 
         switch (outtakeState) {
             case EXTENDING_PLACE_BEHIND:
-                if (absError<.5) {
+                if (absError<6) {
+                    targetV4BPos = V4BarPos.PLACE_BACK.pos;
+                    outtakeState = OuttakeState.EXTENDING_V4BAR_PLACE_BEHIND;
+                }
+                break;
+            case EXTENDING_V4BAR_PLACE_BEHIND:
+                if (outtakeTimer.seconds()>1) {
                     outtakeState = OuttakeState.WAITING_PLACE_BEHIND;
                 }
                 break;
@@ -680,14 +691,14 @@ public class NewOuttake extends SubSystem {
                 break;
 
             case MOVING_TO_DROP_HANG_HOOKS:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.5) {
                     targetV4BPos = V4BarPos.RELEASE_HANG_HOOKS.pos;
                     outtakeState = OuttakeState.DROPPING_HANG_HOOKS;
                     outtakeTimer.reset();
                 }
                 break;
             case DROPPING_HANG_HOOKS:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.4) {
                     targetV4BPos = V4BarPos.HANG_POS.pos;
                     targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
                     clawPosition = ClawPosition.CLOSED;
@@ -755,7 +766,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (false) {//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))
+                    if (gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4) {//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
@@ -809,7 +820,7 @@ public class NewOuttake extends SubSystem {
     private void extendPlaceBehind() {
         targetSlidePos = VerticalSlide.HIGH_BUCKET.length;
 
-        targetV4BPos = V4BarPos.PLACE_BACK.pos;
+        targetV4BPos = V4BarPos.WAIT_PLACE_BACK.pos;
 
         targetClawPitch = ClawPitch.BACK2.pos;
 

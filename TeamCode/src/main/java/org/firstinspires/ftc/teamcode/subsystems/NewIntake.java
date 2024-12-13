@@ -143,7 +143,7 @@ public class NewIntake extends SubSystem {
         UP(.07),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
-        DOWN(.165);//.05
+        DOWN(.18);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}

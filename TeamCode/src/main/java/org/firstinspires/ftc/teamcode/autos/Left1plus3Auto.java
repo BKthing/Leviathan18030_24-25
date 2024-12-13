@@ -35,6 +35,7 @@ public class Left1plus3Auto extends LinearOpMode {
         MOVING_TO_GRAB_BLOCK_3,
         GRABBING_BLOCK_3,
         MOVING_TO_SCORE_BLOCK_3,
+        WAITING_SCORE_BLOCK_3,
         SCORING_BLOCK_3,
         MOVING_TO_PARK,
         FINISHED
@@ -83,10 +84,10 @@ public class Left1plus3Auto extends LinearOpMode {
         );
 
         TrajectorySequence movingToPlacePreload = new TrajectorySequenceBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)), RobotConstants.constraints)
-                .splineToConstantHeading(new Vector2d(6, 31), Math.toRadians(270))
-                .callMarker(2, () -> {
-                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
-                })
+                .splineToConstantHeading(new Vector2d(5, 29.5), Math.toRadians(270))
+//                .callMarker(2, () -> {
+//                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
+//                })
                 .build();
 
         TrajectorySequence movingToGrabBlock1 = new TrajectorySequenceBuilder(movingToPlacePreload.endPose(), RobotConstants.constraints)
@@ -140,7 +141,7 @@ public class Left1plus3Auto extends LinearOpMode {
         TrajectorySequence movingToPark = new TrajectorySequenceBuilder(movingToScoreBlock3.endPose(), RobotConstants.constraints)
                 .splineToLineHeading(new Pose2d(34, 15, Math.toRadians(180)), Math.toRadians(180))
                 .forward(16)
-                .callMarkerFromEnd(20, () -> {
+                .callMarker(3, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.TOUCH_BAR);
                 })
                 .build();
@@ -155,6 +156,8 @@ public class Left1plus3Auto extends LinearOpMode {
         masterThread.clearBulkCache();
 
         localizer.clearDeltas();
+        outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
+
 
         while (!isStopRequested()) {
             masterThread.unThreadedUpdate();
@@ -266,10 +269,12 @@ public class Left1plus3Auto extends LinearOpMode {
                     if (intake.getPrevIntakingState() != NewIntake.IntakingState.INTAKING) {
                         drivetrain.followTrajectorySequence(movingToScoreBlock3);
                         autoState = AutoState.MOVING_TO_SCORE_BLOCK_3;
-                    } else if (autoTimer.seconds()>1.5) {
+                        autoTimer.reset();
+                    } else if (autoTimer.seconds()>2) {
                         drivetrain.followTrajectorySequence(movingToScoreBlock3);
                         autoState = AutoState.MOVING_TO_SCORE_BLOCK_3;
                         intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
+                        autoTimer.reset();
                     } else {
                         extensionDistance = MathUtil.clip(extensionDistance + 10 * loopTimer.seconds(), -.5, 18.5);
                         intake.setTargetSlidePos(extensionDistance);
@@ -287,8 +292,15 @@ public class Left1plus3Auto extends LinearOpMode {
                             autoState = AutoState.SCORING_BLOCK_3;
                         }
                     }
+                    break;
+//                case WAITING_SCORE_BLOCK_3:
+//                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
+//                        autoTimer.reset();
+//                        autoState = AutoState.SCORING_BLOCK_3;
+//                    }
+//                    break;
                 case SCORING_BLOCK_3:
-                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>2) {
+                    if (outtake.getOuttakeState() == NewOuttake.OuttakeState.WAITING_PLACE_BEHIND || autoTimer.seconds()>3) {
                         outtake.toClawPosition(NewOuttake.ClawPosition.OPEN);
                         drivetrain.followTrajectorySequence(movingToPark);
 
