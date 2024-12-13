@@ -88,7 +88,7 @@ public class NewOuttake extends SubSystem {
     public enum VerticalSlide {
         EXTRA_DOWN(-.3),
         DOWN(0),
-        TRANSFER(4.4),
+        TRANSFER(4.7),
         EXTRACT_FROM_TRANSFER(7),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(2),
@@ -148,7 +148,7 @@ public class NewOuttake extends SubSystem {
         BACK_45(.20),
         BACK2(.47),
         WAIT_FOR_TRANSFER(.32),
-        TRANSFER(.28),
+        TRANSFER(.277),
         EXTRACT_FROM_TRANSFER(.32),
         FRONT_ANGLED_UP(.39),
         FRONT_ANGELED_DOWN(.32),
@@ -169,10 +169,10 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPosition {
-        EXTRA_OPEN(.2),
-        HANG_DEPLOY(.18),
-        OPEN(.15),
-        CLOSED(.02);
+        EXTRA_OPEN(.4),
+        HANG_DEPLOY(.55),
+        OPEN(.3),//.15
+        CLOSED(.08);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -725,7 +725,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case GRABBING_FROM_TRANSFER:
-                if (outtakeTimer.seconds()>.2) {
+                if (outtakeTimer.seconds()>.4) { //changed from .2
                     targetSlidePos = VerticalSlide.EXTRACT_FROM_TRANSFER.length;
 
                     outtakeTimer.reset();
@@ -750,6 +750,7 @@ public class NewOuttake extends SubSystem {
 
                             transferAttemptCounter++;
                         } else if (transferAttemptCounter < maxTransferAttempts) {
+
                             retractFromFront();
                             intake.setIntakingState(NewIntake.IntakingState.START_UNJAMMING);
                             intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
@@ -766,7 +767,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4) {//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))
+                    if (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;

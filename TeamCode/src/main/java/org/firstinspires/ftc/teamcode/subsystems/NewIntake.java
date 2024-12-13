@@ -140,7 +140,7 @@ public class NewIntake extends SubSystem {
     private double actualMotorPower = 0;
 
     public enum IntakePos {
-        UP(.07),//.69
+        UP(.06),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
         DOWN(.18);//.05
@@ -174,6 +174,7 @@ public class NewIntake extends SubSystem {
     NormalizedRGBA colors;
     NormalizedRGBA newColors;
 
+    private boolean nextCheckColor = false;
     private boolean checkColor = false;
 
     Gamepad oldGamePad2 = new Gamepad();
@@ -271,13 +272,18 @@ public class NewIntake extends SubSystem {
             colors = newColors;
         }
 
-        if ((isBreakBeam && !prevIsBreakBeam) && !checkColor && intakingState == IntakingState.INTAKING) {
+        checkColor = nextCheckColor;
+
+        if (checkColor) {
             if (blueAlliance != null) {
                 colors = colorSensor.getNormalizedColors();
             }
-            checkColor = true;
+        }
+
+        if ((isBreakBeam && !prevIsBreakBeam) && !nextCheckColor && intakingState == IntakingState.INTAKING) {
+            nextCheckColor = true;
         } else {
-            checkColor = false;
+            nextCheckColor = false;
         }
 
         if (updateIntakeState) {
@@ -486,7 +492,7 @@ public class NewIntake extends SubSystem {
 
                     checkColor = false;
 
-                    if (false) {//(sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)
+                    if ((sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {//(
                         targetIntakeSpeed = -1;
                         targetIntakePos = IntakePos.PARTIAL_UP.pos;
                         intakingState = IntakingState.START_EJECTING;
