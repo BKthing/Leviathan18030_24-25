@@ -93,7 +93,7 @@ public class Left1plus3Auto extends LinearOpMode {
         TrajectorySequence movingToGrabBlock1 = new TrajectorySequenceBuilder(movingToPlacePreload.endPose(), RobotConstants.constraints)
                 .back(2)
                 .splineToConstantHeading(new Vector2d(45, 56), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(48, 50), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(50, 50), Math.toRadians(270))
                 .callMarkerFromEnd(11, () -> {
                     intake.setTargetSlidePos(8);
                     extensionDistance = 8;
@@ -103,7 +103,7 @@ public class Left1plus3Auto extends LinearOpMode {
                 .build();
 
         TrajectorySequence movingToScoreBlock1 = new TrajectorySequenceBuilder(movingToGrabBlock1.endPose(), RobotConstants.constraints)
-                .splineToLineHeading(new Pose2d(56, 56, Math.toRadians(270-45)), Math.toRadians(45))
+                .splineToLineHeading(new Pose2d(58, 54, Math.toRadians(270-45)), Math.toRadians(45))
                 .build();
 
 
@@ -119,13 +119,13 @@ public class Left1plus3Auto extends LinearOpMode {
                 .build();
 
         TrajectorySequence movingToScoreBlock2 = new TrajectorySequenceBuilder(movingToGrabBlock2.endPose(), RobotConstants.constraints)
-                .splineToLineHeading(new Pose2d(55, 57, Math.toRadians(270-45)), Math.toRadians(45))
+                .splineToLineHeading(new Pose2d(57, 55, Math.toRadians(270-45)), Math.toRadians(45))
                 .build();
 
 
         TrajectorySequence movingToGrabBlock3 = new TrajectorySequenceBuilder(movingToScoreBlock2.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToLineHeading(new Pose2d(52, 50, Math.toRadians(300)), Math.toRadians(300))
+                .splineToLineHeading(new Pose2d(53, 47.5, Math.toRadians(303)), Math.toRadians(303))
                 .callMarkerFromEnd(8, () -> {
                     intake.setTargetSlidePos(8);
                     extensionDistance = 8;
@@ -135,15 +135,18 @@ public class Left1plus3Auto extends LinearOpMode {
                 .build();
 
         TrajectorySequence movingToScoreBlock3 = new TrajectorySequenceBuilder(movingToGrabBlock3.endPose(), RobotConstants.constraints)
-                .splineToLineHeading(new Pose2d(53, 59, Math.toRadians(270-45)), Math.toRadians(45))
+                .splineToLineHeading(new Pose2d(55, 57, Math.toRadians(270-45)), Math.toRadians(45))
                 .build();
 
         TrajectorySequence movingToPark = new TrajectorySequenceBuilder(movingToScoreBlock3.endPose(), RobotConstants.constraints)
                 .splineToLineHeading(new Pose2d(34, 15, Math.toRadians(180)), Math.toRadians(180))
-                .forward(16)
+                .forward(12)
                 .callMarker(3, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.TOUCH_BAR);
                 })
+//                .callMarkerFromEnd(.5, () -> {
+//                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.POWER_OFF_OUTTAKE_ARM);
+//                })
                 .build();
 
 

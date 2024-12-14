@@ -44,6 +44,7 @@ public class MasterThread {
     private final List<LynxModule> allHubs;
 
     private final Telemetry.Item queueSize;
+    private final Telemetry.Item preQueueSize;
 
     private final Telemetry.Item threadUpdateTime;
     private final ElapsedTimer threadUpdateTimer = new ElapsedTimer();
@@ -59,6 +60,7 @@ public class MasterThread {
         this.gamepad2 = gamepad2;
 
         queueSize = telemetry.addData("Queue Size", 0);
+        preQueueSize = telemetry.addData("Pre-Update Queue Size", 0);
 
         threadUpdateTime = telemetry.addData("Thread update time", "");
 
@@ -83,6 +85,7 @@ public class MasterThread {
         gamepad1Instance.copy(gamepad1);
         gamepad2Instance.copy(gamepad2);
 
+        threadUpdateTimer.reset();
 
 //        ExecutorService es = Executors.newCachedThreadPool();
         for (SubSystem subSystem: subSystems) {
@@ -92,7 +95,7 @@ public class MasterThread {
 
 //        es.shutdown();
 
-        threadUpdateTimer.reset();
+        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds());
 
         //updates the data in the bulkCache
         clearBulkCache();
@@ -131,13 +134,13 @@ public class MasterThread {
         gamepad1Instance.copy(gamepad1);
         gamepad2Instance.copy(gamepad2);
 
-
         ExecutorService es = Executors.newCachedThreadPool();
         for (SubSystem subSystem: subSystems) {
             subSystem.update(es);
         }
 
         es.shutdown();
+
 
         //updates the data in the bulkCache
         clearBulkCache();
@@ -148,11 +151,12 @@ public class MasterThread {
 
         //runs queued actions while threads are still active
         while (!es.awaitTermination(1, TimeUnit.NANOSECONDS)) {
-            if (hardwareQueue.updateSingle()) {
-                minHardwareUpdates -= 1;
-            }
-        }
+//            if (hardwareQueue.updateSingle()) {
+//                minHardwareUpdates -= 1;
+//            }
 
+        }
+        preQueueSize.setValue(hardwareQueue.size());
         hardwareQueue.update(minHardwareUpdates, 5);
 
         queueSize.setValue(hardwareQueue.size());
@@ -166,7 +170,6 @@ public class MasterThread {
         dashboard.sendTelemetryPacket(packet);
         dashboard.getTelemetry().update();
 
-        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds());
 
         telemetry.update();
 

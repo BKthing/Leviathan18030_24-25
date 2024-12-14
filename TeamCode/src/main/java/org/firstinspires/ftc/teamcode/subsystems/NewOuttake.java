@@ -56,6 +56,7 @@ public class NewOuttake extends SubSystem {
         EJECTING,
         INIT_POSITION,
         IDLE
+
     }
 
     private OuttakeState outtakeState = OuttakeState.INIT_POSITION;
@@ -72,7 +73,8 @@ public class NewOuttake extends SubSystem {
         INIT_POSITION,
         TOUCH_BAR,
         HANG,
-        IDLE
+        IDLE,
+        POWER_OFF_OUTTAKE_ARM
     }
 
     private ToOuttakeState toOuttakeState = ToOuttakeState.INIT_POSITION;
@@ -127,7 +129,8 @@ public class NewOuttake extends SubSystem {
         WAIT_PLACE_BACK(.14),
         PLACE_BACK(.07),
         HANG_POS(.25),
-        IDLE_POSITION(.41);
+        IDLE_POSITION(.41),
+        TOUCH_BAR(.339);
 
         public final double pos;
 
@@ -172,7 +175,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_OPEN(.4),
         HANG_DEPLOY(.55),
         OPEN(.3),//.15
-        CLOSED(.08);//.02
+        CLOSED(.0);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -432,9 +435,9 @@ public class NewOuttake extends SubSystem {
                 toOuttakeState = ToOuttakeState.IDLE;
                 break;
             case TOUCH_BAR:
-                targetV4BPos = V4BarPos.PLACE_FRONT.pos;
-                targetClawPitch = ClawPitch.DOWN.pos;
-                targetSlidePos = 7;
+                targetV4BPos = V4BarPos.TOUCH_BAR.pos;
+                targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
+                targetSlidePos = 6.5;
                 toOuttakeState = ToOuttakeState.IDLE;
                 outtakeState = OuttakeState.IDLE;
                 break;
@@ -449,6 +452,11 @@ public class NewOuttake extends SubSystem {
 
                 outtakeTimer.reset();
 
+                toOuttakeState = ToOuttakeState.IDLE;
+                break;
+            case POWER_OFF_OUTTAKE_ARM:
+                leftOuttakeServo.getController().pwmDisable();
+                rightOuttakeServo.getController().pwmDisable();
                 toOuttakeState = ToOuttakeState.IDLE;
                 break;
         }
@@ -517,14 +525,31 @@ public class NewOuttake extends SubSystem {
 
         switch (outtakeState) {
             case EXTENDING_PLACE_BEHIND:
-                if (absError<6) {
-                    targetV4BPos = V4BarPos.PLACE_BACK.pos;
-                    outtakeState = OuttakeState.EXTENDING_V4BAR_PLACE_BEHIND;
+                if (teleOpControls) {
+                    if (absError<1) {
+                        outtakeTimer.reset();
+                        outtakeState = OuttakeState.EXTENDING_V4BAR_PLACE_BEHIND;
+                    }
                 }
+                else {
+                    if (absError<6) {
+                        outtakeTimer.reset();
+                        outtakeState = OuttakeState.EXTENDING_V4BAR_PLACE_BEHIND;
+                        targetV4BPos = V4BarPos.PLACE_BACK.pos;
+                    }
+                }
+
                 break;
             case EXTENDING_V4BAR_PLACE_BEHIND:
-                if (outtakeTimer.seconds()>1) {
+                if (teleOpControls) {
+                    if (outtakeTimer.seconds()>.1) {
+                        outtakeState = OuttakeState.WAITING_PLACE_BEHIND;
+                    }
+                }
+                else{
+                if (outtakeTimer.seconds()>.3) {
                     outtakeState = OuttakeState.WAITING_PLACE_BEHIND;
+                }
                 }
                 break;
             case WAITING_PLACE_BEHIND:
@@ -602,7 +627,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case GRABBING_SPECIMEN:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.5) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length+4;
 //                    targetV4BPos = V4BarPos.EXTRACT_FROM_GRAB_BACK.pos;
 //                    targetClawPitch = ClawPitch.EXTRACT_FROM_TRANSFER.pos;
@@ -767,7 +792,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+                    if (false){//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
@@ -821,7 +846,12 @@ public class NewOuttake extends SubSystem {
     private void extendPlaceBehind() {
         targetSlidePos = VerticalSlide.HIGH_BUCKET.length;
 
-        targetV4BPos = V4BarPos.WAIT_PLACE_BACK.pos;
+        if (teleOpControls) {
+            targetV4BPos = V4BarPos.PLACE_BACK.pos;
+        }
+        else {
+            targetV4BPos = V4BarPos.WAIT_PLACE_BACK.pos;
+        }
 
         targetClawPitch = ClawPitch.BACK2.pos;
 
@@ -898,4 +928,6 @@ public class NewOuttake extends SubSystem {
     public OuttakeState getOuttakeState() {
         return prevOuttakeState;
     }
+
+
 }

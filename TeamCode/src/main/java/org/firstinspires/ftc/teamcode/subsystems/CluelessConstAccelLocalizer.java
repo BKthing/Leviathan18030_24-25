@@ -106,6 +106,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     @Override
     public void priorityData() {
+        localizerLoopTimer.reset();
         perpendicularWheelDistance = getPerpendicularWheelDistance.getAsDouble();
         parallelWheelDistance = getParallelWheelDistance.getAsDouble();
         //is set here to prevent threading conflicts
@@ -115,7 +116,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     @SuppressLint("DefaultLocale")
     @Override
     public void loop() {
-        localizerLoopTimer.reset();
+
         localizer.update(parallelWheelDistance, perpendicularWheelDistance, imuAngle, timer.seconds());
 //        twoWheel.update(new Point(parallelWheelDistance, timer.seconds()), new Point(perpendicularWheelDistance, timer.seconds()), new Point(imuAngle, timer.seconds()));
         //request an imu call, only gets called if it is not already queued

@@ -143,7 +143,7 @@ public class NewIntake extends SubSystem {
         UP(.06),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
-        DOWN(.18);//.05
+        DOWN(.175);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -492,7 +492,7 @@ public class NewIntake extends SubSystem {
 
                     checkColor = false;
 
-                    if ((sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {//(
+                    if (false) {//(sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {//(
                         targetIntakeSpeed = -1;
                         targetIntakePos = IntakePos.PARTIAL_UP.pos;
                         intakingState = IntakingState.START_EJECTING;

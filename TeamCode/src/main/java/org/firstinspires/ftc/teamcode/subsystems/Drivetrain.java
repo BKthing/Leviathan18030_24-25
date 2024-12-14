@@ -16,7 +16,6 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
 import com.reefsharklibrary.localizers.Localizer;
-import com.reefsharklibrary.localizers.OldLocalizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.EndpointEstimator;
 import com.reefsharklibrary.pathing.TrajectoryInterface;
@@ -141,6 +140,7 @@ public class Drivetrain extends SubSystem {
                 //getting the data before the localizer starts updating it
                 poseEstimate = localizer.getPoseEstimate();
                 poseVelocity = localizer.getPoseVelocity();
+
 //                poseAcceleration = localizer.getPoseAcceleration();
 
                 if (!poseVelocity.isFinite()) {

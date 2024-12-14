@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -7,9 +8,12 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.Encoder;
+
+import java.util.List;
 
 //@Disabled
 @TeleOp
@@ -30,6 +34,15 @@ public class badTestTele extends LinearOpMode {
 
     private Servo leftServo, rightServo, tiltServo;
 
+    private  Encoder perpendicularWheel, parallelWheel;
+
+    private Telemetry.Item loopTime, loopTime2;
+    private ElapsedTimer loopTimer = new ElapsedTimer();
+    private ElapsedTimer loopTimer2 = new ElapsedTimer();
+
+    private  List<LynxModule> allHubs;
+
+
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -40,6 +53,9 @@ public class badTestTele extends LinearOpMode {
 
         bl.setDirection(DcMotorSimple.Direction.REVERSE);
         fl.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
 
         horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft"); // control hub 0
         horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight"); // control hub 1
@@ -60,11 +76,14 @@ public class badTestTele extends LinearOpMode {
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
-        horizontalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
+        allHubs = hardwareMap.getAll(LynxModule.class);
+        manualBulkReads(true);
+
+//        horizontalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
 //        verticalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
 
-        Telemetry.Item horizontalEncoderPos = telemetry.addData("Horizontal Ticks", "");
-        Telemetry.Item verticalEncoderPos = telemetry.addData("Vertical Ticks", "");
+//        Telemetry.Item horizontalEncoderPos = telemetry.addData("Horizontal Ticks", "");
+//        Telemetry.Item verticalEncoderPos = telemetry.addData("Vertical Ticks", "");
 
 
 //        leftServo = hardwareMap.get(Servo.class, "leftServo");
@@ -75,24 +94,36 @@ public class badTestTele extends LinearOpMode {
 
         telemetry.setAutoClear(false);
 
+        loopTime = telemetry.addData("loop time", "");
+        loopTime2 = telemetry.addData("2nd loop time", "");
+
 
 
         waitForStart();
 
         while ( !isStopRequested()) {
+            loopTimer2.reset();
+            clearBulkCache();
+            loopTime2.setValue(loopTimer2.milliSeconds());
+            loopTimer.reset();
+//            parallelWheel.getCurrentPosition();
+            perpendicularWheel.getCurrentPosition();
+            loopTime.setValue(loopTimer.milliSeconds());
 
-            double strafe = gamepad1.left_stick_x;
-            double forward = -gamepad1.left_stick_y;
-            double turn = gamepad1.right_stick_x;
 
-            if ( Math.abs(strafe) < .02)
-                strafe = 0;
 
-            if ( Math.abs(forward) < .02)
-                forward = 0;
-
-            if ( Math.abs(turn) < .02)
-                turn = 0;
+//            double strafe = gamepad1.left_stick_x;
+//            double forward = -gamepad1.left_stick_y;
+//            double turn = gamepad1.right_stick_x;
+//
+//            if ( Math.abs(strafe) < .02)
+//                strafe = 0;
+//
+//            if ( Math.abs(forward) < .02)
+//                forward = 0;
+//
+//            if ( Math.abs(turn) < .02)
+//                turn = 0;
 
 //            if (gamepad1.a){
 //                horizontalLeftMotor.setPower(.5);
@@ -145,29 +176,47 @@ public class badTestTele extends LinearOpMode {
 //                verticalRightMotor.setPower(0);
 //            }
 
-            if (gamepad1.dpad_down){
-                br.setPower(.5);
-            }
-            if (gamepad1.dpad_right) {
-                bl.setPower(0.5);
-            }
-            if (gamepad1.dpad_left) {
-                fl.setPower(0.5);
-            }
-            if (gamepad1.dpad_up) {
-                fr.setPower(0.5);
-            }
+//            if (gamepad1.dpad_down){
+//                br.setPower(.5);
+//            }
+//            if (gamepad1.dpad_right) {
+//                bl.setPower(0.5);
+//            }
+//            if (gamepad1.dpad_left) {
+//                fl.setPower(0.5);
+//            }
+//            if (gamepad1.dpad_up) {
+//                fr.setPower(0.5);
+//            }
 
 
-            fl.setPower( forward + turn + strafe);
-            fr.setPower( forward - turn - strafe);
-            bl.setPower( forward + turn - strafe);
-            br.setPower( forward - turn + strafe);
-
-            horizontalEncoderPos.setValue(horizontalSlideEncoder.getCurrentPosition());
-            verticalEncoderPos.setValue(verticalSlideEncoder.getCurrentPosition());
+//            fl.setPower( forward + turn + strafe);
+//            fr.setPower( forward - turn - strafe);
+//            bl.setPower( forward + turn - strafe);
+//            br.setPower( forward - turn + strafe);
+//
+//            horizontalEncoderPos.setValue(horizontalSlideEncoder.getCurrentPosition());
+//            verticalEncoderPos.setValue(verticalSlideEncoder.getCurrentPosition());
             telemetry.update();
         }
 
+
+    }
+    public void manualBulkReads(boolean manualReads) {
+        if (manualReads) {
+            for (LynxModule hub : allHubs) {
+                hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+            }
+        } else {
+            for (LynxModule hub : allHubs) {
+                hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+            }
+        }
+    }
+
+    public void clearBulkCache() {
+        for (LynxModule hub : allHubs) {
+            hub.clearBulkCache();
+        }
     }
 }
