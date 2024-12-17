@@ -1,16 +1,24 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxNackException;
+import com.qualcomm.hardware.lynx.commands.core.LynxGetADCCommand;
+import com.qualcomm.hardware.lynx.commands.core.LynxGetADCResponse;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.PWMOutputControllerEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoController;
+import com.qualcomm.robotcore.hardware.ServoControllerEx;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 
+import org.firstinspires.ftc.ftccommon.internal.manualcontrol.commands.AnalogCommands;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 
@@ -33,15 +41,24 @@ public class AxonTest extends LinearOpMode {
 
     Telemetry.Item pitchPosTelem;
 
-
+    Telemetry.Item servoBusCurrentTelem;
 
     ElapsedTimer timer = new ElapsedTimer();
 
+    LynxModule myRevHub;
+    private  LynxGetADCCommand.Channel servoChannel;
+    private  LynxGetADCCommand servoCommand;
+    LynxGetADCResponse servoResponse;
+    private double servoBusCurrent;
 
     @Override
     public void runOpMode() throws InterruptedException {
+        servoChannel = LynxGetADCCommand.Channel.SERVO_CURRENT;
+        servoCommand = new LynxGetADCCommand(myRevHub, servoChannel, LynxGetADCCommand.Mode.ENGINEERING);
+        myRevHub = hardwareMap.get(LynxModule.class, "Expansion Hub 3");
+        servoBusCurrent = getServoBusCurrent();
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
-
+        servoBusCurrentTelem = telemetry.addData("Servo Bus Current", "");
         colorTelem = telemetry.addData("Color RGB", "");
         sampleColorTelem = telemetry.addData("Sample Color", "");
         loopTime = telemetry.addData("Loop Time", "");
@@ -233,7 +250,8 @@ public class AxonTest extends LinearOpMode {
 
 
 //
-
+            servoBusCurrent = getServoBusCurrent();
+            servoBusCurrentTelem.setValue(servoBusCurrent);
             posTelem.setValue(targetPos);
             pitchPosTelem.setValue(targetPitchPos);
 
@@ -245,6 +263,19 @@ public class AxonTest extends LinearOpMode {
         }
 
 
+    }
+    double getServoBusCurrent()
+    {
+
+        try
+        {
+            servoResponse = servoCommand.sendReceive();
+            return servoResponse.getValue() / 1000.0;    // return value in Amps
+        }
+        catch (InterruptedException | RuntimeException | LynxNackException e)
+        {
+        }
+        return 999;
     }
 
 }

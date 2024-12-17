@@ -372,9 +372,11 @@ public class NewOuttake extends SubSystem {
                 }
 
             } else {
-                if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
-                    transfer = true;
-                } else if (gamepad2.a && !oldGamePad2.a) {
+
+                //if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
+                //                    transfer = true;
+                //                } else
+                if (gamepad2.a && !oldGamePad2.a) {
                     if (targetV4BPos>V4BarPos.MID_POSITION_CUTOFF.pos) {
                         toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
                     } else {
@@ -792,7 +794,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (false){//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+                    if (gamepad2.right_trigger>.2){//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;

@@ -81,7 +81,7 @@ public class Left0plus4Auto extends LinearOpMode {
                 outtake
         );
 
-        TrajectorySequence movingToScorePreload = new TrajectorySequenceBuilder(new Pose2d(39.8, 65.6, Math.toRadians(180)), RobotConstants.constraints)
+        TrajectorySequence movingToScorePreload = new TrajectorySequenceBuilder(new Pose2d(39.8, 65, Math.toRadians(180)), RobotConstants.constraints)
                 .left(2)
                 .splineToLineHeading(new Pose2d(56.5, 56.5, Math.toRadians(270-45)), Math.toRadians(0))
                 .callMarker(2, () -> {
@@ -94,8 +94,8 @@ public class Left0plus4Auto extends LinearOpMode {
 //                .splineToConstantHeading(new Vector2d(45, 56), Math.toRadians(0))
                 .splineToLineHeading(new Pose2d(50, 50, Math.toRadians(270)), Math.toRadians(270))
                 .callMarkerFromEnd(11, () -> {
-                    intake.setTargetSlidePos(8);
-                    extensionDistance = 8;
+                    intake.setTargetSlidePos(7);
+                    extensionDistance = 7;
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                 })
@@ -108,10 +108,10 @@ public class Left0plus4Auto extends LinearOpMode {
 
         TrajectorySequence movingToGrabBlock2 = new TrajectorySequenceBuilder(movingToScoreBlock1.endPose(), RobotConstants.constraints)
                 .back(1)
-                .splineToLineHeading(new Pose2d(52, 50, Math.toRadians(285)), Math.toRadians(285))
+                .splineToLineHeading(new Pose2d(53, 50, Math.toRadians(285)), Math.toRadians(285))
                 .callMarkerFromEnd(8, () -> {
-                    intake.setTargetSlidePos(7);
-                    extensionDistance = 7;
+                    intake.setTargetSlidePos(6);
+                    extensionDistance = 6;
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                 })
@@ -126,8 +126,8 @@ public class Left0plus4Auto extends LinearOpMode {
                 .back(1)
                 .splineToLineHeading(new Pose2d(53, 47.5, Math.toRadians(303)), Math.toRadians(303))
                 .callMarkerFromEnd(8, () -> {
-                    intake.setTargetSlidePos(7);
-                    extensionDistance = 7;
+                    intake.setTargetSlidePos(5);
+                    extensionDistance = 5;
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                 })
@@ -139,7 +139,7 @@ public class Left0plus4Auto extends LinearOpMode {
 
         TrajectorySequence movingToPark = new TrajectorySequenceBuilder(movingToScoreBlock3.endPose(), RobotConstants.constraints)
                 .splineToLineHeading(new Pose2d(34, 15, Math.toRadians(180)), Math.toRadians(180))
-                .forward(12)
+                .forward(14)
                 .callMarker(3, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.TOUCH_BAR);
                 })
@@ -152,7 +152,7 @@ public class Left0plus4Auto extends LinearOpMode {
 
         drivetrain.followTrajectorySequence(movingToScorePreload);
 
-        localizer.getLocalizer().setPoseEstimate(new Pose2d(39.8, 65.6, Math.toRadians(180)));
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(39.8, 65, Math.toRadians(180)));
 
         waitForStart();
         masterThread.clearBulkCache();

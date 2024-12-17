@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import android.annotation.SuppressLint;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxNackException;
+import com.qualcomm.hardware.lynx.commands.core.LynxGetADCCommand;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -21,6 +24,11 @@ import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 public class NewIntake extends SubSystem {
+
+    private final LynxModule myRevHub;
+//    private final LynxGetADCCommand.Channel servoChannel;
+//    private final LynxGetADCCommand servoCommand;
+    private double servoBusCurrent;
 
     public enum IntakeState {
         EXTENDING,
@@ -56,7 +64,11 @@ public class NewIntake extends SubSystem {
         START_UNJAMMING,
         UNJAMMING_SPIN_OUT,
         UNJAMMING_SPIN_IN,
-        UNJAMMING_FINNISH_SPIN_IN,
+        UNJAMMING_FINISH_SPIN_IN,
+
+        SERVO_STALL_START_UNJAMMING,
+        SERVO_STALL_UNJAMMING_SPIN_OUT,
+
 
         START_PARTIAL_GRAB,
         INTAKING_PARTIAL_GRAB,
@@ -143,7 +155,7 @@ public class NewIntake extends SubSystem {
         UP(.06),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
-        DOWN(.175);//.05
+        DOWN(.16);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -166,6 +178,9 @@ public class NewIntake extends SubSystem {
     private boolean prevIsBreakBeam = false;
 
     private final ElapsedTimer slideTimer = new ElapsedTimer();
+    private final ElapsedTimer timeSinceLastStall = new ElapsedTimer();
+    private int stallCount = 0;
+    private final ElapsedTimer servoStallTimer = new ElapsedTimer();
 
     private boolean transfer = false;
 
@@ -186,11 +201,15 @@ public class NewIntake extends SubSystem {
 
     private final Telemetry.Item intakeLoopTime;
 
+    private final Telemetry.Item servoBusCurrentTelem;
+
     public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls, boolean init) {
         super(data);
 
         this.teleOpControls = teleOpControls;
         this.blueAlliance = blueAlliance;
+        myRevHub = hardwareMap.get(LynxModule.class, "Expansion Hub 3");
+
 
         //Motors
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -234,6 +253,8 @@ public class NewIntake extends SubSystem {
         //initiating slide encoder
         slidePos = ticksToInches(horizontalSlideEncoder.getCurrentPosition());
 
+        servoBusCurrentTelem = telemetry.addData("Servo Bus Current", "");
+
         if (PassData.horizontalSlidesInitiated && slidePos>-.1) {
             //If slides are not at the bottom they are set to their current pose
             if (slidePos>1) {
@@ -257,6 +278,8 @@ public class NewIntake extends SubSystem {
 
     }
 
+
+
     @Override
     public void priorityData() {
 //        if (changedIntakeState) {
@@ -264,6 +287,7 @@ public class NewIntake extends SubSystem {
 //            changedIntakeState = false;
 //        }
 //
+        servoBusCurrent = getServoBusCurrent();
         slideTicks = horizontalSlideEncoder.getCurrentPosition();
 
         isBreakBeam = breakBeam.isPressed();
@@ -446,7 +470,7 @@ public class NewIntake extends SubSystem {
 
 
         if (Math.abs(targetIntakePos-actualIntakePos)>.01) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos));
+            hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos+.03));
             hardwareQueue.add(() -> rightIntakeServo.setPosition(targetIntakePos));
 
             actualIntakePos = targetIntakePos;
@@ -458,14 +482,20 @@ public class NewIntake extends SubSystem {
 
             actualIntakeSpeed = targetIntakeSpeed;
         }
-
+        if (servoBusCurrent < 4) {
+            servoStallTimer.reset();
+        }
         switch (intakingState) {
             case START_INTAKING:
                 targetIntakeSpeed = .6;
                 intakingState = IntakingState.INTAKING;
                 break;
             case INTAKING:
-                if (checkColor) {
+
+                if (servoStallTimer.seconds() > .1) {
+                    intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
+                }
+                else if (checkColor) {
                     if (blueAlliance == null) {
                         targetIntakePos = IntakePos.UP.pos;
 
@@ -512,7 +542,10 @@ public class NewIntake extends SubSystem {
                 }
                 break;
             case FINISH_INTAKING:
-                if (intakingTimer.seconds()>1 || targetIntakeSpeed == 0) {
+                if (servoStallTimer.seconds() > .1) {
+                    intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
+                }
+                else if (intakingTimer.seconds()>1 || targetIntakeSpeed == 0) {
                     targetIntakeSpeed = 0;
 
                     intakingState = IntakingState.HOLDING_SAMPLE;
@@ -567,13 +600,37 @@ public class NewIntake extends SubSystem {
             case UNJAMMING_SPIN_IN:
                 if (isBreakBeam || intakingTimer.seconds() > .5) {
                     intakingTimer.reset();
-                    intakingState = IntakingState.UNJAMMING_FINNISH_SPIN_IN;
+                    intakingState = IntakingState.UNJAMMING_FINISH_SPIN_IN;
                 }
                 break;
-            case UNJAMMING_FINNISH_SPIN_IN:
+            case UNJAMMING_FINISH_SPIN_IN:
                 if (intakingTimer.seconds()>1.5) {
                     targetIntakeSpeed = 0;
                     intakingState = IntakingState.HOLDING_SAMPLE;
+                }
+                break;
+            case SERVO_STALL_START_UNJAMMING:
+                targetIntakeSpeed = -1;
+                intakingState = IntakingState.SERVO_STALL_UNJAMMING_SPIN_OUT;
+                if (timeSinceLastStall.seconds()>.5) {
+                   stallCount = 0;
+                }
+                timeSinceLastStall.reset();
+
+                intakingTimer.reset();
+                break;
+            case SERVO_STALL_UNJAMMING_SPIN_OUT:
+                if ((intakingTimer.seconds()>.15 && stallCount == 0) || (intakingTimer.seconds()>1 && stallCount>0)) {
+                    if (!teleOpControls || gamepad2.left_bumper) {
+                        targetIntakeSpeed = .6;
+
+                    }
+                    else {
+                        targetIntakeSpeed = 0;
+                    }
+                    intakingState = IntakingState.INTAKING;
+                    intakingTimer.reset();
+                    stallCount++;
                 }
                 break;
 
@@ -695,6 +752,7 @@ public class NewIntake extends SubSystem {
         intakeTelem.setValue(intakeState.name());
         colorTelem.setValue(checkColor + " cur:" + isBreakBeam + " prev:" + prevIsBreakBeam);
 
+        servoBusCurrentTelem.setValue(servoBusCurrent);
         prevIsBreakBeam = isBreakBeam;
         oldGamePad2.copy(gamepad2);
 
@@ -775,6 +833,22 @@ public class NewIntake extends SubSystem {
 
     public IntakingState getPrevIntakingState() {
         return prevIntakingState;
+    }
+
+    public double getServoBusCurrent()
+    {
+
+        try
+        {
+            LynxGetADCCommand.Channel servoChannel = LynxGetADCCommand.Channel.SERVO_CURRENT;
+            LynxGetADCCommand servoCommand = new LynxGetADCCommand(myRevHub, servoChannel, LynxGetADCCommand.Mode.ENGINEERING);
+
+            return servoCommand.sendReceive().getValue() / 1000.0;
+        }
+        catch (InterruptedException | RuntimeException | LynxNackException e)
+        {
+        }
+        return 0;
     }
 
 }
