@@ -4,6 +4,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
@@ -31,7 +32,9 @@ public class BlueTeleTest extends LinearOpMode {
 
     private List<LynxModule> allHubs;
 
-    private Encoder perpendicularWheel, parallelWheel;
+    private Encoder perpendicularWheel, parallelWheel, verticalSlideEncoder, horizontalSlideEncoder;
+
+    private TouchSensor breakBeam;
 
 
     @Override
@@ -42,32 +45,33 @@ public class BlueTeleTest extends LinearOpMode {
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
 
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
+
         localizer = new CluelessConstAccelLocalizer(masterThread.getData());
+        localizer.initSensors(perpendicularWheel, parallelWheel);
+
 
         drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.DRIVER_CONTROL);
 
+        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
+        breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
-        intake = new NewIntake(masterThread.getData(), blueAlliance, true, false);
-        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, true, true, true, false);
+        intake = new NewIntake(masterThread.getData(), horizontalSlideEncoder, breakBeam, blueAlliance, true, false);
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-//        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
 
-        allHubs = hardwareMap.getAll(LynxModule.class);
-        manualBulkReads(true);
+        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
+
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, false);
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
-//                drivetrain
-//                localizer
-//                intake,
-//                outtake
+                localizer,
+                drivetrain,
+                intake,
+                outtake
         );
-
-//        masterThread.setParallelWheel(parallelWheel);
-
-//        masterThread.init(hardwareMap);
 
         localizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
 
@@ -80,33 +84,11 @@ public class BlueTeleTest extends LinearOpMode {
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();
 
-
-//            parallelWheel.getCurrentPosition();
-
-//            clearBulkCache();
-//            parallelWheel.getCurrentPosition();
+            parallelWheel.getCurrentPosition();
 
             loopTime.setValue(loopTimer.milliSeconds());
 
             loopTimer.reset();
-        }
-    }
-
-    public void manualBulkReads(boolean manualReads) {
-        if (manualReads) {
-            for (LynxModule hub : allHubs) {
-                hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-            }
-        } else {
-            for (LynxModule hub : allHubs) {
-                hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-            }
-        }
-    }
-
-    public void clearBulkCache() {
-        for (LynxModule hub : allHubs) {
-            hub.clearBulkCache();
         }
     }
 

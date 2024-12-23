@@ -203,7 +203,7 @@ public class NewOuttake extends SubSystem {
 
 
     private final DcMotorEx verticalLeftMotor,verticalRightMotor;
-    private final Encoder verticalSlideEncoder;
+    private Encoder verticalSlideEncoder;
 
     private double actualMotorPower = 0;
 
@@ -230,7 +230,7 @@ public class NewOuttake extends SubSystem {
 
     private final Telemetry.Item outtakeLoopTime;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
+    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -240,6 +240,8 @@ public class NewOuttake extends SubSystem {
         this.blueAlliance = blueAlliance;
 
         this.intake = intake;
+
+        this.verticalSlideEncoder = verticalSlideEncoder;
 
         //motors
         verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
@@ -251,7 +253,7 @@ public class NewOuttake extends SubSystem {
         verticalRightMotor.setDirection(DcMotorEx.Direction.REVERSE);
 
         //encoder
-        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
+//        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 //        verticalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
 
         //servos
@@ -494,7 +496,7 @@ public class NewOuttake extends SubSystem {
         slideTimer.reset();
         prevSlideError = error;
 
-        if (Math.abs(motorPower-actualMotorPower)>.1) {
+        if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
             hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
             hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
 

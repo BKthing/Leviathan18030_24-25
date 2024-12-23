@@ -1,14 +1,22 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import com.qualcomm.hardware.bosch.BNO055IMUNew;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxNackException;
+import com.qualcomm.hardware.lynx.commands.core.LynxGetADCCommand;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.hardware.configuration.annotations.DigitalIoDeviceType;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -21,6 +29,7 @@ import java.util.List;
 public class badTestTele extends LinearOpMode {
 
     private VoltageSensor batteryVoltageSensor;
+    private LynxModule myRevHub;
 
     private DcMotorEx fl;
     private DcMotorEx bl;
@@ -40,9 +49,16 @@ public class badTestTele extends LinearOpMode {
 
     private  Encoder perpendicularWheel, parallelWheel;
 
+    private TouchSensor breakBeam;
+
+    private ModernRoboticsTouchSensor test;
+
     private Telemetry.Item loopTime, loopTime2;
     private ElapsedTimer loopTimer = new ElapsedTimer();
     private ElapsedTimer loopTimer2 = new ElapsedTimer();
+
+    private IMU imu;
+
 
     private  List<LynxModule> allHubs;
 
@@ -80,7 +96,15 @@ public class badTestTele extends LinearOpMode {
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
+        breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
+
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        imu = hardwareMap.get(BNO055IMUNew.class, "expansionImu");
+
+
+        imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
+
 
         allHubs = hardwareMap.getAll(LynxModule.class);
         manualBulkReads(true);
@@ -95,6 +119,7 @@ public class badTestTele extends LinearOpMode {
 //        leftServo = hardwareMap.get(Servo.class, "leftServo");
 //        rightServo = hardwareMap.get(Servo.class, "rightServo");
 //        tiltServo = hardwareMap.get(Servo.class, "tiltServo");
+        myRevHub = hardwareMap.get(LynxModule.class, "Expansion Hub 3");
 
 
 
@@ -103,6 +128,7 @@ public class badTestTele extends LinearOpMode {
         loopTime = telemetry.addData("loop time", "");
         loopTime2 = telemetry.addData("2nd loop time", "");
 
+        breakBeam.resetDeviceConfigurationForOpMode();
 
 
         waitForStart();
@@ -116,10 +142,8 @@ public class badTestTele extends LinearOpMode {
             loopTime2.setValue(loopTimer2.milliSeconds());
             loopTimer.reset();
 
-//            batteryVoltageSensor.getVoltage();
+            imu.getRobotYawPitchRollAngles();
 
-            parallelWheel.getCurrentPosition();
-            perpendicularWheel.getCurrentPosition();
             loopTime.setValue(loopTimer.milliSeconds());
 
             telemetry.update();
@@ -127,6 +151,22 @@ public class badTestTele extends LinearOpMode {
 
 
     }
+
+    public double getServoBusCurrent()
+    {
+
+        try {
+            LynxGetADCCommand.Channel servoChannel = LynxGetADCCommand.Channel.SERVO_CURRENT;
+            LynxGetADCCommand servoCommand = new LynxGetADCCommand(myRevHub, servoChannel, LynxGetADCCommand.Mode.ENGINEERING);
+
+            return servoCommand.sendReceive().getValue() / 1000.0;
+        } catch (InterruptedException | RuntimeException | LynxNackException e) {
+
+        }
+        return 0;
+    }
+
+
     public void manualBulkReads(boolean manualReads) {
         if (manualReads) {
             for (LynxModule hub : allHubs) {

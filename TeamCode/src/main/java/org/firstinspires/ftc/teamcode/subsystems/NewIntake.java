@@ -28,7 +28,9 @@ public class NewIntake extends SubSystem {
     private final LynxModule myRevHub;
 //    private final LynxGetADCCommand.Channel servoChannel;
 //    private final LynxGetADCCommand servoCommand;
-    private double servoBusCurrent;
+    private double servoBusCurrent = 0;
+    private double updatedServoBusCurrent = 0;
+    private boolean changedServoBusCurrent = false;
 
     public enum IntakeState {
         EXTENDING,
@@ -174,6 +176,8 @@ public class NewIntake extends SubSystem {
 
     private TouchSensor breakBeam;
 
+    private boolean changedIsBreakBeam = false;
+    private boolean updatedIsBreakBeam = false;
     private boolean isBreakBeam = false;
     private boolean prevIsBreakBeam = false;
 
@@ -203,7 +207,11 @@ public class NewIntake extends SubSystem {
 
     private final Telemetry.Item servoBusCurrentTelem;
 
-    public NewIntake(SubSystemData data, Boolean blueAlliance, boolean teleOpControls, boolean init) {
+    private final ElapsedTimer servoBusCurrentUpdateTimer = new ElapsedTimer();
+
+    private final ElapsedTimer breakBeamUpdateTimer = new ElapsedTimer();
+
+    public NewIntake(SubSystemData data, Encoder horizontalSlideEncoder, TouchSensor breakBeam, Boolean blueAlliance, boolean teleOpControls, boolean init) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -212,8 +220,10 @@ public class NewIntake extends SubSystem {
 
 
         //Motors
-        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
+        this.horizontalSlideEncoder = horizontalSlideEncoder;
         horizontalSlideEncoder.setDirection(Encoder.Direction.REVERSE);
+
+        this.breakBeam = breakBeam;
 
         horizontalLeftMotor = hardwareMap.get(DcMotorEx.class, "horizontalLeft"); // control hub 0
         horizontalRightMotor = hardwareMap.get(DcMotorEx.class, "horizontalRight"); // control hub 1
@@ -246,7 +256,6 @@ public class NewIntake extends SubSystem {
 
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "colorSensor");
 
-        breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
         intakeTelem = telemetry.addData("Intake state", intakeState.name());
         colorTelem = telemetry.addData("Color Telem", "");
@@ -287,10 +296,25 @@ public class NewIntake extends SubSystem {
 //            changedIntakeState = false;
 //        }
 //
-        servoBusCurrent = getServoBusCurrent();
+//        servoBusCurrent = getServoBusCurrent();
+        if (servoBusCurrent != updatedServoBusCurrent) {
+            changedServoBusCurrent = true;
+
+            servoBusCurrent = updatedServoBusCurrent;
+        } else {
+            changedServoBusCurrent = false;
+        }
+
         slideTicks = horizontalSlideEncoder.getCurrentPosition();
 
-        isBreakBeam = breakBeam.isPressed();
+        if (changedIsBreakBeam) {
+            prevIsBreakBeam = isBreakBeam;
+            isBreakBeam = updatedIsBreakBeam;
+
+            changedIsBreakBeam = false;
+        }
+
+//        isBreakBeam = breakBeam.isPressed();
 
         if (newColors != null && checkColor) {
             colors = newColors;
@@ -420,6 +444,20 @@ public class NewIntake extends SubSystem {
                 break;
         }
 
+        if (breakBeamUpdateTimer.milliSeconds()>20) {
+            hardwareQueue.add(() -> {
+                updatedIsBreakBeam = breakBeam.isPressed();
+                changedIsBreakBeam = true;
+            });
+            breakBeamUpdateTimer.reset();
+        }
+
+        if (servoBusCurrentUpdateTimer.milliSeconds() > 100 && targetIntakeSpeed > 0) {
+            hardwareQueue.add(() -> {
+                updatedServoBusCurrent = getServoBusCurrent();
+            });
+            servoBusCurrentUpdateTimer.reset();
+        }
 
 
         //slide PID
@@ -443,7 +481,7 @@ public class NewIntake extends SubSystem {
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
             p = error*.35;
-            d = ((prevSlideError-error) / elapsedTime) * .01;//.007
+            d = ((prevSlideError-error) / elapsedTime) * .03;//.007
             f=.15*Math.signum(error);
         }
 
@@ -455,7 +493,7 @@ public class NewIntake extends SubSystem {
         prevSlideError = error;
 
 
-        if (Math.abs(motorPower-actualMotorPower)>.1) {
+        if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
             hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
             hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
 
@@ -487,7 +525,7 @@ public class NewIntake extends SubSystem {
                 break;
             case INTAKING:
 
-                if (servoStallTimer.seconds() > .1) {
+                if (changedServoBusCurrent && servoStallTimer.seconds() > .1) {
                     intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
                 }
                 else if (checkColor) {
@@ -537,7 +575,7 @@ public class NewIntake extends SubSystem {
                 }
                 break;
             case FINISH_INTAKING:
-                if (servoStallTimer.seconds() > .1) {
+                if (changedServoBusCurrent && servoStallTimer.seconds() > .1) {
                     intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
                 }
                 else if (intakingTimer.seconds()>1 || targetIntakeSpeed == 0) {
@@ -838,17 +876,16 @@ public class NewIntake extends SubSystem {
     public double getServoBusCurrent()
     {
 
-        try
-        {
+        try {
             LynxGetADCCommand.Channel servoChannel = LynxGetADCCommand.Channel.SERVO_CURRENT;
             LynxGetADCCommand servoCommand = new LynxGetADCCommand(myRevHub, servoChannel, LynxGetADCCommand.Mode.ENGINEERING);
 
             return servoCommand.sendReceive().getValue() / 1000.0;
-        }
-        catch (InterruptedException | RuntimeException | LynxNackException e)
-        {
+        } catch (InterruptedException | RuntimeException | LynxNackException e) {
+
         }
         return 0;
     }
+
 
 }

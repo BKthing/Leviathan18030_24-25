@@ -39,10 +39,6 @@ public abstract class SubSystem {
         es.execute(updateThread);
     }
 
-    public void updateHardwareMap(HardwareMap hardwareMap) {
-        this.hardwareMap = hardwareMap;
-    }
-
     //intended to be used for bulk read data and data you can quickly get a response from
     //processing in this should be minimized because it is not threaded
     public abstract void priorityData();

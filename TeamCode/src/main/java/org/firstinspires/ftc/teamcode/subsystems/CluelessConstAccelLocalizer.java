@@ -42,7 +42,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     public static double PARALLEL_Y = -3.08; //2.57
     public static double PERPENDICULAR_X = -4.75;//6.49
 
-    private final Encoder perpendicularWheel, parallelWheel;
+    private Encoder perpendicularWheel, parallelWheel;
 
     private final IMU imu;
 
@@ -75,9 +75,8 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
         localizer = new CluelessTwoWheelLocalizer(PERPENDICULAR_X, PARALLEL_Y);
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
-
+//        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+//        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
 
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;
         getParallelWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * parallelWheel.getCurrentPosition() * PARALLEL_MULTIPLIER / TICKS_PER_REV;
@@ -102,6 +101,11 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 //            position.setValue("imu updated");
 //        });`
 
+    }
+
+    public void initSensors(Encoder perpendicularWheel, Encoder parallelWheel) {
+        this.perpendicularWheel = perpendicularWheel;
+        this.parallelWheel = parallelWheel;
     }
 
     @Override

@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.headingPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.lateralPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.naturalDecel;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.pointPID;
 import static org.firstinspires.ftc.teamcode.util.RobotConstants.trackWidth;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -15,7 +14,6 @@ import com.reefsharklibrary.data.MotorPowers;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
-import com.reefsharklibrary.localizers.Localizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.EndpointEstimator;
 import com.reefsharklibrary.pathing.TrajectoryInterface;
@@ -28,6 +26,7 @@ import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,6 +40,8 @@ public class Drivetrain extends SubSystem {
     private DriveState driveState;
 
     private final DcMotorEx frontLeft, frontRight, backLeft, backRight;
+
+    private List<DcMotorEx> drivetrainMotors;
 
     private List<Double> lastPowers = Arrays.asList(0.0, 0.0, 0.0, 0.0);
 
@@ -60,7 +61,7 @@ public class Drivetrain extends SubSystem {
 
 
     private final VoltageSensor batteryVoltageSensor;
-    private double voltage = 0;
+    private double voltage = 13, updatedVoltage = 13;
 
     private final CluelessTwoWheelLocalizer localizer;
 
@@ -76,6 +77,8 @@ public class Drivetrain extends SubSystem {
     private final Telemetry.Item driveTrainLoopTime;
 
     private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
+
+    private final ElapsedTimer voltageUpdateTimer = new ElapsedTimer();
 
     public Drivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer) {
         this(data, localizer, DriveState.FOLLOW_PATH);
@@ -103,6 +106,9 @@ public class Drivetrain extends SubSystem {
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
+
+
 //        frontLeft.setDirection(DcMotorSimple.Dir
 //        ection.REVERSE);
 //        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -124,7 +130,7 @@ public class Drivetrain extends SubSystem {
 
     @Override
     public void priorityData() {
-        voltage = batteryVoltageSensor.getVoltage();
+        voltage = updatedVoltage;
         switch (driveState) {
             case FOLLOW_PATH:
                 //getting the data before the localizer starts updating it
@@ -153,6 +159,14 @@ public class Drivetrain extends SubSystem {
     @Override
     public void loop() {
         driveTrainLoopTimer.reset();
+
+        if (voltageUpdateTimer.milliSeconds()>200) {
+            hardwareQueue.add(() -> {
+                updatedVoltage = batteryVoltageSensor.getVoltage();
+            });
+            voltageUpdateTimer.reset();
+        }
+
 
         switch (driveState) {
             case FOLLOW_PATH:
@@ -332,24 +346,12 @@ public class Drivetrain extends SubSystem {
     public void setDrivePower(MotorPowers motorPowers) {
         List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
 
-        if (different(powers)) {
-            hardwareQueue.add(() -> frontLeft.setPower(powers.get(0)));
-            hardwareQueue.add(() -> frontRight.setPower(powers.get(3)));
-            hardwareQueue.add(() -> backLeft.setPower(powers.get(1)));
-            hardwareQueue.add(() -> backRight.setPower(powers.get(2)));
-
-            lastPowers = powers;
-        }
-    }
-
-    private boolean different(List<Double> powers) {
         for (int i = 0; i<4; i++) {
-            //checks if powers are far enough apart to be worthy of an update
-            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.1)) {
-                return true;
+            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.075)) {
+                int finalI = i;
+                hardwareQueue.add(() -> drivetrainMotors.get(finalI).setPower(powers.get(finalI)));
             }
         }
-
-        return false;
     }
+
 }

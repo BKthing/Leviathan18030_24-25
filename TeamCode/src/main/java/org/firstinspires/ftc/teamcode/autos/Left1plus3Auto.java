@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.autos;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
@@ -14,6 +16,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
+import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
@@ -56,6 +59,9 @@ public class Left1plus3Auto extends LinearOpMode {
 
     double extensionDistance = 0;
 
+    private Encoder perpendicularWheel, parallelWheel, verticalSlideEncoder, horizontalSlideEncoder;
+
+    private TouchSensor breakBeam;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -69,10 +75,13 @@ public class Left1plus3Auto extends LinearOpMode {
 
         drivetrain = new Drivetrain(masterThread.getData(), localizer.getLocalizer());
         drivetrain.setDriveState(Drivetrain.DriveState.FOLLOW_PATH);
+        breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
+        verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
+        horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
 
-        intake = new NewIntake(masterThread.getData(), blueAlliance, false, true);
-        outtake = new NewOuttake(masterThread.getData(), intake, blueAlliance, false, true, true, true);
+        intake = new NewIntake(masterThread.getData(), horizontalSlideEncoder, breakBeam, blueAlliance, false, true);
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, true);
 
 
         //its important that outtake is added after intake for update order purposes

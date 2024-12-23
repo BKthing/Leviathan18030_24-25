@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MasterThread {
 
-    private Encoder parallelWheel, perpendicularWheel;
+//    private Encoder parallelWheel, perpendicularWheel;
 
 
     private final HardwareQueue hardwareQueue = new HardwareQueue();
@@ -43,7 +43,6 @@ public class MasterThread {
 
     private final FtcDashboard dashboard;
 
-//    private final VoltageSensor batteryVoltageSensor;
 
 
     private final boolean dashboardEnabled = true;
@@ -59,11 +58,9 @@ public class MasterThread {
     private final ElapsedTimer threadUpdateTimer = new ElapsedTimer();
 
     public MasterThread(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad1, Gamepad gamepad2) {
-//        this.hardwareMap = hardwareMap;
 
-
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
+//        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+//        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
 
         dashboard = FtcDashboard.getInstance();
 
@@ -84,10 +81,10 @@ public class MasterThread {
         this.data = new SubSystemData(hardwareMap, hardwareQueue, telemetry, gamepad1Instance, gamepad2Instance);
     }
 
-
-//    public void init(HardwareMap hardwareMap) {
-//
+//    public void setParallelWheel(Encoder encoder) {
+//        parallelWheel = encoder;
 //    }
+
 
     public void addSubSystem(SubSystem subSystem) {
         subSystems.add(subSystem);
@@ -104,38 +101,27 @@ public class MasterThread {
         gamepad1Instance.copy(gamepad1);
         gamepad2Instance.copy(gamepad2);
 
-
-//        for (SubSystem subSystem: subSystems) {
-//            subSystem.updateHardwareMap(hardwareMap);
-////            subSystem.loop();
-//        }
-
         threadUpdateTimer.reset();
-
-        perpendicularWheel.getCurrentPosition();
-        parallelWheel.getCurrentPosition();
-
-        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds() + " " + parallelWheel.getCurrentPosition());
 
         for (SubSystem subSystem: subSystems) {
             subSystem.priorityData();
 //            subSystem.loop();
         }
 
-//        ExecutorService es = Executors.newCachedThreadPool();
+        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds());
+
+
         for (SubSystem subSystem: subSystems) {
 //            subSystem.priorityData();
             subSystem.loop();
         }
-
-//        es.shutdown();
 
 
         //updates the data in the bulkCache
         clearBulkCache();
 
         //ensures that a certain amount of hardware actions are called
-        int minHardwareUpdates = 8;
+        int minHardwareUpdates = 2;
 
         //runs queued actions while threads are still active
 //        while (!es.awaitTermination(1, TimeUnit.NANOSECONDS)) {
