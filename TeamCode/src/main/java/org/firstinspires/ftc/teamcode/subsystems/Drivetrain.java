@@ -345,7 +345,7 @@ public class Drivetrain extends SubSystem {
     private boolean different(List<Double> powers) {
         for (int i = 0; i<4; i++) {
             //checks if powers are far enough apart to be worthy of an update
-            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.02)) {
+            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.1)) {
                 return true;
             }
         }

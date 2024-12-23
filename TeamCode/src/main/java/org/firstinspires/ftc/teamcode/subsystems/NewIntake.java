@@ -296,18 +296,13 @@ public class NewIntake extends SubSystem {
             colors = newColors;
         }
 
-        checkColor = nextCheckColor;
+//        checkColor = nextCheckColor;
 
-        if (checkColor) {
+        if ((isBreakBeam && !prevIsBreakBeam) && !checkColor && intakingState == IntakingState.INTAKING) {
+            checkColor = true;
             if (blueAlliance != null) {
                 colors = colorSensor.getNormalizedColors();
             }
-        }
-
-        if ((isBreakBeam && !prevIsBreakBeam) && !nextCheckColor && intakingState == IntakingState.INTAKING) {
-            nextCheckColor = true;
-        } else {
-            nextCheckColor = false;
         }
 
         if (updateIntakeState) {
@@ -379,7 +374,7 @@ public class NewIntake extends SubSystem {
             if (gamepad2.left_bumper && !oldGamePad2.left_bumper) {
                 toIntakeState = ToIntakeState.DROP_INTAKE;
                 intakingState = IntakingState.INTAKING;
-                targetIntakeSpeed = .6;
+                targetIntakeSpeed = 1;
             } else if (gamepad2.left_trigger>.2 && oldGamePad2.left_trigger<=.2) {
                 targetIntakeSpeed = -1;
                 intakingState = IntakingState.MANUAL_EJECTING;
@@ -460,7 +455,7 @@ public class NewIntake extends SubSystem {
         prevSlideError = error;
 
 
-        if (Math.abs(motorPower-actualMotorPower)>.04) {
+        if (Math.abs(motorPower-actualMotorPower)>.1) {
             hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
             hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
 
@@ -469,7 +464,7 @@ public class NewIntake extends SubSystem {
 
 
 
-        if (Math.abs(targetIntakePos-actualIntakePos)>.01) {
+        if (targetIntakePos != actualIntakePos) {
             hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos+.03));
             hardwareQueue.add(() -> rightIntakeServo.setPosition(targetIntakePos));
 
@@ -482,12 +477,12 @@ public class NewIntake extends SubSystem {
 
             actualIntakeSpeed = targetIntakeSpeed;
         }
-        if (servoBusCurrent < 4) {
+        if (servoBusCurrent < 3.2) {
             servoStallTimer.reset();
         }
         switch (intakingState) {
             case START_INTAKING:
-                targetIntakeSpeed = .6;
+                targetIntakeSpeed = 1;
                 intakingState = IntakingState.INTAKING;
                 break;
             case INTAKING:
@@ -522,7 +517,7 @@ public class NewIntake extends SubSystem {
 
                     checkColor = false;
 
-                    if (false) {//(sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {//(
+                    if ((sampleColor == SampleColor.BLUE && !blueAlliance) ||  (sampleColor == SampleColor.RED && blueAlliance)) {//(
                         targetIntakeSpeed = -1;
                         targetIntakePos = IntakePos.PARTIAL_UP.pos;
                         intakingState = IntakingState.START_EJECTING;
@@ -591,7 +586,7 @@ public class NewIntake extends SubSystem {
                 intakingState = IntakingState.UNJAMMING_SPIN_OUT;
                 break;
             case UNJAMMING_SPIN_OUT:
-                if (intakingTimer.seconds()>.25) {
+                if (intakingTimer.seconds()>.1) {
                     targetIntakeSpeed = 1;
                     intakingState = IntakingState.UNJAMMING_SPIN_IN;
                     intakingTimer.reset();
@@ -612,7 +607,7 @@ public class NewIntake extends SubSystem {
             case SERVO_STALL_START_UNJAMMING:
                 targetIntakeSpeed = -1;
                 intakingState = IntakingState.SERVO_STALL_UNJAMMING_SPIN_OUT;
-                if (timeSinceLastStall.seconds()>.5) {
+                if (timeSinceLastStall.seconds()>.8) {
                    stallCount = 0;
                 }
                 timeSinceLastStall.reset();
@@ -620,9 +615,9 @@ public class NewIntake extends SubSystem {
                 intakingTimer.reset();
                 break;
             case SERVO_STALL_UNJAMMING_SPIN_OUT:
-                if ((intakingTimer.seconds()>.15 && stallCount == 0) || (intakingTimer.seconds()>1 && stallCount>0)) {
+                if ((intakingTimer.seconds()>.1 && stallCount == 0) || (intakingTimer.seconds()>.5 && stallCount>0)) {
                     if (!teleOpControls || gamepad2.left_bumper) {
-                        targetIntakeSpeed = .6;
+                        targetIntakeSpeed = 1;
 
                     }
                     else {
@@ -661,6 +656,10 @@ public class NewIntake extends SubSystem {
                 break;
         }
 
+        if (teleOpControls && gamepad2.right_trigger > .05 && (intakeState == IntakeState.INTAKING || intakeState == IntakeState.RESTING || intakeState == IntakeState.DROPPING_INTAKE || intakeState == IntakeState.EXTENDING)) {
+            targetIntakePos = IntakePos.DOWN.pos+gamepad2.right_trigger*(IntakePos.UP.pos-IntakePos.DOWN.pos);
+        }
+
 
         switch (intakeState) {
             case EXTENDING:
@@ -676,12 +675,13 @@ public class NewIntake extends SubSystem {
             case DROPPING_INTAKE:
                 //if intake has finished dropping start intaking
                 if (intakeTimer.seconds()>.2) {
-                    targetIntakeSpeed = .6;
+                    targetIntakeSpeed = 1;
 
 
 
                     intakeState = IntakeState.INTAKING;
                 }
+                break;
 
             case INTAKING:
 //                if (holdingSample) {

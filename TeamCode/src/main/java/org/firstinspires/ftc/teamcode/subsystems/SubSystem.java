@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutorService;
 
 public abstract class SubSystem {
     public final SubSystemData data;
-    public final HardwareMap hardwareMap;
+    public HardwareMap hardwareMap;
     public final Telemetry telemetry;
     public final Gamepad gamepad1, gamepad2;
 
@@ -37,6 +37,10 @@ public abstract class SubSystem {
 
         updateThread = new Thread(this::loop);
         es.execute(updateThread);
+    }
+
+    public void updateHardwareMap(HardwareMap hardwareMap) {
+        this.hardwareMap = hardwareMap;
     }
 
     //intended to be used for bulk read data and data you can quickly get a response from

@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -18,6 +19,9 @@ import java.util.List;
 //@Disabled
 @TeleOp
 public class badTestTele extends LinearOpMode {
+
+    private VoltageSensor batteryVoltageSensor;
+
     private DcMotorEx fl;
     private DcMotorEx bl;
     private DcMotorEx fr;
@@ -76,6 +80,8 @@ public class badTestTele extends LinearOpMode {
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
+        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
         allHubs = hardwareMap.getAll(LynxModule.class);
         manualBulkReads(true);
 
@@ -104,99 +110,18 @@ public class badTestTele extends LinearOpMode {
         while ( !isStopRequested()) {
             loopTimer2.reset();
             clearBulkCache();
+            parallelWheel.getCurrentPosition();
+
+//            batteryVoltageSensor.getVoltage();
             loopTime2.setValue(loopTimer2.milliSeconds());
             loopTimer.reset();
-//            parallelWheel.getCurrentPosition();
+
+//            batteryVoltageSensor.getVoltage();
+
+            parallelWheel.getCurrentPosition();
             perpendicularWheel.getCurrentPosition();
             loopTime.setValue(loopTimer.milliSeconds());
 
-
-
-//            double strafe = gamepad1.left_stick_x;
-//            double forward = -gamepad1.left_stick_y;
-//            double turn = gamepad1.right_stick_x;
-//
-//            if ( Math.abs(strafe) < .02)
-//                strafe = 0;
-//
-//            if ( Math.abs(forward) < .02)
-//                forward = 0;
-//
-//            if ( Math.abs(turn) < .02)
-//                turn = 0;
-
-//            if (gamepad1.a){
-//                horizontalLeftMotor.setPower(.5);
-//                horizontalRightMotor.setPower(0.5);
-//            } else if (gamepad1.b) {
-//                horizontalLeftMotor.setPower(-.5);
-//                horizontalRightMotor.setPower(-0.5);
-//            } else {
-//                horizontalLeftMotor.setPower(0);
-//                horizontalRightMotor.setPower(0);
-//            }
-
-//            if (gamepad1.x){
-//                verticalLeftMotor.setPower(.5);
-//                verticalRightMotor.setPower(0.5);
-//            } else if (gamepad1.y) {
-//                verticalLeftMotor.setPower(-.5);
-//                verticalRightMotor.setPower(-0.5);
-//            } else {
-//                verticalLeftMotor.setPower(0);
-//                verticalRightMotor.setPower(0);
-//            }
-
-//            leftServo.setPosition(.46);
-//            rightServo.setPosition(.23);
-//            tiltServo.setPosition(.755);
-
-
-//            if (gamepad1.a) {
-//                horizontalRightMotor.setPower(0.5);
-//            } else  {
-//                horizontalRightMotor.setPower(0);
-//            }
-//
-//            if (gamepad1.b) {
-//                horizontalLeftMotor.setPower(0.5);
-//            } else  {
-//                horizontalLeftMotor.setPower(0);
-//            }
-//
-//            if (gamepad1.x) {
-//                verticalLeftMotor.setPower(0.5);
-//            } else  {
-//                verticalLeftMotor.setPower(0);
-//            }
-//
-//            if (gamepad1.y) {
-//                verticalRightMotor.setPower(0.5);
-//            } else  {
-//                verticalRightMotor.setPower(0);
-//            }
-
-//            if (gamepad1.dpad_down){
-//                br.setPower(.5);
-//            }
-//            if (gamepad1.dpad_right) {
-//                bl.setPower(0.5);
-//            }
-//            if (gamepad1.dpad_left) {
-//                fl.setPower(0.5);
-//            }
-//            if (gamepad1.dpad_up) {
-//                fr.setPower(0.5);
-//            }
-
-
-//            fl.setPower( forward + turn + strafe);
-//            fr.setPower( forward - turn - strafe);
-//            bl.setPower( forward + turn - strafe);
-//            br.setPower( forward - turn + strafe);
-//
-//            horizontalEncoderPos.setValue(horizontalSlideEncoder.getCurrentPosition());
-//            verticalEncoderPos.setValue(verticalSlideEncoder.getCurrentPosition());
             telemetry.update();
         }
 

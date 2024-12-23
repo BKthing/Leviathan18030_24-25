@@ -90,11 +90,11 @@ public class NewOuttake extends SubSystem {
     public enum VerticalSlide {
         EXTRA_DOWN(-.3),
         DOWN(0),
-        TRANSFER(4.7),
-        EXTRACT_FROM_TRANSFER(7),
+        TRANSFER(5.6),
+        EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(8.5),
         SPECIMEN_PICKUP(2),
-        CLEAR_SPECIMEN_BAR(4.7),
+        CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(13.7),
         HANG_HEIGHT(21),
@@ -116,16 +116,16 @@ public class NewOuttake extends SubSystem {
     private int slideTicks = 0;
 
     public enum V4BarPos {
-        PLACE_FRONT(.345),
+        PLACE_FRONT(.327),
         CLEAR_FRONT_BAR(.29),
 //        WAIT_FOR_TRANSFER(.35),
         RELEASE_HANG_HOOKS(.57),
         MID_POSITION_CUTOFF(.55),
-        WAITING_FOR_HANG_DEPLOY(.51),
-        TRANSFER(.49),
+        WAITING_FOR_HANG_DEPLOY(.49),
+        TRANSFER(.48),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
-        GRAB_BACK(.64),
+        GRAB_BACK(.61),
         WAIT_PLACE_BACK(.14),
         PLACE_BACK(.07),
         HANG_POS(.25),
@@ -145,19 +145,16 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPitch {
-        DOWN(.24),
-        BACK(0.155),
+        DOWN(.31),
+        BACK(0.106),
         BACK_ANGLED_DOWN(.19),
-        BACK_45(.20),
-        BACK2(.47),
-        WAIT_FOR_TRANSFER(.32),
-        TRANSFER(.277),
+        BACK2(1),
+        TRANSFER(.435),
         EXTRACT_FROM_TRANSFER(.32),
-        FRONT_ANGLED_UP(.39),
-        FRONT_ANGELED_DOWN(.32),
-        FRONT_45(.29),
+        FRONT_ANGLED_UP(.72),
+        FRONT_ANGELED_DOWN(.49),
 
-        FRONT(.34);
+        FRONT(.62);
 
         public final double pos;
 
@@ -172,10 +169,10 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPosition {
-        EXTRA_OPEN(.4),
-        HANG_DEPLOY(.55),
+        EXTRA_OPEN(.43),
+        HANG_DEPLOY(.39),
         OPEN(.3),//.15
-        CLOSED(.0);//.02
+        CLOSED(.18);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -497,7 +494,7 @@ public class NewOuttake extends SubSystem {
         slideTimer.reset();
         prevSlideError = error;
 
-        if (Math.abs(motorPower-actualMotorPower)>.04) {
+        if (Math.abs(motorPower-actualMotorPower)>.1) {
             hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
             hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
 
@@ -794,7 +791,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (gamepad2.right_trigger>.2){//blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance))) {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+                    if (gamepad2.right_trigger>.2 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
                         targetSlidePos = VerticalSlide.TRANSFER.length + 2;
                         targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
                         targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;

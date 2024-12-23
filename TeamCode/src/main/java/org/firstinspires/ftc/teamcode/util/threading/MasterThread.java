@@ -4,13 +4,16 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.HardwareQueue;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.SubSystem;
+import org.firstinspires.ftc.teamcode.util.Encoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,11 +24,14 @@ import java.util.concurrent.TimeUnit;
 
 public class MasterThread {
 
+    private Encoder parallelWheel, perpendicularWheel;
+
+
     private final HardwareQueue hardwareQueue = new HardwareQueue();
 
     private final List<SubSystem> subSystems = new ArrayList<>();
 
-    private final HardwareMap hardwareMap;
+//    private final HardwareMap hardwareMap;
 
     private final Telemetry telemetry;
 
@@ -36,6 +42,9 @@ public class MasterThread {
     private final Gamepad gamepad2Instance = new Gamepad();
 
     private final FtcDashboard dashboard;
+
+//    private final VoltageSensor batteryVoltageSensor;
+
 
     private final boolean dashboardEnabled = true;
 
@@ -50,7 +59,11 @@ public class MasterThread {
     private final ElapsedTimer threadUpdateTimer = new ElapsedTimer();
 
     public MasterThread(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad1, Gamepad gamepad2) {
-        this.hardwareMap = hardwareMap;
+//        this.hardwareMap = hardwareMap;
+
+
+        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
 
         dashboard = FtcDashboard.getInstance();
 
@@ -59,16 +72,22 @@ public class MasterThread {
         this.gamepad1 = gamepad1;
         this.gamepad2 = gamepad2;
 
+//        batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+        allHubs = hardwareMap.getAll(LynxModule.class);
+        manualBulkReads(true);
+
         queueSize = telemetry.addData("Queue Size", 0);
         preQueueSize = telemetry.addData("Pre-Update Queue Size", 0);
 
         threadUpdateTime = telemetry.addData("Thread update time", "");
 
         this.data = new SubSystemData(hardwareMap, hardwareQueue, telemetry, gamepad1Instance, gamepad2Instance);
-
-        allHubs = hardwareMap.getAll(LynxModule.class);
-        manualBulkReads(true);
     }
+
+
+//    public void init(HardwareMap hardwareMap) {
+//
+//    }
 
     public void addSubSystem(SubSystem subSystem) {
         subSystems.add(subSystem);
@@ -85,21 +104,35 @@ public class MasterThread {
         gamepad1Instance.copy(gamepad1);
         gamepad2Instance.copy(gamepad2);
 
+
+//        for (SubSystem subSystem: subSystems) {
+//            subSystem.updateHardwareMap(hardwareMap);
+////            subSystem.loop();
+//        }
+
         threadUpdateTimer.reset();
+
+        perpendicularWheel.getCurrentPosition();
+        parallelWheel.getCurrentPosition();
+
+        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds() + " " + parallelWheel.getCurrentPosition());
+
+        for (SubSystem subSystem: subSystems) {
+            subSystem.priorityData();
+//            subSystem.loop();
+        }
 
 //        ExecutorService es = Executors.newCachedThreadPool();
         for (SubSystem subSystem: subSystems) {
-            subSystem.priorityData();
+//            subSystem.priorityData();
             subSystem.loop();
         }
 
 //        es.shutdown();
 
-        threadUpdateTime.setValue(threadUpdateTimer.milliSeconds());
 
         //updates the data in the bulkCache
         clearBulkCache();
-
 
         //ensures that a certain amount of hardware actions are called
         int minHardwareUpdates = 8;
@@ -143,8 +176,7 @@ public class MasterThread {
 
 
         //updates the data in the bulkCache
-        clearBulkCache();
-
+//        clearBulkCache();
 
         //ensures that a certain amount of hardware actions are called
         int minHardwareUpdates = 8;

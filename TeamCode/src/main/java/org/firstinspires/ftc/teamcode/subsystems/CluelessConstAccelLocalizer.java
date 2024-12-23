@@ -32,15 +32,15 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     CluelessTwoWheelLocalizer localizer;
 //    ReusableHardwareAction imuAction;
 
-    public static double TICKS_PER_REV = 8192;
-    public static double WHEEL_RADIUS = 0.69; // in
+    public static double TICKS_PER_REV = 2000;
+    public static double WHEEL_RADIUS = 0.94; // in
 
-    public static double PARALLEL_MULTIPLIER = .998342;//.998342
+    public static double PARALLEL_MULTIPLIER = -1;//.998342
 
-    public static double PERPENDICULAR_MULTIPLIER = 1.01;//1.01
+    public static double PERPENDICULAR_MULTIPLIER = -1;//1.01
 
-    public static double PARALLEL_Y = -2.57; //2.57
-    public static double PERPENDICULAR_X = -6.49;//6.49
+    public static double PARALLEL_Y = -3.08; //2.57
+    public static double PERPENDICULAR_X = -4.75;//6.49
 
     private final Encoder perpendicularWheel, parallelWheel;
 
@@ -76,7 +76,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         localizer = new CluelessTwoWheelLocalizer(PERPENDICULAR_X, PARALLEL_Y);
 
         perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalRight"));
+        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
 
 
         getPerpendicularWheelDistance = () -> WHEEL_RADIUS * 2 * Math.PI * perpendicularWheel.getCurrentPosition() * PERPENDICULAR_MULTIPLIER / TICKS_PER_REV;
