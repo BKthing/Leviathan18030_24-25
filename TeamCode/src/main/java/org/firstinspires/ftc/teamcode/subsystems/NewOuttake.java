@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.reefsharklibrary.misc.ElapsedTimer;
+import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PassData;
@@ -230,6 +231,8 @@ public class NewOuttake extends SubSystem {
 
     private final Telemetry.Item outtakeLoopTime;
 
+    private final ReusableHardwareAction leftMotorReusableHardwareAction, rightMotorReusableHardwareAction, leftOuttakeServoReusableHardwareAction, rightOuttakeServoReusableHardwareAction, clawPitchServoReusableHardwareAction, clawServoReusableHardwareAction;
+
     public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
         super(data);
 
@@ -242,6 +245,14 @@ public class NewOuttake extends SubSystem {
         this.intake = intake;
 
         this.verticalSlideEncoder = verticalSlideEncoder;
+
+        this.leftMotorReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.rightMotorReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.leftOuttakeServoReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.rightOuttakeServoReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.clawPitchServoReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.clawServoReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
+
 
         //motors
         verticalLeftMotor = hardwareMap.get(DcMotorEx.class, "verticalLeft"); // control hub 2
@@ -497,28 +508,29 @@ public class NewOuttake extends SubSystem {
         prevSlideError = error;
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            hardwareQueue.add(() -> verticalLeftMotor.setPower(motorPower));
-            hardwareQueue.add(() -> verticalRightMotor.setPower(motorPower));
+            leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower));
+            rightMotorReusableHardwareAction.setAndQueueAction(() -> verticalRightMotor.setPower(motorPower));
 
             actualMotorPower = motorPower;
         }
 
 
         if (targetClawPitch != actualClawPitch) {
-            hardwareQueue.add(() -> clawPitchServo.setPosition(targetClawPitch));
+            clawPitchServoReusableHardwareAction.setAndQueueAction(() -> clawPitchServo.setPosition(targetClawPitch));
 
             actualClawPitch = targetClawPitch;
         }
 
         if (targetV4BPos != actualV4BPos) {
-            hardwareQueue.add(() -> leftOuttakeServo.setPosition(targetV4BPos));
-            hardwareQueue.add(() -> rightOuttakeServo.setPosition(targetV4BPos));
+            leftOuttakeServoReusableHardwareAction.setAndQueueAction(() -> leftOuttakeServo.setPosition(targetV4BPos));
+            rightOuttakeServoReusableHardwareAction.setAndQueueAction(() -> rightOuttakeServo.setPosition(targetV4BPos));
 
             actualV4BPos = targetV4BPos;
         }
 
         if (updateClawPosition) {
-            hardwareQueue.add(() -> clawServo.setPosition(clawPosition.pos));
+            clawServoReusableHardwareAction.setAndQueueAction(() -> clawServo.setPosition(clawPosition.pos));
+
             updateClawPosition = false;
         }
 

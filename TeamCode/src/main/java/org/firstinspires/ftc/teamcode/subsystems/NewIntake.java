@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.misc.ElapsedTimer;
+import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PassData;
@@ -209,7 +210,14 @@ public class NewIntake extends SubSystem {
 
     private final ElapsedTimer servoBusCurrentUpdateTimer = new ElapsedTimer();
 
+    private final ReusableHardwareAction servoBusCurrentHardwareAction;
+
     private final ElapsedTimer breakBeamUpdateTimer = new ElapsedTimer();
+
+    private final ReusableHardwareAction breakBeamUpdateHardwareAction;
+
+    private final ReusableHardwareAction leftIntakeMotorHardwareAction, rightIntakeMotorHardwareAction, leftIntakeServoHardwareAction, rightIntakeServoHardwareAction, leftSpinnerServoHardwareAction, rightSpinnerServoHardwareAction;
+
 
     public NewIntake(SubSystemData data, Encoder horizontalSlideEncoder, TouchSensor breakBeam, Boolean blueAlliance, boolean teleOpControls, boolean init) {
         super(data);
@@ -217,6 +225,16 @@ public class NewIntake extends SubSystem {
         this.teleOpControls = teleOpControls;
         this.blueAlliance = blueAlliance;
         myRevHub = hardwareMap.get(LynxModule.class, "Expansion Hub 3");
+
+        this.servoBusCurrentHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.breakBeamUpdateHardwareAction = new ReusableHardwareAction(hardwareQueue);
+
+        this.leftIntakeMotorHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.rightIntakeMotorHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.leftIntakeServoHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.rightIntakeServoHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.leftSpinnerServoHardwareAction = new ReusableHardwareAction(hardwareQueue);
+        this.rightSpinnerServoHardwareAction = new ReusableHardwareAction(hardwareQueue);
 
 
         //Motors
@@ -445,7 +463,7 @@ public class NewIntake extends SubSystem {
         }
 
         if (breakBeamUpdateTimer.milliSeconds()>20) {
-            hardwareQueue.add(() -> {
+            breakBeamUpdateHardwareAction.setAndQueueIfEmpty(() -> {
                 updatedIsBreakBeam = breakBeam.isPressed();
                 changedIsBreakBeam = true;
             });
@@ -453,9 +471,10 @@ public class NewIntake extends SubSystem {
         }
 
         if (servoBusCurrentUpdateTimer.milliSeconds() > 100 && targetIntakeSpeed > 0) {
-            hardwareQueue.add(() -> {
+            servoBusCurrentHardwareAction.setAndQueueIfEmpty(() -> {
                 updatedServoBusCurrent = getServoBusCurrent();
             });
+
             servoBusCurrentUpdateTimer.reset();
         }
 
@@ -494,8 +513,8 @@ public class NewIntake extends SubSystem {
 
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            hardwareQueue.add(() -> horizontalLeftMotor.setPower(motorPower));
-            hardwareQueue.add(() -> horizontalRightMotor.setPower(motorPower));
+            leftIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalLeftMotor.setPower(motorPower));
+            rightIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalRightMotor.setPower(motorPower));
 
             actualMotorPower = motorPower;
         }
@@ -503,15 +522,15 @@ public class NewIntake extends SubSystem {
 
 
         if (targetIntakePos != actualIntakePos) {
-            hardwareQueue.add(() -> leftIntakeServo.setPosition(targetIntakePos+.03));
-            hardwareQueue.add(() -> rightIntakeServo.setPosition(targetIntakePos));
+            leftIntakeServoHardwareAction.setAndQueueAction(() -> leftIntakeServo.setPosition(targetIntakePos+.03));
+            rightIntakeServoHardwareAction.setAndQueueAction(() -> rightIntakeServo.setPosition(targetIntakePos));
 
             actualIntakePos = targetIntakePos;
         }
 
         if (Math.abs(targetIntakeSpeed-actualIntakeSpeed)>.04) {
-            hardwareQueue.add(() -> leftSpinnerServo.setPower(targetIntakeSpeed));
-            hardwareQueue.add(() -> rightSpinnerServo.setPower(targetIntakeSpeed));
+            leftSpinnerServoHardwareAction.setAndQueueAction(() -> leftSpinnerServo.setPower(targetIntakeSpeed));
+            rightSpinnerServoHardwareAction.setAndQueueAction(() -> rightSpinnerServo.setPower(targetIntakeSpeed));
 
             actualIntakeSpeed = targetIntakeSpeed;
         }

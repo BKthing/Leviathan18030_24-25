@@ -71,13 +71,13 @@ public class AutoTest extends LinearOpMode {
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
-                localizer,
-                drivetrain,
-                intake,
-                outtake
+//                localizer,
+                drivetrain
+//                intake,
+//                outtake
         );
 
-        Action testPath = drivetrain.drive.actionBuilder(new com.reefsharklibrary.data.Pose2d(64, 14, Math.toRadians(180)))
+        Action testPath = drivetrain.drive.actionBuilder(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)))
                 .setTangent(Math.toRadians(180))
                 .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(0, 0, Math.toRadians(0)), Math.toRadians(180))
                 .setTangent(Math.toRadians(0))

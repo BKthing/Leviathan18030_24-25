@@ -74,7 +74,7 @@ public class BlueTeleTest extends LinearOpMode {
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
-                localizer,
+//                localizer,
                 drivetrain,
                 intake,
                 outtake

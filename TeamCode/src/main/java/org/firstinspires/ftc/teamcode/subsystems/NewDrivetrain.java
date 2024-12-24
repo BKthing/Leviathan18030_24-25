@@ -1,15 +1,8 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.headingPID;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.lateralPID;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.naturalDecel;
-import static org.firstinspires.ftc.teamcode.util.RobotConstants.trackWidth;
-
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -19,16 +12,11 @@ import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
-import com.reefsharklibrary.pathing.EndpointEstimator;
-import com.reefsharklibrary.pathing.TrajectoryInterface;
-import com.reefsharklibrary.pathing.TrajectorySequence;
-import com.reefsharklibrary.pathing.TrajectorySequenceRunner;
-import com.reefsharklibrary.pathing.data.IndexCallMarker;
+import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.util.DashboardUtil;
-import org.firstinspires.ftc.teamcode.util.RobotConstants;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
+import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 import java.util.Arrays;
@@ -43,7 +31,7 @@ public class NewDrivetrain extends SubSystem {
 
     private DriveState driveState;
 
-    public final MecanumDrive drive;
+    public final MecanumDrive2 drive;
 
     private Action path;
 
@@ -55,7 +43,9 @@ public class NewDrivetrain extends SubSystem {
 
     private List<DcMotorEx> drivetrainMotors;
 
-    private List<Double> lastPowers = Arrays.asList(0.0, 0.0, 0.0, 0.0);
+    private final List<ReusableHardwareAction> motorActions;
+
+    private List<Double> actualPowers = Arrays.asList(0.0, 0.0, 0.0, 0.0);
 
     private final Telemetry.Item motorPowerTelemetry;
 
@@ -76,6 +66,7 @@ public class NewDrivetrain extends SubSystem {
     private final double minPowerChange = .03;
 
 
+    private final ReusableHardwareAction voltageSensorHardwareAction;
     private final VoltageSensor batteryVoltageSensor;
     private double voltage = 13, updatedVoltage = 13;
 
@@ -107,7 +98,11 @@ public class NewDrivetrain extends SubSystem {
 
         this.driveState = driveState;
 
-        this.drive = new MecanumDrive(hardwareMap, localizer.getPoseEstimate());
+        this.drive = new MecanumDrive2(hardwareMap, MathUtil.toRoadRunnerPose(localizer.getPoseEstimate()));
+
+        this.motorActions = Arrays.asList(new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue));
+
+        this.voltageSensorHardwareAction = new ReusableHardwareAction(hardwareQueue);
 
         frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
         frontRight = hardwareMap.get(DcMotorEx.class, "fr");//
@@ -124,12 +119,6 @@ public class NewDrivetrain extends SubSystem {
 
         drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
-//        dashboard = FtcDashboard.getInstance();
-
-
-//        frontLeft.setDirection(DcMotorSimple.Dir
-//        ection.REVERSE);
-//        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -149,28 +138,12 @@ public class NewDrivetrain extends SubSystem {
     @Override
     public void priorityData() {
         voltage = updatedVoltage;
-        switch (driveState) {
-            case FOLLOW_PATH:
-                //getting the data before the localizer starts updating it
-                poseEstimate = localizer.getPoseEstimate();
-                poseVelocity = localizer.getPoseVelocity();
-//                poseAcceleration = localizer.getPoseAcceleration();
 
-                if (!poseVelocity.isFinite()) {
-                    throw new RuntimeException("Invalid velocity:" + poseVelocity);
-                }
-                break;
-            case DRIVER_CONTROL:
-                //getting the data before the localizer starts updating it
-                poseEstimate = localizer.getPoseEstimate();
-                poseVelocity = localizer.getPoseVelocity();
+        poseEstimate = localizer.getPoseEstimate();
+        poseVelocity = localizer.getPoseVelocity();
 
-//                poseAcceleration = localizer.getPoseAcceleration();
-
-                if (!poseVelocity.isFinite()) {
-                    throw new RuntimeException("Invalid velocity:" + poseVelocity);
-                }
-                break;
+        if (!poseVelocity.isFinite()) {
+            throw new RuntimeException("Invalid velocity:" + poseVelocity);
         }
     }
 
@@ -178,10 +151,10 @@ public class NewDrivetrain extends SubSystem {
     public void loop() {
 
         driveTrainLoopTimer.reset();
-        drive.setVoltage(voltage);
+//        drive.setVoltage(voltage);
 
         if (voltageUpdateTimer.milliSeconds()>200) {
-            hardwareQueue.add(() -> {
+            voltageSensorHardwareAction.setAndQueueIfEmpty(() -> {
                 updatedVoltage = batteryVoltageSensor.getVoltage();
             });
             voltageUpdateTimer.reset();
@@ -192,15 +165,11 @@ public class NewDrivetrain extends SubSystem {
             case FOLLOW_PATH:
 
                 if (followPath) {
-//                    drive.updatePoseEstimate(poseEstimate, poseVelocity);
-
                     packet = new TelemetryPacket();
+                    packet.fieldOverlay().getOperations().addAll(canvas.getOperations());
 
                     followPath = path.run(packet);
 
-                    packet.fieldOverlay().getOperations().addAll(canvas.getOperations());
-
-//                    dashboard.sendTelemetryPacket(packet);
 
                     setDrivePower(drive.getDrivePowers());
                 }
@@ -209,7 +178,6 @@ public class NewDrivetrain extends SubSystem {
             case DRIVER_CONTROL:
                 double relativeHeading = poseEstimate.getHeading()-headingOffset;
 
-//                double speedMultiplier = 1- gamepad1.right_trigger*.7;
                 double speedMultiplier = 1- gamepad1.right_trigger*.7;
 
                 MotorPowers powers = new MotorPowers();
@@ -269,97 +237,8 @@ public class NewDrivetrain extends SubSystem {
     public TelemetryPacket dashboard(TelemetryPacket packet) {
 
         if (driveState == DriveState.FOLLOW_PATH) {
-
             packet.fieldOverlay().getOperations().addAll(this.packet.fieldOverlay().getOperations());
         }
-
-
-//        if (followPath) {
-//            if (path.getClass() == MecanumDrive.FollowTrajectoryAction.class) {
-//                MecanumDrive.FollowTrajectoryAction newPath = (MecanumDrive.FollowTrajectoryAction) path;
-//                newPath.updateDashboard(packet);
-//            } else if (path.getClass() == MecanumDrive.TurnAction.class) {
-//                MecanumDrive.TurnAction newPath = (MecanumDrive.TurnAction) path;
-//                newPath.updateDashboard(packet);
-//            } else {
-////                throw new RuntimeException("Not valid path type");
-//            }
-//        }
-
-//        packet.fieldOverlay().setStrokeWidth(1);
-//        followState.setValue(runner.getFollowState());
-//
-//
-//
-//        if (runner.getFollowState() != TrajectorySequenceRunner.FollowState.NO_TRAJECTORY) {
-//
-//            for (TrajectoryInterface trajectory : runner.getTrajectorySequence().getTrajectories()) {
-//                List<Pose2d> poseList = trajectory.poseList();
-//
-//                packet.fieldOverlay().setStroke("#FC0703");
-//
-//                //drawing path segment
-//                DashboardUtil.drawSampledPath(packet.fieldOverlay(), poseList);
-//
-//                //highlighting segment if it is part of the trajectory were following
-//                if (trajectory == runner.getTrajectorySequence().getCurrentTrajectory()) {
-//                    packet.fieldOverlay().setAlpha(.3);
-//                    packet.fieldOverlay().setStrokeWidth(3);
-//
-//                    DashboardUtil.drawSampledPath(packet.fieldOverlay(), poseList);
-//
-//                    packet.fieldOverlay().setAlpha(1);
-//                    packet.fieldOverlay().setStrokeWidth(1);
-//                }
-//
-//                List<IndexCallMarker> callMarkerList = trajectory.callMarkerList();
-//                int callMarkerIndex = trajectory.callMarkerIndex();
-//
-//                packet.fieldOverlay().setStroke("#4CAF50");
-//
-//                //drawing markers that have been called
-//                for (int i = 0; i < callMarkerIndex; i++) {
-//                    DashboardUtil.drawMarker(packet.fieldOverlay(), poseList.get(callMarkerList.get(i).getCallPosition()).getVector2d(), false);
-//                }
-//
-//                //drawing markers that haven't been called yet
-//                for (int i = callMarkerIndex; i < callMarkerList.size(); i++) {
-//                    DashboardUtil.drawMarker(packet.fieldOverlay(), poseList.get(callMarkerList.get(i).getCallPosition()).getVector2d(), true);
-//                }
-//            }
-//
-//            if (runner.getFollowState() == TrajectorySequenceRunner.FollowState.FOLLOW_TRAJECTORY) {
-//                packet.fieldOverlay().setStroke("#4CAF50");
-//                Pose2d targetPose = runner.getTrajectorySequence().getCurrentTrajectory().getTargetPose();
-//
-//                //drawing robot's target position
-//                DashboardUtil.drawRobot(packet.fieldOverlay(), targetPose);
-//
-//                //drawing the robots target velocity
-//                targetMotionState.setValue(runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection());
-////                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getVector2d()));
-//                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(new Vector2d(15*runner.getForwardComponent(), runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection(), true)));
-//                forwardComponentTelemetry.setValue(runner.getForwardComponent());
-////                packet.fieldOverlay().setStroke("#9D00FF");
-////                DashboardUtil.drawArrow(packet.fieldOverlay(), targetPose.getVector2d(), targetPose.getVector2d().plus(new Vector2d(10, runner.getTrajectorySequence().getCurrentTrajectory().getTargetDirectionalPose().getDirection(), true)));
-//
-//            } else if (runner.getFollowState() == TrajectorySequenceRunner.FollowState.TARGET_END_POINT) {
-//                packet.fieldOverlay().setStroke("#4CAF50");
-//
-//                //drawing where the robot predicts it will stop at
-//                DashboardUtil.drawRobot(packet.fieldOverlay(), runner.getEndpointController().getEstimatedEndPos());
-//            }
-//
-//            radiansPerInch.setValue(runner.getTrajectorySequence().getCurrentTrajectory().getRadiansPerInch(4));
-//
-//            //drawing robots motor powers as a vector
-//            Pose2d driveTrainMovement = MotorPowers.powersToPose(lastPowers);
-//            motorPowerTelemetry.setValue(driveTrainMovement.toStringRadians());
-//
-//            packet.fieldOverlay().setStroke("#0a0a0f");
-//
-//            DashboardUtil.drawArrow(packet.fieldOverlay(), localizer.getPoseEstimate().getVector2d(), localizer.getPoseEstimate().getVector2d().plus(driveTrainMovement.getVector2d().rotate(-localizer.getPoseEstimate().getHeading()).multiply(10)));
-//        }
 
         return packet;
     }
@@ -371,18 +250,6 @@ public class NewDrivetrain extends SubSystem {
     public DriveState getDriveState() {
         return driveState;
     }
-
-//    public TrajectorySequenceRunner runner() {
-//        return runner;
-//    }
-
-//    public void followTrajectorySequence(TrajectorySequence trajectorySequence) {
-//        runner.followTrajectorySequence(trajectorySequence);
-//    }
-//
-//    public void setForwardComponent(double forwardComponent) {
-//        runner.setForwardComponent(forwardComponent);
-//    }
 
     public void followPath(Action path) {
         this.path = path;
@@ -396,21 +263,19 @@ public class NewDrivetrain extends SubSystem {
     }
 
     public void setDrivePower(MotorPowers motorPowers) {
-//        List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
         setDrivePower(motorPowers.getNormalizedVoltages(voltage));
     }
 
-    public void setDrivePower(List<Double> powers) {
-//        List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
-
+    public void setDrivePower(List<Double> targetPowers) {
         for (int i = 0; i<4; i++) {
-            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.1)) {
+            if ((actualPowers.get(i) == 0 && targetPowers.get(i) != 0) || (actualPowers.get(i) != 0 && targetPowers.get(i) == 0) || (Math.abs(targetPowers.get(i)- actualPowers.get(i))>.1)) {
                 int finalI = i;
-                hardwareQueue.add(() -> drivetrainMotors.get(finalI).setPower(powers.get(finalI)));
+                motorActions.get(i).setAndQueueAction(() -> {
+                    drivetrainMotors.get(finalI).setPower(targetPowers.get(finalI));
+                    actualPowers.set(finalI, targetPowers.get(finalI));
+                });
             }
         }
-
-        lastPowers = powers;
     }
 
 }
