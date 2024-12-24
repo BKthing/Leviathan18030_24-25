@@ -11,13 +11,11 @@ import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
 import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
-import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @Autonomous
-public class SplineTest extends LinearOpMode {
+public class SplineTest2 extends LinearOpMode {
 
     ElapsedTimer autoTimer = new ElapsedTimer();
 

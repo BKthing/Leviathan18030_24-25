@@ -43,6 +43,8 @@ public class MasterThread {
 
     private final FtcDashboard dashboard;
 
+    private TelemetryPacket packet;
+
 
 
     private final boolean dashboardEnabled = true;
@@ -95,7 +97,7 @@ public class MasterThread {
     }
 
     public void unThreadedUpdate() throws InterruptedException {
-        TelemetryPacket packet = new TelemetryPacket();
+        packet = new TelemetryPacket();
 
         //passes an instance so that all subsystems will run with the same set of buttons pressed
         gamepad1Instance.copy(gamepad1);

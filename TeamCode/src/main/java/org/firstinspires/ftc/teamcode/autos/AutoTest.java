@@ -1,10 +1,9 @@
-package org.firstinspires.ftc.teamcode.teleops;
+package org.firstinspires.ftc.teamcode.autos;
 
-import com.acmerobotics.roadrunner.DualNum;
-import com.acmerobotics.roadrunner.Time;
-import com.acmerobotics.roadrunner.Twist2dDual;
-import com.acmerobotics.roadrunner.Vector2dDual;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,18 +13,16 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewDrivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
-import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 import java.util.List;
 
-@TeleOp
-public class BlueTeleTest extends LinearOpMode {
+@Autonomous
+public class AutoTest extends LinearOpMode {
     NewDrivetrain drivetrain;
     CluelessConstAccelLocalizer localizer;
     NewIntake intake;
@@ -60,7 +57,7 @@ public class BlueTeleTest extends LinearOpMode {
 
 
         drivetrain = new NewDrivetrain(masterThread.getData(), localizer.getLocalizer());
-        drivetrain.setDriveState(NewDrivetrain.DriveState.DRIVER_CONTROL);
+        drivetrain.setDriveState(NewDrivetrain.DriveState.FOLLOW_PATH);
 
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
         breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
@@ -80,12 +77,22 @@ public class BlueTeleTest extends LinearOpMode {
                 outtake
         );
 
-        localizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
+        Action testPath = drivetrain.drive.actionBuilder(new com.reefsharklibrary.data.Pose2d(64, 14, Math.toRadians(180)))
+                .setTangent(Math.toRadians(180))
+                .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(0, 0, Math.toRadians(0)), Math.toRadians(180))
+                .setTangent(Math.toRadians(0))
+                .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)), Math.toRadians(0))
+                .build();
+
+        localizer.getLocalizer().setPoseEstimate(new Pose2d(64, 14, Math.toRadians(180)));
+        drivetrain.drive.pose = new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180));
 
         waitForStart();
         masterThread.clearBulkCache();
 
         localizer.clearDeltas();
+
+        drivetrain.followPath(testPath);
 
 
         while ( !isStopRequested()) {

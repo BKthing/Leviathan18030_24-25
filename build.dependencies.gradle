@@ -18,6 +18,10 @@ dependencies {
 
     implementation 'com.github.BKthing.reefshark:reefsharkLibrary:0.0.2b-alpha'
 
-    implementation('com.acmerobotics.dashboard:dashboard:0.4.15')
+    implementation('com.acmerobotics.dashboard:dashboard:0.4.16')
+
+    implementation "com.acmerobotics.roadrunner:ftc:0.1.14"
+    implementation "com.acmerobotics.roadrunner:core:1.0.0"
+    implementation "com.acmerobotics.roadrunner:actions:1.0.0"
 }
 
