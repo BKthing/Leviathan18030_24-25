@@ -5,15 +5,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
-import com.reefsharklibrary.localizers.Localizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
-import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 

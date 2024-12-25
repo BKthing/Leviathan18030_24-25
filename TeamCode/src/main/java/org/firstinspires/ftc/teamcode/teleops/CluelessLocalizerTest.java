@@ -3,14 +3,11 @@ package org.firstinspires.ftc.teamcode.teleops;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.reefsharklibrary.data.Pose2d;
-import com.reefsharklibrary.localizers.CluelessConstantAccelMath;
-import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.ConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.depricated.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 

@@ -20,40 +20,31 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.ProfileParams;
-import com.acmerobotics.roadrunner.Rotation2d;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeTrajectory;
 import com.acmerobotics.roadrunner.TimeTurn;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TrajectoryBuilderParams;
 import com.acmerobotics.roadrunner.TurnConstraints;
+import com.acmerobotics.roadrunner.Twist2d;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.Vector2dDual;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.DownsampledWriter;
-import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
-import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
-import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
-import com.acmerobotics.roadrunner.ftc.RawEncoder;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.teamcode.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,21 +73,21 @@ public final class MecanumDrive2 {
         public double kA = 0.0001;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel = 60;
         public double minProfileAccel = -30;
-        public double maxProfileAccel = 50;
+        public double maxProfileAccel = 60;
 
         // turn profile parameters (in radians)
-        public double maxAngVel = Math.PI; // shared with path
-        public double maxAngAccel = Math.PI;
+        public double maxAngVel = 3*Math.PI; // shared with path
+        public double maxAngAccel = 3*Math.PI;
 
         // path controller gains
-        public double axialGain = 10;
-        public double lateralGain = 10;
-        public double headingGain = 5; // shared with turn
+        public double axialGain = 4;
+        public double lateralGain = 4;
+        public double headingGain = 1.5; // shared with turn
 
-        public double axialVelGain = 2.5;
-        public double lateralVelGain = 2.5;
+        public double axialVelGain = .3;
+        public double lateralVelGain = .3;
         public double headingVelGain = .2; // shared with turn
     }
 
@@ -122,9 +113,9 @@ public final class MecanumDrive2 {
     public final LazyImu lazyImu;
 
     public final Localizer localizer;
-    public Pose2d pose;
 
-    private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+    public Pose2d pose;
+    public PoseVelocity2d robotVelRobot;
 
     private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
     private final DownsampledWriter targetPoseWriter = new DownsampledWriter("TARGET_POSE", 50_000_000);
@@ -135,14 +126,10 @@ public final class MecanumDrive2 {
 
     private double voltage = 13;
 
-    public MecanumDrive2(HardwareMap hardwareMap, Pose2d pose) {
+    public MecanumDrive2(HardwareMap hardwareMap, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, Pose2d pose) {
         this.pose = pose;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
-
-//        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-//            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-//        }
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -169,7 +156,7 @@ public final class MecanumDrive2 {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
+        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
@@ -234,8 +221,6 @@ public final class MecanumDrive2 {
             Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
             targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
 
-            PoseVelocity2d robotVelRobot = updatePoseEstimate();
-
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -269,7 +254,6 @@ public final class MecanumDrive2 {
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
-            drawPoseHistory(c);
 
             c.setStroke("#4CAF50");
             Drawing.drawRobot(c, txWorldTarget.value());
@@ -320,8 +304,6 @@ public final class MecanumDrive2 {
             Pose2dDual<Time> txWorldTarget = turn.get(t);
             targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
 
-            PoseVelocity2d robotVelRobot = updatePoseEstimate();
-
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -343,9 +325,7 @@ public final class MecanumDrive2 {
 
             motorPowers = Arrays.asList(feedforward.compute(wheelVels.leftFront) / voltage, feedforward.compute(wheelVels.leftBack) / voltage, feedforward.compute(wheelVels.rightBack) / voltage, feedforward.compute(wheelVels.rightFront) / voltage);
 
-
             Canvas c = p.fieldOverlay();
-            drawPoseHistory(c);
 
             c.setStroke("#4CAF50");
             Drawing.drawRobot(c, txWorldTarget.value());
@@ -366,35 +346,39 @@ public final class MecanumDrive2 {
         }
     }
 
-    public PoseVelocity2d updatePoseEstimate() {
-        Twist2dDual<Time> twist = localizer.update();
-        pose = pose.plus(twist.value());
-
-        poseHistory.add(pose);
-        while (poseHistory.size() > 100) {
-            poseHistory.removeFirst();
-        }
+    public void updatePoseEstimate(com.reefsharklibrary.data.Pose2d poseEstimate, com.reefsharklibrary.data.Pose2d poseVelocity) {
+        pose = MathUtil.toRoadRunnerPose(poseEstimate);
 
         estimatedPoseWriter.write(new PoseMessage(pose));
 
-        return twist.velocity().value();
+        robotVelRobot = new PoseVelocity2d(new Vector2d(poseVelocity.getX(), poseVelocity.getY()), poseVelocity.getHeading());
     }
 
-    private void drawPoseHistory(Canvas c) {
-        double[] xPoints = new double[poseHistory.size()];
-        double[] yPoints = new double[poseHistory.size()];
+    public void updatePoseEstimate(Twist2d poseDelta, PoseVelocity2d poseVelocity) {
 
-        int i = 0;
-        for (Pose2d t : poseHistory) {
-            xPoints[i] = t.position.x;
-            yPoints[i] = t.position.y;
+        pose = pose.plus(poseDelta);
 
-            i++;
-        }
+        estimatedPoseWriter.write(new PoseMessage(pose));
 
-        c.setStrokeWidth(1);
-        c.setStroke("#3F51B5");
-        c.strokePolyline(xPoints, yPoints);
+        robotVelRobot = poseVelocity;
+    }
+
+    public void updatePoseEstimate(Pose2d pose, PoseVelocity2d poseVelocity) {
+
+        this.pose = pose;
+
+        estimatedPoseWriter.write(new PoseMessage(pose));
+
+        robotVelRobot = poseVelocity;
+    }
+
+    public void updatePoseEstimate() {
+        Twist2dDual<Time> twist = localizer.update();
+        pose = pose.plus(twist.value());
+
+        estimatedPoseWriter.write(new PoseMessage(pose));
+
+        robotVelRobot = twist.velocity().value();
     }
 
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {

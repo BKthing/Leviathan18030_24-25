@@ -5,7 +5,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
 import org.firstinspires.ftc.teamcode.roadrunner.TankDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 
@@ -13,7 +13,7 @@ public final class SplineTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         com.acmerobotics.roadrunner.Pose2d beginPose = new Pose2d(0, 0, 0);
-        if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
+        if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive2.class)) {
             UnModifiedMecanumDrive drive = new UnModifiedMecanumDrive(hardwareMap, beginPose);
 
             waitForStart();

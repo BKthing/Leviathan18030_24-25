@@ -43,12 +43,12 @@ public final class TwoDeadWheelLocalizer implements Localizer {
     private double lastRawHeadingVel, headingVelOffset;
     private boolean initialized;
 
-    public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
+    public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, double inPerTick) {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "bl")));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "verticalRight")));
+        par = new OverflowEncoder(new RawEncoder(parallelEncoder));
+        perp = new OverflowEncoder(new RawEncoder(perpendicularEncoder));
 
         par.setDirection(DcMotorSimple.Direction.REVERSE);
         perp.setDirection(DcMotorSimple.Direction.REVERSE);

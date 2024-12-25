@@ -1,9 +1,5 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
-import com.acmerobotics.roadrunner.DualNum;
-import com.acmerobotics.roadrunner.Time;
-import com.acmerobotics.roadrunner.Twist2dDual;
-import com.acmerobotics.roadrunner.Vector2dDual;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -14,11 +10,9 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewDrivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
-import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
@@ -27,7 +21,6 @@ import java.util.List;
 @TeleOp
 public class BlueTeleTest extends LinearOpMode {
     NewDrivetrain drivetrain;
-    CluelessConstAccelLocalizer localizer;
     NewIntake intake;
     NewOuttake outtake;
     MasterThread masterThread;
@@ -37,7 +30,9 @@ public class BlueTeleTest extends LinearOpMode {
 
     private List<LynxModule> allHubs;
 
-    private Encoder perpendicularWheel, parallelWheel, verticalSlideEncoder, horizontalSlideEncoder;
+    private Encoder verticalSlideEncoder, horizontalSlideEncoder;
+
+    private DcMotorEx perpendicularWheel, parallelWheel;
 
     private TouchSensor breakBeam;
 
@@ -52,14 +47,11 @@ public class BlueTeleTest extends LinearOpMode {
 
 //        Twist2dDual<Time> testPose = new Twist2dDual<Time>(new Vector2dDual<>(new DualNum<Time>(new double[2.0, 4.1])))
 
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
-
-        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
-        localizer.initSensors(perpendicularWheel, parallelWheel);
+        perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
+        parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
 
 
-        drivetrain = new NewDrivetrain(masterThread.getData(), localizer.getLocalizer());
+        drivetrain = new NewDrivetrain(masterThread.getData(), parallelWheel, perpendicularWheel);
         drivetrain.setDriveState(NewDrivetrain.DriveState.DRIVER_CONTROL);
 
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -74,19 +66,14 @@ public class BlueTeleTest extends LinearOpMode {
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
-//                localizer,
                 drivetrain,
                 intake,
                 outtake
         );
 
-        localizer.getLocalizer().setPoseEstimate(new Pose2d(0, 0, Math.toRadians(0)));
 
         waitForStart();
         masterThread.clearBulkCache();
-
-        localizer.clearDeltas();
-
 
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();

@@ -5,14 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.reefsharklibrary.data.Pose2d;
-import com.reefsharklibrary.data.Vector2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.pathing.TrajectorySequence;
 import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.depricated.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.util.Encoder;

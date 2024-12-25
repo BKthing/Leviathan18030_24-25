@@ -20,14 +20,13 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
 import org.firstinspires.ftc.teamcode.roadrunner.TankDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +38,9 @@ public final class TuningOpModes {
 
     public static final String GROUP = "quickstart";
     public static final boolean DISABLED = false;
+
+
+
 
     private TuningOpModes() {}
 
@@ -52,12 +54,21 @@ public final class TuningOpModes {
 
     @OpModeRegistrar
     public static void register(OpModeManager manager) {
+
+
+
         if (DISABLED) return;
 
         DriveViewFactory dvf;
         if (DRIVE_CLASS.equals(MecanumDrive2.class)) {
+
+
             dvf = hardwareMap -> {
-                MecanumDrive2 md = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
+                DcMotorEx perpendicularWheel, parallelWheel;
+                perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
+                parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
+
+                MecanumDrive2 md = new MecanumDrive2(hardwareMap, parallelWheel, perpendicularWheel, new Pose2d(0, 0, 0));
 
                 List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
                 List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
@@ -95,7 +106,7 @@ public final class TuningOpModes {
                         perpEncs,
                         md.lazyImu,
                         md.voltageSensor,
-                        () -> new MotorFeedforward(MecanumDrive.PARAMS.kS,
+                        () -> new MotorFeedforward(MecanumDrive2.PARAMS.kS,
                                 MecanumDrive2.PARAMS.kV / MecanumDrive2.PARAMS.inPerTick,
                                 MecanumDrive2.PARAMS.kA / MecanumDrive2.PARAMS.inPerTick)
                 );

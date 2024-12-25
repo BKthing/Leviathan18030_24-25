@@ -54,14 +54,14 @@ public class CluelessConstAccelLocalizer extends SubSystem{
     private double perpendicularWheelDistance, parallelWheelDistance;
 
     private final Telemetry.Item position;
-    private final Telemetry.Item rawPosition;
+//    private final Telemetry.Item rawPosition;
     private final Telemetry.Item velocity;
 
     private final ElapsedTimer timer = new ElapsedTimer();
 
-    private final Telemetry.Item localizerLoopTime;
+//    private final Telemetry.Item localizerLoopTime;
 
-    private final ElapsedTimer localizerLoopTimer = new ElapsedTimer();
+//    private final ElapsedTimer localizerLoopTimer = new ElapsedTimer();
 
 //    TwoWheel twoWheel;
 
@@ -69,9 +69,9 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         super(data);
 
         //initializing localizer and sensors
-        position = data.getTelemetry().addData("Clueless Pos", new Pose2d(0, 0 ,0));
-        rawPosition = data.getTelemetry().addData("Raw Pos", "");
-        velocity = data.getTelemetry().addData("Velocity", new Pose2d(0, 0, 0));
+        position = telemetry.addData("Clueless Pos", new Pose2d(0, 0 ,0));
+//        rawPosition = telemetry.addData("Raw Pos", "");
+        velocity = telemetry.addData("Velocity", new Pose2d(0, 0, 0));
 
         localizer = new CluelessTwoWheelLocalizer(PERPENDICULAR_X, PARALLEL_Y);
 
@@ -93,7 +93,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD)));
 
 
-        localizerLoopTime = telemetry.addData("Localizer loop time", "");
+//        localizerLoopTime = telemetry.addData("Localizer loop time", "");
 //        twoWheel = new TwoWheel(PERPENDICULAR_X, PARALLEL_Y);
 
 //        imuAction.setAction(() -> {
@@ -110,7 +110,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     @Override
     public void priorityData() {
-        localizerLoopTimer.reset();
+//        localizerLoopTimer.reset();
         perpendicularWheelDistance = getPerpendicularWheelDistance.getAsDouble();
         parallelWheelDistance = getParallelWheelDistance.getAsDouble();
         //is set here to prevent threading conflicts
@@ -129,7 +129,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
             updatedImuAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);//*Math.PI/180
         });
 
-        localizerLoopTime.setValue(localizerLoopTimer.milliSeconds());
+//        localizerLoopTime.setValue(localizerLoopTimer.milliSeconds());
     }
 
     public void update() {
@@ -149,8 +149,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
     @Override
     public TelemetryPacket dashboard(TelemetryPacket packet) {
-        position.setValue("X: " + localizer.getPoseEstimate().getX() + " Y: " + localizer.getPoseEstimate().getY() + "Heading: " + localizer.getPoseEstimate().getHeading());//((Pose2d) localizer.getPoseEstimate()).toString()
-        rawPosition.setValue("Perp: " + perpendicularWheelDistance + " Parallel: " + parallelWheelDistance);
+        position.setValue(localizer.getPoseEstimate());//((Pose2d) localizer.getPoseEstimate()).toString()
 
         packet.put("x", localizer.getPoseEstimate().getX());
         packet.put("y", localizer.getPoseEstimate().getY());
@@ -170,7 +169,7 @@ public class CluelessConstAccelLocalizer extends SubSystem{
 
         Vector2d robotVelocity = localizer.getPoseVelocity().getVector2d();
 
-        velocity.setValue(robotVelocity);
+        velocity.setValue(localizer.getPoseVelocity());
 
         DashboardUtil.drawArrow(packet.fieldOverlay(), localizer.getPoseEstimate().getVector2d(), localizer.getPoseEstimate().getVector2d().plus(robotVelocity));
 

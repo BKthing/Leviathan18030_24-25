@@ -3,9 +3,18 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.DualNum;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Time;
+import com.acmerobotics.roadrunner.Twist2dDual;
+import com.acmerobotics.roadrunner.Vector2dDual;
+import com.acmerobotics.roadrunner.ftc.LazyImu;
+import com.qualcomm.hardware.bosch.BNO055IMUNew;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.reefsharklibrary.data.MotorPowers;
 import com.reefsharklibrary.data.Pose2d;
@@ -15,7 +24,9 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
+import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
@@ -57,7 +68,7 @@ public class NewDrivetrain extends SubSystem {
 
     private final Telemetry.Item radiansPerInch;
 
-    private TelemetryPacket packet;
+    private TelemetryPacket packet = new TelemetryPacket();
 
     private Canvas canvas = new Canvas();
 
@@ -70,35 +81,42 @@ public class NewDrivetrain extends SubSystem {
     private final VoltageSensor batteryVoltageSensor;
     private double voltage = 13, updatedVoltage = 13;
 
-    private final CluelessTwoWheelLocalizer localizer;
-
 //    private final TrajectorySequenceRunner runner;
 
-    private Pose2d poseEstimate;
-    private Pose2d poseVelocity;
+    private Pose2d roadRunnerPoseEstimate;
+    private Pose2d roadRunnerPoseVelocity;
 //    private Pose2d poseAcceleration;
 
     private boolean fieldCentric = false;
     private double headingOffset = 0;
 
+    private final Telemetry.Item roadRunnerPos;
+    private final Telemetry.Item roadRunnerVel;
     private final Telemetry.Item driveTrainLoopTime;
 
     private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
 
     private final ElapsedTimer voltageUpdateTimer = new ElapsedTimer();
 
-    public NewDrivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer) {
-        this(data, localizer, DriveState.FOLLOW_PATH);
+    private final LazyImu lazyImu;
+
+    private final Localizer roadRunnerLocalizer;
+
+    public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
+
+
+    public NewDrivetrain(SubSystemData data, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder) {
+        this(data, parallelEncoder, perpendicularEncoder, DriveState.FOLLOW_PATH);
     }
 
-    public NewDrivetrain(SubSystemData data, CluelessTwoWheelLocalizer localizer, DriveState driveState) {
+    public NewDrivetrain(SubSystemData data, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, DriveState driveState) {
         super(data);
 
-        this.localizer = localizer;
+//        this.localizer = localizer;
 
         this.driveState = driveState;
 
-        this.drive = new MecanumDrive2(hardwareMap, MathUtil.toRoadRunnerPose(localizer.getPoseEstimate()));
+        this.drive = new MecanumDrive2(hardwareMap, parallelEncoder, perpendicularEncoder, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
 
         this.motorActions = Arrays.asList(new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue));
 
@@ -119,8 +137,16 @@ public class NewDrivetrain extends SubSystem {
 
         drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
+        lazyImu = new LazyImu(hardwareMap, "controlImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+
+        roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
+
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        roadRunnerPos = telemetry.addData("Roadrunner pos", "");
+
+        roadRunnerVel = telemetry.addData("Roadrunner vel", "");
 
         motorPowerTelemetry = telemetry.addData("Motor powers", "");
 
@@ -138,20 +164,27 @@ public class NewDrivetrain extends SubSystem {
     @Override
     public void priorityData() {
         voltage = updatedVoltage;
-
-        poseEstimate = localizer.getPoseEstimate();
-        poseVelocity = localizer.getPoseVelocity();
-
-        if (!poseVelocity.isFinite()) {
-            throw new RuntimeException("Invalid velocity:" + poseVelocity);
-        }
     }
 
     @Override
     public void loop() {
 
         driveTrainLoopTimer.reset();
-//        drive.setVoltage(voltage);
+        drive.setVoltage(voltage);
+
+        Twist2dDual<Time> twist = roadRunnerLocalizer.update();
+
+        roadRunnerPose = roadRunnerPose.plus(twist.value());//MathUtil.toRoadRunnerPose(poseEstimate);//
+
+        roadRunnerPoseEstimate = new Pose2d(roadRunnerPose.position.x, roadRunnerPose.position.y, roadRunnerPose.heading.toDouble());
+
+        roadRunnerPoseVelocity = new Pose2d(twist.velocity().linearVel.x.value(), twist.velocity().linearVel.y.value(), twist.velocity().angVel.value());
+
+        roadRunnerPos.setValue(roadRunnerPoseEstimate);
+        roadRunnerVel.setValue(roadRunnerPoseVelocity);
+
+
+        drive.updatePoseEstimate(roadRunnerPose, twist.velocity().value());
 
         if (voltageUpdateTimer.milliSeconds()>200) {
             voltageSensorHardwareAction.setAndQueueIfEmpty(() -> {
@@ -176,7 +209,7 @@ public class NewDrivetrain extends SubSystem {
 
                 break;
             case DRIVER_CONTROL:
-                double relativeHeading = poseEstimate.getHeading()-headingOffset;
+                double relativeHeading = roadRunnerPoseEstimate.getHeading()-headingOffset;
 
                 double speedMultiplier = 1- gamepad1.right_trigger*.7;
 
@@ -216,7 +249,7 @@ public class NewDrivetrain extends SubSystem {
 
                 //driving settings
                 if (gamepad1.back) {
-                    headingOffset = poseEstimate.getHeading();
+                    headingOffset = roadRunnerPoseEstimate.getHeading();
                 }
 
                 if (gamepad1.start && gamepad1.dpad_up) {

@@ -5,23 +5,19 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.reefsharklibrary.data.MotorPowers;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
 import org.firstinspires.ftc.teamcode.roadrunner.TankDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +27,8 @@ public final class ManualFeedbackSplineTuner extends LinearOpMode {
     public static double DISTANCE = 64;
 
     private DcMotorEx frontLeft, frontRight, backLeft, backRight;
+    private DcMotorEx perpendicularWheel, parallelWheel;
+
 
     private List<DcMotorEx> drivetrainMotors;
 
@@ -39,7 +37,10 @@ public final class ManualFeedbackSplineTuner extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive2.class)) {
-            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
+            perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
+            parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
+
+            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, parallelWheel, perpendicularWheel, new Pose2d(0, 0, 0));
 
             frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
             frontRight = hardwareMap.get(DcMotorEx.class, "fr");//

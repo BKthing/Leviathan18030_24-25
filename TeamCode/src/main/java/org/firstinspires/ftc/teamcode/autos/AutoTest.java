@@ -24,7 +24,6 @@ import java.util.List;
 @Autonomous
 public class AutoTest extends LinearOpMode {
     NewDrivetrain drivetrain;
-    CluelessConstAccelLocalizer localizer;
     NewIntake intake;
     NewOuttake outtake;
     MasterThread masterThread;
@@ -34,9 +33,12 @@ public class AutoTest extends LinearOpMode {
 
     private List<LynxModule> allHubs;
 
-    private Encoder perpendicularWheel, parallelWheel, verticalSlideEncoder, horizontalSlideEncoder;
+    private Encoder verticalSlideEncoder, horizontalSlideEncoder;
 
     private TouchSensor breakBeam;
+
+    private DcMotorEx perpendicularWheel, parallelWheel;
+
 
 
     @Override
@@ -46,17 +48,10 @@ public class AutoTest extends LinearOpMode {
 
         masterThread = new MasterThread(hardwareMap, telemetry, gamepad1, gamepad2);
 
+        perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
+        parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
 
-//        Twist2dDual<Time> testPose = new Twist2dDual<Time>(new Vector2dDual<>(new DualNum<Time>(new double[2.0, 4.1])))
-
-        perpendicularWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalRight"));
-        parallelWheel = new Encoder(hardwareMap.get(DcMotorEx.class, "bl"));
-
-        localizer = new CluelessConstAccelLocalizer(masterThread.getData());
-        localizer.initSensors(perpendicularWheel, parallelWheel);
-
-
-        drivetrain = new NewDrivetrain(masterThread.getData(), localizer.getLocalizer());
+        drivetrain = new NewDrivetrain(masterThread.getData(), parallelWheel, perpendicularWheel);
         drivetrain.setDriveState(NewDrivetrain.DriveState.FOLLOW_PATH);
 
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -71,32 +66,34 @@ public class AutoTest extends LinearOpMode {
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
-//                localizer,
-                drivetrain
-//                intake,
-//                outtake
+                drivetrain,
+                intake,
+                outtake
         );
 
-        Action testPath = drivetrain.drive.actionBuilder(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)))
-                .setTangent(Math.toRadians(180))
-                .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(0, 0, Math.toRadians(0)), Math.toRadians(180))
-                .setTangent(Math.toRadians(0))
-                .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)), Math.toRadians(0))
-                .build();
 
-        localizer.getLocalizer().setPoseEstimate(new Pose2d(64, 14, Math.toRadians(180)));
+
         drivetrain.drive.pose = new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180));
+        drivetrain.roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180));
 
         waitForStart();
         masterThread.clearBulkCache();
 
-        localizer.clearDeltas();
-
-        drivetrain.followPath(testPath);
-
 
         while ( !isStopRequested()) {
+            if (drivetrain.isFinished()) {
+                Action testPath = drivetrain.drive.actionBuilder(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)))
+                        .setTangent(Math.toRadians(180))
+                        .splineToConstantHeading(new com.acmerobotics.roadrunner.Vector2d(0, 0), Math.toRadians(180))
+                        .setTangent(Math.toRadians(0))
+                        .splineToConstantHeading(new com.acmerobotics.roadrunner.Vector2d(64, 14), Math.toRadians(0))
+                        .build();
+                drivetrain.followPath(testPath);
+            }
+
             masterThread.unThreadedUpdate();
+
+
 
             parallelWheel.getCurrentPosition();
 

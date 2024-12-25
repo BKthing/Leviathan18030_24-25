@@ -7,9 +7,8 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.depricated.Drivetrain;
 import org.firstinspires.ftc.teamcode.subsystems.EndPointEstimatorSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.OldLocalizer;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
 @TeleOp

@@ -10,7 +10,7 @@ import com.reefsharklibrary.pathing.TrajectorySequenceBuilder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.CluelessConstAccelLocalizer;
-import org.firstinspires.ftc.teamcode.subsystems.Drivetrain;
+import org.firstinspires.ftc.teamcode.depricated.Drivetrain;
 import org.firstinspires.ftc.teamcode.util.RobotConstants;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
