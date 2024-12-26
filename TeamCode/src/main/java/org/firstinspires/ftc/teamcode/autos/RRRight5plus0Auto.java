@@ -30,9 +30,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
     MasterThread masterThread;
     Telemetry.Item loopTime;
 
-    Boolean blueAlliance = true;
-
-    private List<LynxModule> allHubs;
+    Boolean blueAlliance = null;
 
     private Encoder verticalSlideEncoder, horizontalSlideEncoder;
 
@@ -58,12 +56,12 @@ public class RRRight5plus0Auto extends LinearOpMode {
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
         breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
-        intake = new NewIntake(masterThread.getData(), horizontalSlideEncoder, breakBeam, blueAlliance, true, true);
+        intake = new NewIntake(masterThread.getData(), horizontalSlideEncoder, breakBeam, blueAlliance, false, true);
 
 
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
-        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, true);
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, true);
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(

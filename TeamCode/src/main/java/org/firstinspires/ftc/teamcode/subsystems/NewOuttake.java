@@ -52,6 +52,7 @@ public class NewOuttake extends SubSystem {
         GRABBING_FROM_TRANSFER,
         EXTRACTING_FROM_TRANSFER,
         VERIFYING_EXTRACTION,
+        FAILED_TRANSFER,
 
         MOVING_TO_EJECTION,
         EJECTING,
@@ -795,7 +796,16 @@ public class NewOuttake extends SubSystem {
 
                             transferAttemptCounter++;
                         } else {
-                            retractFromFront();
+                            targetSlidePos = VerticalSlide.TRANSFER.length;
+
+                            targetV4BPos = V4BarPos.TRANSFER.pos;
+
+                            targetClawPitch = ClawPitch.TRANSFER.pos;
+
+                            clawPosition = ClawPosition.OPEN;
+                            updateClawPosition = true;
+
+                            outtakeState = OuttakeState.FAILED_TRANSFER;
 
                             transferAttemptCounter = 0;
                         }
