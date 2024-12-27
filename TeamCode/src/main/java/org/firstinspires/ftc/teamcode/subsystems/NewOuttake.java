@@ -174,7 +174,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_OPEN(.43),
         HANG_DEPLOY(.39),
         OPEN(.3),//.15
-        CLOSED(.18);//.02
+        CLOSED(.175);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
