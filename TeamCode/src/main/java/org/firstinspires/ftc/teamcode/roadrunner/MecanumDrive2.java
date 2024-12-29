@@ -129,6 +129,7 @@ public final class MecanumDrive2 {
     public MecanumDrive2(HardwareMap hardwareMap, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, Pose2d pose) {
         this.pose = pose;
 
+
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
         // TODO: make sure your config has motors with these names (or change them)
@@ -151,7 +152,7 @@ public final class MecanumDrive2 {
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(
+        lazyImu = new LazyImu(hardwareMap, "controlImu", new RevHubOrientationOnRobot(
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -159,6 +160,8 @@ public final class MecanumDrive2 {
         localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
+
+        updatePoseEstimate();
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -370,6 +373,7 @@ public final class MecanumDrive2 {
         estimatedPoseWriter.write(new PoseMessage(pose));
 
         robotVelRobot = poseVelocity;
+
     }
 
     public void updatePoseEstimate() {
@@ -379,6 +383,7 @@ public final class MecanumDrive2 {
         estimatedPoseWriter.write(new PoseMessage(pose));
 
         robotVelRobot = twist.velocity().value();
+
     }
 
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {

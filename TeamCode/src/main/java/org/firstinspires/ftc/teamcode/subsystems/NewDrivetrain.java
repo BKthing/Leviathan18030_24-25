@@ -137,7 +137,7 @@ public class NewDrivetrain extends SubSystem {
 
         drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
-        lazyImu = new LazyImu(hardwareMap, "controlImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
 
         roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
 
@@ -164,6 +164,7 @@ public class NewDrivetrain extends SubSystem {
     @Override
     public void priorityData() {
         voltage = updatedVoltage;
+
     }
 
     @Override

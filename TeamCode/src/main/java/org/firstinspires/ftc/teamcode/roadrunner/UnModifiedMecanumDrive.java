@@ -449,6 +449,7 @@ public final class UnModifiedMecanumDrive {
         pose = pose.plus(twist.value());
 
         poseHistory.add(pose);
+
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
