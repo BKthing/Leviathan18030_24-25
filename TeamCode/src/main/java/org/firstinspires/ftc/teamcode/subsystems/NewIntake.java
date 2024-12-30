@@ -499,9 +499,9 @@ public class NewIntake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.35;
-            d = ((prevSlideError-error) / elapsedTime) * .03;//.007
-            f=.15*Math.signum(error);
+            p = error*.17;//.35;
+            d = ((prevSlideError-error) / elapsedTime) * 0.01;//.03;//.007
+            f=Math.signum(error)*0.15;//.15;
         }
 
 //        p = 0;

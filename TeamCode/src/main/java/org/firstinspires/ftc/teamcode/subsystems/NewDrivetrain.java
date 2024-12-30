@@ -27,6 +27,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
 import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
+import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
@@ -184,6 +185,7 @@ public class NewDrivetrain extends SubSystem {
         roadRunnerPos.setValue(roadRunnerPoseEstimate);
         roadRunnerVel.setValue(roadRunnerPoseVelocity);
 
+//        drive.updatePoseEstimate();
 
         drive.updatePoseEstimate(roadRunnerPose, twist.velocity().value());
 
@@ -206,10 +208,12 @@ public class NewDrivetrain extends SubSystem {
 
 
                     setDrivePower(drive.getDrivePowers());
+                    followState.setValue("FOLLOW");
                 }
 
                 break;
             case DRIVER_CONTROL:
+                followState.setValue("DRIVER");
                 double relativeHeading = roadRunnerPoseEstimate.getHeading()-headingOffset;
 
                 double speedMultiplier = 1- gamepad1.right_trigger*.7;
@@ -261,10 +265,13 @@ public class NewDrivetrain extends SubSystem {
 
 
                 setDrivePower(powers);
+
                 break;
         }
-
+        motorPowerTelemetry.setValue(drive.getDrivePowers());
         driveTrainLoopTime.setValue(driveTrainLoopTimer.milliSeconds());
+
+
     }
 
     @Override

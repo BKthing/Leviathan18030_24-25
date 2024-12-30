@@ -241,7 +241,7 @@ public final class UnModifiedMecanumDrive {
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
         DcMotorEx motora = null, motorb = null;
 
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), motorb, motora, PARAMS.inPerTick);
+        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), hardwareMap.get(DcMotorEx.class, "bl"),  hardwareMap.get(DcMotorEx.class, "verticalRight"), PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
