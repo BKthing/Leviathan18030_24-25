@@ -94,8 +94,8 @@ public class NewOuttake extends SubSystem {
         DOWN(0),
         TRANSFER(5.6),
         EXTRACT_FROM_TRANSFER(9),
-        MIN_PASSTHROUGH_HEIGHT(8.5),
-        SPECIMEN_PICKUP(2),
+        MIN_PASSTHROUGH_HEIGHT(10),
+        SPECIMEN_PICKUP(3.5),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(13.7),
@@ -127,7 +127,7 @@ public class NewOuttake extends SubSystem {
         TRANSFER(.48),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
-        GRAB_BACK(.61),
+        GRAB_BACK(.62),
         WAIT_PLACE_BACK(.14),
         PLACE_BACK(.07),
         HANG_POS(.25),
@@ -148,7 +148,7 @@ public class NewOuttake extends SubSystem {
 
     public enum ClawPitch {
         DOWN(.31),
-        BACK(0.106),
+        BACK(0.08),
         BACK_ANGLED_DOWN(.19),
         BACK2(1),
         TRANSFER(.435),
@@ -156,7 +156,7 @@ public class NewOuttake extends SubSystem {
         FRONT_ANGLED_UP(.72),
         FRONT_ANGELED_DOWN(.49),
 
-        FRONT(.62);
+        FRONT(.6);
 
         public final double pos;
 
@@ -174,7 +174,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_OPEN(.43),
         HANG_DEPLOY(.39),
         OPEN(.3),//.15
-        CLOSED(.175);//.02
+        CLOSED(.152);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),

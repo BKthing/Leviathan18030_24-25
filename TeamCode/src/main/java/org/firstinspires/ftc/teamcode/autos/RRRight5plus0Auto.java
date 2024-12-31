@@ -103,18 +103,18 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .afterTime(.1, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .setTangent(new com.reefsharklibrary.data.Vector2d(-37.5, 40).minus(new com.reefsharklibrary.data.Vector2d(-36, 40)).getDirection())
-                .lineToXSplineHeading(-37.5, Math.toRadians(250))
+                .setTangent(new com.reefsharklibrary.data.Vector2d(-39, 37).minus(new com.reefsharklibrary.data.Vector2d(-36, 40)).getDirection())
+                .lineToXSplineHeading(-39, Math.toRadians(245))
                 .build();
 
-        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-37.5, 40, Math.toRadians(235)))
+        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-39, 37, Math.toRadians(245)))
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(50, Math.toRadians(170))
                 .afterTime(0, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
-                .splineToSplineHeading(new Pose2d(-28, 61, Math.toRadians(270)), Math.toRadians(270))
+                .splineToSplineHeading(new Pose2d(-28, 62, Math.toRadians(270)), Math.toRadians(270))
                 .lineToY(64)
                 .build();
 
@@ -149,7 +149,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
         Action moveToScoreSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
                 .waitSeconds(.15)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-6, 35), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
                 .build();
 
         Action moveToGrabSpecimen5 = drivetrain.drive.actionBuilder(new Pose2d(-6, 35, Math.toRadians(270)))
@@ -163,7 +163,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
         Action moveToScoreSpecimen5 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
                 .waitSeconds(.15)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-10, 35), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
                 .build();
 
         Action moveToPark = drivetrain.drive.actionBuilder(new Pose2d(-10, 35, Math.toRadians(270)))
