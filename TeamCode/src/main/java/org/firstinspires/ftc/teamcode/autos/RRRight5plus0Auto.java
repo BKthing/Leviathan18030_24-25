@@ -103,11 +103,11 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .afterTime(.1, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .setTangent(new com.reefsharklibrary.data.Vector2d(-35.5, 33).minus(new com.reefsharklibrary.data.Vector2d(-36, 40)).getDirection())
-                .lineToXSplineHeading(-35.5, Math.toRadians(235))
+                .setTangent(new com.reefsharklibrary.data.Vector2d(-37.5, 40).minus(new com.reefsharklibrary.data.Vector2d(-36, 40)).getDirection())
+                .lineToXSplineHeading(-37.5, Math.toRadians(250))
                 .build();
 
-        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-35.5, 33, Math.toRadians(235)))
+        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-37.5, 40, Math.toRadians(235)))
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(50, Math.toRadians(170))
                 .afterTime(0, () -> {
@@ -163,10 +163,10 @@ public class RRRight5plus0Auto extends LinearOpMode {
         Action moveToScoreSpecimen5 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
                 .waitSeconds(.15)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-8, 35), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-10, 35), Math.toRadians(270))
                 .build();
 
-        Action moveToPark = drivetrain.drive.actionBuilder(new Pose2d(-8, 35, Math.toRadians(270)))
+        Action moveToPark = drivetrain.drive.actionBuilder(new Pose2d(-10, 35, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
                 .afterTime(.8, () -> {
                     intake.setTargetSlidePos(18.5);
