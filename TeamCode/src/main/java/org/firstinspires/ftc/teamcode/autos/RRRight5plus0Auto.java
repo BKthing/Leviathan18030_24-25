@@ -104,10 +104,10 @@ public class RRRight5plus0Auto extends LinearOpMode {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
                 .setTangent(new com.reefsharklibrary.data.Vector2d(-39, 37).minus(new com.reefsharklibrary.data.Vector2d(-36, 40)).getDirection())
-                .lineToXSplineHeading(-39, Math.toRadians(245))
+                .lineToXSplineHeading(-39, Math.toRadians(240))
                 .build();
 
-        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-39, 37, Math.toRadians(245)))
+        Action moveToPlaceBlock3 = drivetrain.drive.actionBuilder(new Pose2d(-39, 37, Math.toRadians(240)))
                 .setTangent(Math.toRadians(90))
                 .lineToYLinearHeading(50, Math.toRadians(170))
                 .afterTime(0, () -> {
@@ -119,7 +119,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .build();
 
         Action moveToScoreSpecimen2 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
-                .waitSeconds(.15)
+                .waitSeconds(.5)
                 .setTangent(Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(-2, 35), Math.toRadians(270))
                 .build();
@@ -133,7 +133,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .build();
 
         Action moveToScoreSpecimen3 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
-                .waitSeconds(.15)
+                .waitSeconds(.5)
                 .setTangent(Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
                 .build();
@@ -147,7 +147,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .build();
 
         Action moveToScoreSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
-                .waitSeconds(.15)
+                .waitSeconds(.5)
                 .setTangent(Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
                 .build();
@@ -161,7 +161,7 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .build();
 
         Action moveToScoreSpecimen5 = drivetrain.drive.actionBuilder(new Pose2d(-28, 64, Math.toRadians(270)))
-                .waitSeconds(.15)
+                .waitSeconds(.5)
                 .setTangent(Math.toRadians(270))
                 .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
                 .build();
@@ -187,27 +187,27 @@ public class RRRight5plus0Auto extends LinearOpMode {
 
         drivetrain.followPath(new SequentialAction(
                 preload,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
                 moveToGrabBlock1,
                 new SingleAction(() -> intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE)),
                 moveToPlaceBlock2,
                 new SingleAction(() -> intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE)),
                 moveToPlaceBlock3,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
                 moveToScoreSpecimen2,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
                 moveToGrabSpecimen3,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
                 moveToScoreSpecimen3,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
                 moveToGrabSpecimen4,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
                 moveToScoreSpecimen4,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
                 moveToGrabSpecimen5,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.CLOSED)),
                 moveToScoreSpecimen5,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+//                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
                 moveToPark
                 ));
 

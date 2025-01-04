@@ -219,9 +219,9 @@ public class AxonTest extends LinearOpMode {
            }
 
            if (gamepad2.left_bumper) {
-               clawServo.setPosition(.07);
+               clawServo.setPosition(0);
            } else if (gamepad2.right_bumper) {
-               clawServo.setPosition(.4);
+               clawServo.setPosition(.5);
            }
 
             if (Math.abs (gamepad2.right_stick_y) > .1 ) {
