@@ -101,7 +101,7 @@ public class NewDrivetrain extends SubSystem {
 
     private final LazyImu lazyImu;
 
-    private final Localizer roadRunnerLocalizer;
+    public final Localizer roadRunnerLocalizer;
 
     public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
 
@@ -138,7 +138,7 @@ public class NewDrivetrain extends SubSystem {
 
         drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
-        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
 
         roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
 

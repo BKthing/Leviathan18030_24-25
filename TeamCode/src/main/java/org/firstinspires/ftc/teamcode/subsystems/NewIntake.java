@@ -126,8 +126,8 @@ public class NewIntake extends SubSystem {
 
     public enum HorizontalSlide {
         //18.9 max
-        EXTRA_IN(-1),
-        IN(0),
+        EXTRA_IN(-.5),
+        IN(-.1),
         AUTO_PRESET1(13.5),
         AUTO_PRESET2(4),
         CLOSE(7),
@@ -155,7 +155,7 @@ public class NewIntake extends SubSystem {
     private double actualMotorPower = 0;
 
     public enum IntakePos {
-        UP(.06),//.69
+        UP(.05),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.13),
         DOWN(.16);//.05
@@ -499,8 +499,8 @@ public class NewIntake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.17;//.35;
-            d = ((prevSlideError-error) / elapsedTime) * 0.01;//.03;//.007
+            p = error*.27;//.35;
+            d = ((prevSlideError-error) / elapsedTime) * 0.025;//.03;//.007
             f=Math.signum(error)*0.15;//.15;
         }
 
@@ -534,7 +534,7 @@ public class NewIntake extends SubSystem {
 
             actualIntakeSpeed = targetIntakeSpeed;
         }
-        if (servoBusCurrent < 3.2) {
+        if (servoBusCurrent < 3.5) {
             servoStallTimer.reset();
         }
         switch (intakingState) {
@@ -597,7 +597,7 @@ public class NewIntake extends SubSystem {
                 if (changedServoBusCurrent && servoStallTimer.seconds() > .1) {
                     intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
                 }
-                else if (intakingTimer.seconds()>1 || targetIntakeSpeed == 0) {
+                else if (intakingTimer.seconds()>.8 || targetIntakeSpeed == 0) {
                     targetIntakeSpeed = 0;
 
                     intakingState = IntakingState.HOLDING_SAMPLE;
@@ -672,7 +672,7 @@ public class NewIntake extends SubSystem {
                 intakingTimer.reset();
                 break;
             case SERVO_STALL_UNJAMMING_SPIN_OUT:
-                if ((intakingTimer.seconds()>.1 && stallCount == 0) || (intakingTimer.seconds()>.5 && stallCount>0)) {
+                if ((intakingTimer.seconds()>.05 && stallCount == 0) || (intakingTimer.seconds()>.3 && stallCount>0)) {
                     if (!teleOpControls || gamepad2.left_bumper) {
                         targetIntakeSpeed = 1;
 
@@ -754,7 +754,7 @@ public class NewIntake extends SubSystem {
 //                }
                 break;
             case RETRACTING_INTAKE:
-                if (intakeTimer.seconds()>.3) {
+                if (intakeTimer.seconds()>.1) {
                     targetSlidePos = HorizontalSlide.EXTRA_IN.length;
 
                     intakeState = IntakeState.RETRACTING;
@@ -762,17 +762,17 @@ public class NewIntake extends SubSystem {
                 break;
             case RETRACTING:
                 //if fully retracted and holding sample start transferring else rest
-                if (slidePos<.4 || intakeTimer.seconds()>1) {
+                if ((slidePos<.4 && intakingTimer.seconds() > .2)  || intakeTimer.seconds()>1) {
                     intakeTimer.reset();
 
                     intakeState = IntakeState.WAITING_AFTER_RETRACTING;
                 }
                 break;
             case WAITING_AFTER_RETRACTING:
-                if (intakeTimer.seconds()>.3) {
+                if (intakeTimer.seconds()>.1) {
                     targetSlidePos = HorizontalSlide.IN.length;
 
-                    if (intakingState == IntakingState.HOLDING_SAMPLE || (isBreakBeam && intakingState == IntakingState.IDLE)) {
+                    if (intakingState == IntakingState.HOLDING_SAMPLE || (isBreakBeam && (intakingState == IntakingState.IDLE || intakingState == IntakingState.FINISH_INTAKING))) {
                         targetIntakeSpeed = 0;
                         if (isBreakBeam) {
                             transfer = true;

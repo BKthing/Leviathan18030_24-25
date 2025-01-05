@@ -97,7 +97,7 @@ public class Right4plus0Auto extends LinearOpMode {
         breakBeam = hardwareMap.get(TouchSensor.class, "breakBeam");
 
         intake = new NewIntake(masterThread.getData(), horizontalSlideEncoder, breakBeam, blueAlliance, false, true);
-        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, true);
+//        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, true);
 
 
         //its important that outtake is added after intake for update order purposes

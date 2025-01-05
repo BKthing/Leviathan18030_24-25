@@ -11,6 +11,8 @@ import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PassData;
 import org.firstinspires.ftc.teamcode.depricated.Outtake;
+import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
+import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
@@ -52,18 +54,25 @@ public class NewOuttake extends SubSystem {
         GRABBING_FROM_TRANSFER,
         EXTRACTING_FROM_TRANSFER,
         VERIFYING_EXTRACTION,
-        FAILED_TRANSFER,
+
 
         MOVING_TO_EJECTION,
         EJECTING,
         INIT_POSITION,
-        IDLE
+        IDLE,
+
+        PULLING_TO_FIRST_BAR,
+        FIRST_BAR_WAIT,
+        EXTEND_TO_SECOND_BAR,
+        GRABBED_SECOND_BAR
 
     }
 
     private OuttakeState outtakeState = OuttakeState.INIT_POSITION;
 
     private OuttakeState prevOuttakeState = outtakeState;
+
+    private Localizer localizer;
 
     public enum ToOuttakeState {
         WAIT_PLACE_FRONT,
@@ -85,6 +94,8 @@ public class NewOuttake extends SubSystem {
 
     private boolean changedToOuttakeState = true;
 
+    private boolean failedToTransfer = false;
+
 
     private final ElapsedTimer outtakeTimer = new ElapsedTimer();
 
@@ -95,13 +106,15 @@ public class NewOuttake extends SubSystem {
         TRANSFER(5.6),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
-        SPECIMEN_PICKUP(3.5),
+        SPECIMEN_PICKUP(3.7),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(13.7),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(25);
+        HIGH_BUCKET(25),
+        PULL_TO_FIRST_BAR(0),
+        EXTEND_TO_SECOND_BAR(18);
 
         public final double length;
         VerticalSlide(double length) {this.length = length;}
@@ -116,6 +129,18 @@ public class NewOuttake extends SubSystem {
     private double prevSlideError;
 
     private int slideTicks = 0;
+
+    private boolean slideProfile = false;
+
+    private double targetMotionProfilePos = 0;
+
+    private double slideVel = 0;
+
+    private double prevPitch;
+
+    private final ElapsedTimer pitchTimer = new ElapsedTimer();
+
+    private final ElapsedTimer slideProfileTimer = new ElapsedTimer();
 
     public enum V4BarPos {
         PLACE_FRONT(.327),
@@ -171,10 +196,10 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPosition {
-        EXTRA_OPEN(.43),
-        HANG_DEPLOY(.39),
-        OPEN(.3),//.15
-        CLOSED(.148);//.02
+        EXTRA_OPEN(.39),
+        HANG_DEPLOY(.35),
+        OPEN(.26),//.15
+        CLOSED(.1);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -195,6 +220,8 @@ public class NewOuttake extends SubSystem {
 
     private boolean updateClawPosition = false;
 
+
+    
 
     private boolean transfer = false;
 
@@ -232,11 +259,13 @@ public class NewOuttake extends SubSystem {
 
     private final Telemetry.Item outtakeLoopTime;
 
+    private final Telemetry.Item imuAngles;
+
     private final ReusableHardwareAction leftMotorReusableHardwareAction, rightMotorReusableHardwareAction, leftOuttakeServoReusableHardwareAction, rightOuttakeServoReusableHardwareAction, clawPitchServoReusableHardwareAction, clawServoReusableHardwareAction;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
+    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init, Localizer localizer) {
         super(data);
-
+        this.localizer = localizer;
         this.teleOpControls = teleOpControls;
         this.autoExtendSlides = autoExtendSlides;
         this.autoRetractSlides = autoRetractSlides;
@@ -312,7 +341,7 @@ public class NewOuttake extends SubSystem {
         }
 
         outtakeLoopTime = telemetry.addData("Outtake Time", "");
-
+        imuAngles = telemetry.addData("IMU Angles", "");
     }
 
 
@@ -372,6 +401,10 @@ public class NewOuttake extends SubSystem {
 
                 if (Math.abs(gamepad2.right_stick_y) > .05) {
                     targetSlidePos = targetSlidePos+8 * slideTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75);
+                    slideVel = 8 * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75);
+                }
+                else if (Math.abs(oldGamePad2.right_stick_y) > .05 && gamepad2.right_stick_y <= .05){
+                    slideVel = 0;
                 }
 
                 if (Math.abs(gamepad2.left_stick_x)>.05) {
@@ -380,6 +413,16 @@ public class NewOuttake extends SubSystem {
 
                 if (Math.abs(gamepad2.right_stick_x) > .05) {
                     targetClawPitch += gamepad2.right_stick_x * slideTimer.seconds() * .05;
+                }
+                if (gamepad2.right_bumper && !oldGamePad2.right_bumper) {
+                    if (outtakeState == OuttakeState.GRABBED_SECOND_BAR) {
+                        targetSlidePos = 0;
+                    }
+                    else {
+                        outtakeState = OuttakeState.PULLING_TO_FIRST_BAR;
+                        toSlidePosConstantVel(VerticalSlide.PULL_TO_FIRST_BAR.length, 40);
+                    }
+
                 }
 
             } else {
@@ -392,12 +435,19 @@ public class NewOuttake extends SubSystem {
                         toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
                     } else {
                         retractFromGrabBehind();
+
                     }
+                    slideProfile = false;
+                    slideVel = 0;
                 } else if (gamepad2.b && !oldGamePad2.b) {
                     toOuttakeState = ToOuttakeState.PLACE_FRONT;
+                    slideProfile = false;
+                    slideVel = 0;
                 } else if (gamepad2.x && !oldGamePad2.x) {
 //                    if (clawPosition == ClawPosition.CLOSED) {
                         dropBehind();
+                    slideProfile = false;
+                    slideVel = 0;
 //                    } else if (clawPosition == ClawPosition.OPEN) {
 //                        clawPosition = ClawPosition.EXTRA_OPEN;
 //                        updateClawPosition = true;
@@ -405,12 +455,23 @@ public class NewOuttake extends SubSystem {
 //                    }
                 } else if (gamepad2.y && !oldGamePad2.y) {
                     toOuttakeState = ToOuttakeState.PLACE_BEHIND;
+                    slideProfile = false;
+                    slideVel = 0;
                 } else if (Math.abs(gamepad2.right_stick_y) > .05) {
                     if (!gamepad2.back) {
                         targetSlidePos = MathUtil.clip(targetSlidePos+8 * slideTimer.seconds() * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75), -.5, 28.1);
-                    } else {
-//                    outtake.setTargetV4BarPos(outtake.getTargetV4BarPos()+gamepad2.right_stick_y * .0002 * loopTimer.milliSeconds());
+                        slideProfile = false;
+                        slideVel = 8 * -gamepad2.right_stick_y * (1 - gamepad2.left_trigger * .75);
                     }
+                    else if (Math.abs(oldGamePad2.right_stick_y) > .05 && gamepad2.right_stick_y <= .05){
+                        slideVel = 0;
+                    }
+                }
+                if (gamepad2.right_bumper && !oldGamePad2.right_bumper) {
+                    updateClawPosition = true;
+                    clawPosition = clawPosition == ClawPosition.CLOSED ? ClawPosition.OPEN : ClawPosition.CLOSED;
+
+//                clawPosition = clawPosition == ClawPosition.CLOSED ? (outtakeState == OuttakeState.WAITING_DROP_SAMPLE ? ClawPosition.EXTRA_OPEN : ClawPosition.OPEN) : ClawPosition.CLOSED;
                 }
             }
 
@@ -418,12 +479,7 @@ public class NewOuttake extends SubSystem {
 
 
 
-            if (gamepad2.right_bumper && !oldGamePad2.right_bumper) {
-                updateClawPosition = true;
-                clawPosition = clawPosition == ClawPosition.CLOSED ? ClawPosition.OPEN : ClawPosition.CLOSED;
 
-//                clawPosition = clawPosition == ClawPosition.CLOSED ? (outtakeState == OuttakeState.WAITING_DROP_SAMPLE ? ClawPosition.EXTRA_OPEN : ClawPosition.OPEN) : ClawPosition.CLOSED;
-            }
         }
 
 
@@ -474,7 +530,21 @@ public class NewOuttake extends SubSystem {
                 break;
         }
 
+        if (slideProfile) {
+            double elapsedTime = Math.min(slideProfileTimer.seconds(), .005);
+            if (targetMotionProfilePos > targetSlidePos) {
+                targetSlidePos = Math.min(targetMotionProfilePos, targetSlidePos + slideVel * elapsedTime);
+            }
+            else if (targetMotionProfilePos < targetSlidePos) {
+                targetSlidePos = Math.max(targetMotionProfilePos, targetSlidePos + slideVel * elapsedTime);
+            }
+            else {
+                slideVel = 0;
+                slideProfile = false;
+            }
 
+        }
+        slideProfileTimer.reset();
         //slide PID
         slidePos = ticksToInches(slideTicks);
         //limits max time
@@ -488,7 +558,7 @@ public class NewOuttake extends SubSystem {
 
         double f;
 
-        if (targetSlidePos != 0) {
+        if (targetSlidePos != 0 && !slideProfile) {
             f = .13;
         } else {
             f = 0;
@@ -501,10 +571,14 @@ public class NewOuttake extends SubSystem {
             p = Math.signum(error);
         } else {
             p =error*.38;
-            d = ((prevSlideError-error) / elapsedTime) * .015;
+            if (!slideProfile) {
+                d = (slideVel - (prevSlideError-error) / elapsedTime) * .025;
+            }
+
+
         }
 
-        double motorPower =  p  - d + f; //
+        double motorPower =  p  + d + f; //
         slideTimer.reset();
         prevSlideError = error;
 
@@ -641,7 +715,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case GRABBING_SPECIMEN:
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>.1) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length+4;
 //                    targetV4BPos = V4BarPos.EXTRACT_FROM_GRAB_BACK.pos;
 //                    targetClawPitch = ClawPitch.EXTRACT_FROM_TRANSFER.pos;
@@ -764,7 +838,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case GRABBING_FROM_TRANSFER:
-                if (outtakeTimer.seconds()>.4) { //changed from .2
+                if (outtakeTimer.seconds()>.2) { //changed from .2
                     targetSlidePos = VerticalSlide.EXTRACT_FROM_TRANSFER.length;
 
                     outtakeTimer.reset();
@@ -773,7 +847,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case EXTRACTING_FROM_TRANSFER:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.2) {
                     updateIntakeHoldingSample = true;
                     outtakeState = OuttakeState.VERIFYING_EXTRACTION;
                 }
@@ -805,7 +879,8 @@ public class NewOuttake extends SubSystem {
                             clawPosition = ClawPosition.OPEN;
                             updateClawPosition = true;
 
-                            outtakeState = OuttakeState.FAILED_TRANSFER;
+                            outtakeState = OuttakeState.WAITING_FOR_TRANSFER;
+                            failedToTransfer = true;
 
                             transferAttemptCounter = 0;
                         }
@@ -850,11 +925,39 @@ public class NewOuttake extends SubSystem {
                     retractFromFront();
                 }
                 break;
+            case PULLING_TO_FIRST_BAR:
+
+                if (!slideProfile && absError < .75 ) {
+                    outtakeState = OuttakeState.WAITING_TO_HANG;
+                    outtakeTimer.reset();
+                }
+                break;
+            case WAITING_TO_HANG:
+                double pitch1 = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+
+                if (outtakeTimer.seconds() > 1 && pitch1 > -9  && ((pitch1 - prevPitch) / pitchTimer.seconds()) > 1) {
+                    targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length;
+//                    toSlidePosConstantVel(VerticalSlide.EXTEND_TO_SECOND_BAR.length, 40);
+                    outtakeState = OuttakeState.EXTEND_TO_SECOND_BAR;
+                }
+                break;
+            case EXTEND_TO_SECOND_BAR:
+                double pitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+                if ((pitch > -3 || (pitch > -6 && (((pitch - prevPitch) / pitchTimer.seconds()) > 1))) && absError < .7) {
+                    targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length - 2;
+                    outtakeState = OuttakeState.GRABBED_SECOND_BAR;
+                }
+                break;
+
         }
+        imuAngles.setValue(((TwoDeadWheelLocalizer) localizer).angles.getPitch() + " " + (((TwoDeadWheelLocalizer) localizer).angles.getPitch() - prevPitch) / pitchTimer.seconds());
+        prevPitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+        pitchTimer.reset();
 
         oldGamePad2.copy(gamepad2);
 
         outtakeLoopTime.setValue(outtakeLoopTimer.milliSeconds());
+
     }
 
     @Override
@@ -950,6 +1053,22 @@ public class NewOuttake extends SubSystem {
 
     public OuttakeState getOuttakeState() {
         return prevOuttakeState;
+    }
+
+    public boolean getFailedToTransfer() {
+        if (failedToTransfer){
+            failedToTransfer = false;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private void toSlidePosConstantVel(double targetSlidePos, double targetVel) {
+        slideProfile = true;
+        slideVel = targetSlidePos < this.targetSlidePos ? -targetVel : targetVel;
+        targetMotionProfilePos = targetSlidePos;
     }
 
 

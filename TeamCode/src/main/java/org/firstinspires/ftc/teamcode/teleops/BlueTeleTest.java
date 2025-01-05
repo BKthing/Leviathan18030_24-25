@@ -62,7 +62,7 @@ public class BlueTeleTest extends LinearOpMode {
 
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
-        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, false);
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, false, drivetrain.roadRunnerLocalizer);
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(

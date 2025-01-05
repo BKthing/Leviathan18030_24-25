@@ -43,6 +43,8 @@ public final class TwoDeadWheelLocalizer implements Localizer {
     private double lastRawHeadingVel, headingVelOffset;
     private boolean initialized;
 
+    public YawPitchRollAngles angles;
+
     public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, double inPerTick) {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
@@ -67,7 +69,8 @@ public final class TwoDeadWheelLocalizer implements Localizer {
         PositionVelocityPair parPosVel = par.getPositionAndVelocity();
         PositionVelocityPair perpPosVel = perp.getPositionAndVelocity();
 
-        YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
+        angles = imu.getRobotYawPitchRollAngles();
+
         // Use degrees here to work around https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/1070
         AngularVelocity angularVelocityDegrees = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
         AngularVelocity angularVelocity = new AngularVelocity(
