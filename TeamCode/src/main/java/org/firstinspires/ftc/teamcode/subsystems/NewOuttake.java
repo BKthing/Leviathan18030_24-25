@@ -136,19 +136,19 @@ public class NewOuttake extends SubSystem {
 
     private double slideVel = 0;
 
-    private double prevPitch, prevRoll;
+    private double prevPitch, prevYaw;
 
     private final ElapsedTimer pitchTimer = new ElapsedTimer();
 
-    private final ElapsedTimer rollTimer = new ElapsedTimer();
+    private final ElapsedTimer yawTimer = new ElapsedTimer();
 
     private final ElapsedTimer slideProfileTimer = new ElapsedTimer();
 
     public enum V4BarPos {
-        PLACE_FRONT(.327),
+        PLACE_FRONT(.319),
         CLEAR_FRONT_BAR(.29),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.57),
+        RELEASE_HANG_HOOKS(.59),
         MID_POSITION_CUTOFF(.55),
         WAITING_FOR_HANG_DEPLOY(.49),
         TRANSFER(.48),
@@ -174,7 +174,7 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPitch {
-        DOWN(.31),
+        DOWN(.34),
         BACK(0.08),
         BACK_ANGLED_DOWN(.19),
         BACK2(1),
@@ -423,7 +423,6 @@ public class NewOuttake extends SubSystem {
                     else {
                         outtakeState = OuttakeState.PULLING_TO_FIRST_BAR;
                         toSlidePosConstantVel(VerticalSlide.PULL_TO_FIRST_BAR.length, 40);
-                        prevRoll = ((TwoDeadWheelLocalizer) localizer).angles.getRoll();
                     }
 
                 }
@@ -937,10 +936,10 @@ public class NewOuttake extends SubSystem {
                 break;
             case WAITING_TO_HANG:
                 double pitch1 = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
-                double roll = ((TwoDeadWheelLocalizer)localizer).angles.getRoll();
+                double yaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
 
                 if (outtakeTimer.seconds() > 1 && pitch1 > -9  && ((pitch1 - prevPitch) / pitchTimer.seconds()) > 1
-                && (Math.abs(roll - prevRoll) / rollTimer.seconds()) < 1) {
+                && (Math.abs(yaw - prevYaw) / yawTimer.seconds()) < 1) {
                     targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length;
 //                    toSlidePosConstantVel(VerticalSlide.EXTEND_TO_SECOND_BAR.length, 40);
                     outtakeState = OuttakeState.EXTEND_TO_SECOND_BAR;
@@ -956,12 +955,12 @@ public class NewOuttake extends SubSystem {
 
         }
         imuAngles.setValue(((TwoDeadWheelLocalizer) localizer).angles.getPitch() + " " + (((TwoDeadWheelLocalizer) localizer).angles.getPitch() - prevPitch) / pitchTimer.seconds()
-        + " roll: " + prevRoll /*((TwoDeadWheelLocalizer) localizer).angles.getRoll()*/ + " " +
-                (((TwoDeadWheelLocalizer) localizer).angles.getRoll() - prevRoll) / rollTimer.seconds());
+        + " yaw: " + ((TwoDeadWheelLocalizer) localizer).angles.getYaw() + " " +
+                (((TwoDeadWheelLocalizer) localizer).angles.getYaw() - prevYaw) / yawTimer.seconds());
         prevPitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
-        prevRoll = ((TwoDeadWheelLocalizer)localizer).angles.getRoll();
+        prevYaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
         pitchTimer.reset();
-        rollTimer.reset();
+        yawTimer.reset();
 
         oldGamePad2.copy(gamepad2);
 

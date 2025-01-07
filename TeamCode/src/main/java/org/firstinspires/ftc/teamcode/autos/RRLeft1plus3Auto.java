@@ -134,10 +134,10 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToLinearHeading(new Pose2d(53, 51.5, Math.toRadians(293)), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(54, 50, Math.toRadians(295)), Math.toRadians(270))
                 .build();
 
-        Action moveToScoreBlock3 = drivetrain.drive.actionBuilder(new Pose2d(53, 47.5, Math.toRadians(303)))
+        Action moveToScoreBlock3 = drivetrain.drive.actionBuilder(new Pose2d(54, 50, Math.toRadians(295)))
                 .setTangent(Math.toRadians(105))
                 .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(225)), Math.toRadians(90))
                 .build();
