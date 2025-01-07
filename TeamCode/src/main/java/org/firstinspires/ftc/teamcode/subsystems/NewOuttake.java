@@ -62,6 +62,7 @@ public class NewOuttake extends SubSystem {
         IDLE,
 
         PULLING_TO_FIRST_BAR,
+        SLOW_BEFORE_FIRST_BAR,
         FIRST_BAR_WAIT,
         EXTEND_TO_SECOND_BAR,
         GRABBED_SECOND_BAR
@@ -113,7 +114,8 @@ public class NewOuttake extends SubSystem {
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(25),
-        PULL_TO_FIRST_BAR(0),
+        PULL_TO_FIRST_BAR(.3),
+        GRAB_FIRST_BAR(3),
         EXTEND_TO_SECOND_BAR(18);
 
         public final double length;
@@ -143,6 +145,8 @@ public class NewOuttake extends SubSystem {
     private final ElapsedTimer yawTimer = new ElapsedTimer();
 
     private final ElapsedTimer slideProfileTimer = new ElapsedTimer();
+
+    private double startingHangHeading = 0;
 
     public enum V4BarPos {
         PLACE_FRONT(.319),
@@ -423,6 +427,7 @@ public class NewOuttake extends SubSystem {
                     else {
                         outtakeState = OuttakeState.PULLING_TO_FIRST_BAR;
                         toSlidePosConstantVel(VerticalSlide.PULL_TO_FIRST_BAR.length, 40);
+                        startingHangHeading = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
                     }
 
                 }
@@ -928,7 +933,15 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case PULLING_TO_FIRST_BAR:
-
+                //3in from top
+                if (slidePos<targetMotionProfilePos+3) {
+                    outtakeState = OuttakeState.SLOW_BEFORE_FIRST_BAR;
+                    targetSlidePos = slidePos;
+                    toSlidePosConstantVel(VerticalSlide.PULL_TO_FIRST_BAR.length, 10);
+                    outtakeTimer.reset();
+                }
+                break;
+            case SLOW_BEFORE_FIRST_BAR:
                 if (!slideProfile && absError < .75 ) {
                     outtakeState = OuttakeState.WAITING_TO_HANG;
                     outtakeTimer.reset();
@@ -939,11 +952,15 @@ public class NewOuttake extends SubSystem {
                 double yaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
 
                 if (outtakeTimer.seconds() > 1 && pitch1 > -9  && ((pitch1 - prevPitch) / pitchTimer.seconds()) > 1
-                && (Math.abs(yaw - prevYaw) / yawTimer.seconds()) < 1) {
-                    targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length;
+                && (Math.abs(yaw - prevYaw) / yawTimer.seconds()) < 1 &&
+                Math.abs(startingHangHeading-yaw)<2) {
+                    toSlidePosConstantVel(VerticalSlide.GRAB_FIRST_BAR.length, 10);
 //                    toSlidePosConstantVel(VerticalSlide.EXTEND_TO_SECOND_BAR.length, 40);
-                    outtakeState = OuttakeState.EXTEND_TO_SECOND_BAR;
+                    outtakeState = OuttakeState.FIRST_BAR_WAIT;
                 }
+                break;
+            case FIRST_BAR_WAIT:
+
                 break;
             case EXTEND_TO_SECOND_BAR:
                 double pitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
