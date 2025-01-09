@@ -94,6 +94,7 @@ public class NewDrivetrain extends SubSystem {
     private final Telemetry.Item roadRunnerPos;
     private final Telemetry.Item roadRunnerVel;
     private final Telemetry.Item driveTrainLoopTime;
+    private final GoBildaPinpointDriver pinpointLoacalizer;
 
     private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
 
@@ -141,7 +142,11 @@ public class NewDrivetrain extends SubSystem {
         lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
 
         roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
+        pinpointLoacalizer = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        pinpointLoacalizer.setOffsets(-120.65, -78.232);
 
+        pinpointLoacalizer.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpointLoacalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
