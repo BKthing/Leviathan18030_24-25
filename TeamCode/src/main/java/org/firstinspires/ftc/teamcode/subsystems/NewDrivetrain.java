@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2dDual;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.qualcomm.hardware.bosch.BNO055IMUNew;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -26,6 +27,7 @@ import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
@@ -101,7 +103,9 @@ public class NewDrivetrain extends SubSystem {
 
     private final LazyImu lazyImu;
 
-    public final Localizer roadRunnerLocalizer;
+//    public final Localizer roadRunnerLocalizer;
+
+    public final GoBildaPinpointDriverRR pinpointLocalizer;
 
     public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
 
@@ -140,8 +144,10 @@ public class NewDrivetrain extends SubSystem {
 
         lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
 
-        roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
+//        roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
 
+
+        pinpointLocalizer = hardwareMap.get(GoBildaPinpointDriverRR.class,new PinpointDrive.Params().pinpointDeviceName);
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -174,20 +180,24 @@ public class NewDrivetrain extends SubSystem {
         driveTrainLoopTimer.reset();
         drive.setVoltage(voltage);
 
-        Twist2dDual<Time> twist = roadRunnerLocalizer.update();
+        pinpointLocalizer.update();
 
-        roadRunnerPose = roadRunnerPose.plus(twist.value());//MathUtil.toRoadRunnerPose(poseEstimate);//
+//        Twist2dDual<Time> twist = ;
+
+        roadRunnerPose = pinpointLocalizer.getPositionRR();//MathUtil.toRoadRunnerPose(poseEstimate);//
 
         roadRunnerPoseEstimate = new Pose2d(roadRunnerPose.position.x, roadRunnerPose.position.y, roadRunnerPose.heading.toDouble());
 
-        roadRunnerPoseVelocity = new Pose2d(twist.velocity().linearVel.x.value(), twist.velocity().linearVel.y.value(), twist.velocity().angVel.value());
+        PoseVelocity2d velocity = pinpointLocalizer.getVelocityRR();
+
+        roadRunnerPoseVelocity = new Pose2d(velocity.linearVel.x, velocity.linearVel.y, velocity.angVel);
 
         roadRunnerPos.setValue(roadRunnerPoseEstimate);
         roadRunnerVel.setValue(roadRunnerPoseVelocity);
 
 //        drive.updatePoseEstimate();
 
-        drive.updatePoseEstimate(roadRunnerPose, twist.velocity().value());
+        drive.updatePoseEstimate(roadRunnerPose, velocity);
 
         if (voltageUpdateTimer.milliSeconds()>200) {
             voltageSensorHardwareAction.setAndQueueIfEmpty(() -> {

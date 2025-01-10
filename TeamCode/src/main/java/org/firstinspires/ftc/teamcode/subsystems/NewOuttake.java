@@ -113,7 +113,7 @@ public class NewOuttake extends SubSystem {
         PLACE_SPECIMEN_BAR(13.7),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(25),
+        HIGH_BUCKET(23),
         PULL_TO_FIRST_BAR(.3),
         GRAB_FIRST_BAR(3),
         EXTEND_TO_SECOND_BAR(18);
@@ -155,13 +155,14 @@ public class NewOuttake extends SubSystem {
         RELEASE_HANG_HOOKS(.59),
         MID_POSITION_CUTOFF(.55),
         WAITING_FOR_HANG_DEPLOY(.49),
+        // hello brett my king
         TRANSFER(.48),
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
         GRAB_BACK(.62),
         WAIT_PLACE_BACK(.14),
         PLACE_BACK(.07),
-        HANG_POS(.25),
+        HANG_POS(.23),
         IDLE_POSITION(.41),
         TOUCH_BAR(.339);
 
@@ -896,16 +897,16 @@ public class NewOuttake extends SubSystem {
                     }
 
                     transferAttemptCounter = 0;
-
-                    if (gamepad2.right_trigger>.2 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
-                        targetSlidePos = VerticalSlide.TRANSFER.length + 2;
-                        targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
-                        targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
-
-                        outtakeTimer.reset();
-
-                        outtakeState = OuttakeState.MOVING_TO_EJECTION;
-                    } else if (autoExtendSlides) {
+//(gamepad2.right_trigger>.2 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+//                        targetSlidePos = VerticalSlide.TRANSFER.length + 2;
+//                        targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
+//                        targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
+//
+//                        outtakeTimer.reset();
+//
+//                        outtakeState = OuttakeState.MOVING_TO_EJECTION;
+//                    } else
+                     if (autoExtendSlides) {
                         if ( cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
                             dropBehind();
                         } else {
