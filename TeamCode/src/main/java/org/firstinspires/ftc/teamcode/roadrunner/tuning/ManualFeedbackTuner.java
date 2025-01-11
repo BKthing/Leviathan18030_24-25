@@ -21,7 +21,7 @@ public final class ManualFeedbackTuner extends LinearOpMode {
             perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
             parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
 
-            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, parallelWheel, perpendicularWheel, new Pose2d(0, 0, 0));
+            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
             
 //            if (drive.localizer instanceof TwoDeadWheelLocalizer) {
 //                if (TwoDeadWheelLocalizer.PARAMS.perpXTicks == 0 && TwoDeadWheelLocalizer.PARAMS.parYTicks == 0) {

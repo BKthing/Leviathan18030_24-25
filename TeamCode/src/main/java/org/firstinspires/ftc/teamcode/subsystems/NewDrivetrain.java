@@ -125,7 +125,6 @@ public class NewDrivetrain extends SubSystem {
 
         this.driveState = driveState;
 
-        this.drive = new MecanumDrive2(hardwareMap, parallelEncoder, perpendicularEncoder, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
 
         this.motorActions = Arrays.asList(new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue), new ReusableHardwareAction(hardwareQueue));
 
@@ -157,6 +156,8 @@ public class NewDrivetrain extends SubSystem {
         pinpointLocalizer.setCurrentTicksPerMM(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
         pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpointLocalizer.setOffsets(-78.2, -120.7);
+
+        this.drive = new MecanumDrive2(hardwareMap, pinpointLocalizer, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
 
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();

@@ -35,8 +35,11 @@ import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.DownsampledWriter;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.ForwardRampLogger;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
+import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -45,8 +48,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.PoseMessage;
@@ -75,9 +80,9 @@ public final class MecanumDrive2 {
         public double trackWidthTicks = 3620.3695082807526;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.579568863855739;
-        public double kV = 0.0003889546799981593;
-        public double kA = 0.0001;
+        public double kS = 1.3174464421787597;
+        public double kV = 0.12880689268881115;
+        public double kA = 0.0001; //.01
 
         // path profile parameters (in inches)
         public double maxWheelVel = 60;
@@ -98,7 +103,9 @@ public final class MecanumDrive2 {
         public double headingVelGain = .5; // shared with turn
 
         public boolean usePinpointIMUForTuning = true;
+
     }
+    public GoBildaPinpointDriverRR pinpoint;
 
     public static Params PARAMS = new Params();
 
@@ -121,7 +128,7 @@ public final class MecanumDrive2 {
 
     public final LazyImu lazyImu;
 
-    public final Localizer localizer;
+    public  Localizer localizer;
 
     public Pose2d pose;
     public PoseVelocity2d robotVelRobot;
@@ -134,9 +141,19 @@ public final class MecanumDrive2 {
     private List<Double> motorPowers = new ArrayList<>();
 
     private double voltage = 13;
+    public MecanumDrive2(HardwareMap hardwareMap, Pose2d pose) {
+        this(hardwareMap, hardwareMap.get(GoBildaPinpointDriverRR.class, "pinpoint"), pose);
 
-    public MecanumDrive2(HardwareMap hardwareMap, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, Pose2d pose, ) {
+        pinpoint.setCurrentTicksPerMM(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpoint.setOffsets(-78.2, -120.7);
+
+
+    }
+
+    public MecanumDrive2(HardwareMap hardwareMap, GoBildaPinpointDriverRR pinpoint, Pose2d pose) {
         this.pose = pose;
+        this.pinpoint = pinpoint;
 
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
@@ -177,7 +194,8 @@ public final class MecanumDrive2 {
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
         }
 
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, PARAMS.inPerTick);
+//        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, PARAMS.inPerTick);
+
 
         updatePoseEstimate();
     }
@@ -391,7 +409,10 @@ public final class MecanumDrive2 {
         estimatedPoseWriter.write(new PoseMessage(pose));
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
-        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(new Pose2D(DistanceUnit.INCH, pose.position.x, pose.position.y, AngleUnit.DEGREES, pose.heading.toDouble())));
+        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
+
+//        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(new Pose2D(DistanceUnit.INCH, pose.position.x, pose.position.y, AngleUnit.DEGREES, pose.heading.toDouble())));
+        FlightRecorder.write("PINPOINT_STATUS",pinpoint.getDeviceStatus());
 
 //        FlightRecorder.write("TWO_DEAD_WHEEL_INPUTS", new TwoDeadWheelInputsMessage(poseVelocity., perpPosVel, angles, angularVelocity));
 
@@ -402,12 +423,17 @@ public final class MecanumDrive2 {
     }
 
     public void updatePoseEstimate() {
-        Twist2dDual<Time> twist = localizer.update();
-        pose = pose.plus(twist.value());
 
-        estimatedPoseWriter.write(new PoseMessage(pose));
+        pinpoint.update();
+        pose = pinpoint.getPositionRR();
 
-        robotVelRobot = twist.velocity().value();
+
+
+        FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
+        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
+        FlightRecorder.write("PINPOINT_STATUS",pinpoint.getDeviceStatus());
+
+        robotVelRobot = pinpoint.getVelocityRR();
 
     }
 

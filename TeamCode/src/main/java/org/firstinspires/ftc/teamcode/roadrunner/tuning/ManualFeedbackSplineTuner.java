@@ -40,7 +40,7 @@ public final class ManualFeedbackSplineTuner extends LinearOpMode {
             perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
             parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
 
-            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, parallelWheel, perpendicularWheel, new Pose2d(0, 0, 0));
+            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
 
             frontLeft = hardwareMap.get(DcMotorEx.class, "fl");//ex 0
             frontRight = hardwareMap.get(DcMotorEx.class, "fr");//

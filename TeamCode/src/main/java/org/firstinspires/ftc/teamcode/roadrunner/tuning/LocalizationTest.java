@@ -11,7 +11,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.roadrunner.Drawing;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.TankDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
 
 public class LocalizationTest extends LinearOpMode {
 
@@ -24,8 +26,8 @@ public class LocalizationTest extends LinearOpMode {
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive2.class)) {
             perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
             parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
-
-            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, parallelWheel, perpendicularWheel, new Pose2d(0, 0, 0));
+//                PinpointDrive drive = new PinpointDrive(hardwareMap, new Pose2d(0, 0, 0));
+            MecanumDrive2 drive = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
 
             waitForStart();
 

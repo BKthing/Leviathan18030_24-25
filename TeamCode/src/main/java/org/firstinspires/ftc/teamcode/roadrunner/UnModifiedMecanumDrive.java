@@ -52,7 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class UnModifiedMecanumDrive {
+public  class UnModifiedMecanumDrive {
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
@@ -63,7 +63,7 @@ public final class UnModifiedMecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
 
         // drive model parameters
-        public double inPerTick = .94*2*Math.PI/2000;
+        public double inPerTick = 1;
         public double lateralInPerTick = inPerTick;
         public double trackWidthTicks = 3620.3695082807526;
 
@@ -110,12 +110,12 @@ public final class UnModifiedMecanumDrive {
 
     public final VoltageSensor voltageSensor;
 
-    public final LazyImu lazyImu;
+    public  LazyImu lazyImu;
 
     public final Localizer localizer;
     public Pose2d pose;
 
-    private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+    public   LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     private final DownsampledWriter estimatedPoseWriter = new DownsampledWriter("ESTIMATED_POSE", 50_000_000);
     private final DownsampledWriter targetPoseWriter = new DownsampledWriter("TARGET_POSE", 50_000_000);
