@@ -1,11 +1,11 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.TouchSensor;
-import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -62,7 +62,7 @@ public class BlueTeleTest extends LinearOpMode {
 
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
-        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, false, drivetrain.roadRunnerLocalizer);
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, true, true, true, false);
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
@@ -74,6 +74,7 @@ public class BlueTeleTest extends LinearOpMode {
 
         waitForStart();
         masterThread.clearBulkCache();
+        drivetrain.pinpointLocalizer.setPositionRR(new Pose2d(0, 0, 0));
 
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();

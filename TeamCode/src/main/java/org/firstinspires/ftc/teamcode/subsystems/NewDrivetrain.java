@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2dDual;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.qualcomm.hardware.bosch.BNO055IMUNew;
@@ -25,11 +26,14 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
-import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
 import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
+import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
@@ -147,7 +151,13 @@ public class NewDrivetrain extends SubSystem {
 //        roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
 
 
-        pinpointLocalizer = hardwareMap.get(GoBildaPinpointDriverRR.class,new PinpointDrive.Params().pinpointDeviceName);
+        pinpointLocalizer = hardwareMap.get(GoBildaPinpointDriverRR.class, "pinpoint");
+
+
+        pinpointLocalizer.setCurrentTicksPerMM(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
+        pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpointLocalizer.setOffsets(-78.2, -120.7);
+
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -188,16 +198,16 @@ public class NewDrivetrain extends SubSystem {
 
         roadRunnerPoseEstimate = new Pose2d(roadRunnerPose.position.x, roadRunnerPose.position.y, roadRunnerPose.heading.toDouble());
 
-        PoseVelocity2d velocity = pinpointLocalizer.getVelocityRR();
+//        PoseVelocity2d velocity = ;
 
-        roadRunnerPoseVelocity = new Pose2d(velocity.linearVel.x, velocity.linearVel.y, velocity.angVel);
+//        roadRunnerPoseVelocity = new Pose2d(velocity.linearVel.x, velocity.linearVel.y, velocity.angVel);
 
         roadRunnerPos.setValue(roadRunnerPoseEstimate);
         roadRunnerVel.setValue(roadRunnerPoseVelocity);
 
 //        drive.updatePoseEstimate();
 
-        drive.updatePoseEstimate(roadRunnerPose, velocity);
+        drive.updatePoseEstimate(roadRunnerPose, pinpointLocalizer.getVelocityRR());
 
         if (voltageUpdateTimer.milliSeconds()>200) {
             voltageSensorHardwareAction.setAndQueueIfEmpty(() -> {
@@ -289,6 +299,29 @@ public class NewDrivetrain extends SubSystem {
 
         if (driveState == DriveState.FOLLOW_PATH) {
             packet.fieldOverlay().getOperations().addAll(this.packet.fieldOverlay().getOperations());
+        } else {
+
+//            packet.put("x", roadRunnerPose.position.x);
+//            packet.put("y", roadRunnerPose.position.y);
+//            packet.put("heading (deg)", roadRunnerPose.heading.toDouble()*180/Math.PI);
+//
+//            packet.fieldOverlay().setStrokeWidth(1);
+//            packet.fieldOverlay().setStroke("#b33fb5");
+////            DashboardUtil.drawFullPoseHistory(packet.fieldOverlay(), localizer.getPoseHistory());
+//            DashboardUtil.drawRobot(packet.fieldOverlay(), roadRunnerPoseEstimate);
+//
+//            //draws the last 200 points the robot was at
+//
+//            packet.fieldOverlay().setStroke("#3F51B5");
+//
+//
+//            //draws the robots current position
+//
+//            Vector2d robotVelocity = roadRunnerPoseVelocity.getVector2d();
+//
+//
+//            DashboardUtil.drawArrow(packet.fieldOverlay(), roadRunnerPoseEstimate.getVector2d(), roadRunnerPoseEstimate.getVector2d().plus(robotVelocity));
+
         }
 
         return packet;
@@ -328,5 +361,7 @@ public class NewDrivetrain extends SubSystem {
             }
         }
     }
+
+
 
 }

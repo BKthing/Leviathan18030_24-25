@@ -65,7 +65,9 @@ public class AutoTest extends LinearOpMode {
 
         verticalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "verticalLeft"));
 
-        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, false, drivetrain.roadRunnerLocalizer);
+
+
+        outtake = new NewOuttake(masterThread.getData(), intake, verticalSlideEncoder, blueAlliance, false, true, true, false);
 
         //its important that outtake is added after intake for update order purposes
         masterThread.addSubSystems(
@@ -82,6 +84,7 @@ public class AutoTest extends LinearOpMode {
 
         waitForStart();
         masterThread.clearBulkCache();
+        drivetrain.pinpointLocalizer.setPositionRR(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)));
 
 
         while ( !isStopRequested()) {

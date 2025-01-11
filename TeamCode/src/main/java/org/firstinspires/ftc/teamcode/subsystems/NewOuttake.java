@@ -73,7 +73,7 @@ public class NewOuttake extends SubSystem {
 
     private OuttakeState prevOuttakeState = outtakeState;
 
-    private Localizer localizer;
+//    private Localizer localizer;
 
     public enum ToOuttakeState {
         WAIT_PLACE_FRONT,
@@ -270,9 +270,9 @@ public class NewOuttake extends SubSystem {
 
     private final ReusableHardwareAction leftMotorReusableHardwareAction, rightMotorReusableHardwareAction, leftOuttakeServoReusableHardwareAction, rightOuttakeServoReusableHardwareAction, clawPitchServoReusableHardwareAction, clawServoReusableHardwareAction;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init, Localizer localizer) {
+    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
         super(data);
-        this.localizer = localizer;
+//        this.localizer = localizer;
         this.teleOpControls = teleOpControls;
         this.autoExtendSlides = autoExtendSlides;
         this.autoRetractSlides = autoRetractSlides;
@@ -428,7 +428,7 @@ public class NewOuttake extends SubSystem {
                     else {
                         outtakeState = OuttakeState.PULLING_TO_FIRST_BAR;
                         toSlidePosConstantVel(VerticalSlide.PULL_TO_FIRST_BAR.length, 40);
-                        startingHangHeading = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
+//                        startingHangHeading = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
                     }
 
                 }
@@ -949,34 +949,34 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case WAITING_TO_HANG:
-                double pitch1 = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
-                double yaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
-
-                if (outtakeTimer.seconds() > 1 && pitch1 > -9  && ((pitch1 - prevPitch) / pitchTimer.seconds()) > 1
-                && (Math.abs(yaw - prevYaw) / yawTimer.seconds()) < 1 &&
-                Math.abs(startingHangHeading-yaw)<2) {
-                    toSlidePosConstantVel(VerticalSlide.GRAB_FIRST_BAR.length, 10);
-//                    toSlidePosConstantVel(VerticalSlide.EXTEND_TO_SECOND_BAR.length, 40);
-                    outtakeState = OuttakeState.FIRST_BAR_WAIT;
-                }
+//                double pitch1 = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+//                double yaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
+//
+//                if (outtakeTimer.seconds() > 1 && pitch1 > -9  && ((pitch1 - prevPitch) / pitchTimer.seconds()) > 1
+//                && (Math.abs(yaw - prevYaw) / yawTimer.seconds()) < 1 &&
+//                Math.abs(startingHangHeading-yaw)<2) {
+//                    toSlidePosConstantVel(VerticalSlide.GRAB_FIRST_BAR.length, 10);
+                    toSlidePosConstantVel(VerticalSlide.EXTEND_TO_SECOND_BAR.length, 40);
+//                    outtakeState = OuttakeState.FIRST_BAR_WAIT;
+//                }
                 break;
             case FIRST_BAR_WAIT:
 
                 break;
             case EXTEND_TO_SECOND_BAR:
-                double pitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
-                if ((pitch > -3 || (pitch > -6 && (((pitch - prevPitch) / pitchTimer.seconds()) > 1))) && absError < .7) {
-                    targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length - 2;
-                    outtakeState = OuttakeState.GRABBED_SECOND_BAR;
-                }
+//                double pitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+//                if ((pitch > -3 || (pitch > -6 && (((pitch - prevPitch) / pitchTimer.seconds()) > 1))) && absError < .7) {
+//                    targetSlidePos = VerticalSlide.EXTEND_TO_SECOND_BAR.length - 2;
+//                    outtakeState = OuttakeState.GRABBED_SECOND_BAR;
+//                }
                 break;
 
         }
-        imuAngles.setValue(((TwoDeadWheelLocalizer) localizer).angles.getPitch() + " " + (((TwoDeadWheelLocalizer) localizer).angles.getPitch() - prevPitch) / pitchTimer.seconds()
-        + " yaw: " + ((TwoDeadWheelLocalizer) localizer).angles.getYaw() + " " +
-                (((TwoDeadWheelLocalizer) localizer).angles.getYaw() - prevYaw) / yawTimer.seconds());
-        prevPitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
-        prevYaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
+//        imuAngles.setValue(((TwoDeadWheelLocalizer) localizer).angles.getPitch() + " " + (((TwoDeadWheelLocalizer) localizer).angles.getPitch() - prevPitch) / pitchTimer.seconds()
+//        + " yaw: " + ((TwoDeadWheelLocalizer) localizer).angles.getYaw() + " " +
+//                (((TwoDeadWheelLocalizer) localizer).angles.getYaw() - prevYaw) / yawTimer.seconds());
+//        prevPitch = ((TwoDeadWheelLocalizer)localizer).angles.getPitch();
+//        prevYaw = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
         pitchTimer.reset();
         yawTimer.reset();
 
