@@ -155,8 +155,8 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                 .build();
 
         waitForStart();
-        drivetrain.drive.pose = new Pose2d(16.8, 62.1, Math.toRadians(270));
-        drivetrain.roadRunnerPose = new Pose2d(16.8, 62.1, Math.toRadians(270));
+
+        drivetrain.drive.setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
 
         masterThread.clearBulkCache();
 

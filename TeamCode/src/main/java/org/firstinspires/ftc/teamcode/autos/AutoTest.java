@@ -78,13 +78,10 @@ public class AutoTest extends LinearOpMode {
 
 
 
-        drivetrain.drive.pose = new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180));
-        drivetrain.roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180));
-
-
         waitForStart();
         masterThread.clearBulkCache();
-        drivetrain.pinpointLocalizer.setPositionRR(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)));
+
+        drivetrain.drive.setPoseEstimate(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)));
 
 
         while ( !isStopRequested()) {

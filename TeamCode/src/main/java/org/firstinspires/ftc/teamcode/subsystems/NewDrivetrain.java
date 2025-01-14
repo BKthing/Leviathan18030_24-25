@@ -3,38 +3,25 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.DualNum;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Time;
-import com.acmerobotics.roadrunner.Twist2dDual;
-import com.acmerobotics.roadrunner.Vector2dDual;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
-import com.qualcomm.hardware.bosch.BNO055IMUNew;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.reefsharklibrary.data.MotorPowers;
 import com.reefsharklibrary.data.Pose2d;
 import com.reefsharklibrary.data.Vector2d;
-import com.reefsharklibrary.localizers.CluelessTwoWheelLocalizer;
 import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
-import org.firstinspires.ftc.teamcode.roadrunner.TwoDeadWheelLocalizer;
-import org.firstinspires.ftc.teamcode.roadrunner.UnModifiedMecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive3;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
-import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
 import java.util.Arrays;
@@ -49,7 +36,7 @@ public class NewDrivetrain extends SubSystem {
 
     private DriveState driveState;
 
-    public final MecanumDrive2 drive;
+    public final PinpointDrive drive;
 
     private Action path;
 
@@ -69,11 +56,11 @@ public class NewDrivetrain extends SubSystem {
 
     private final Telemetry.Item followState;
 
-    private final Telemetry.Item targetMotionState;
-
-    private final Telemetry.Item forwardComponentTelemetry;
-
-    private final Telemetry.Item radiansPerInch;
+//    private final Telemetry.Item targetMotionState;
+//
+//    private final Telemetry.Item forwardComponentTelemetry;
+//
+//    private final Telemetry.Item radiansPerInch;
 
     private TelemetryPacket packet = new TelemetryPacket();
 
@@ -99,19 +86,18 @@ public class NewDrivetrain extends SubSystem {
 
     private final Telemetry.Item roadRunnerPos;
     private final Telemetry.Item roadRunnerVel;
-    private final Telemetry.Item driveTrainLoopTime;
+//    private final Telemetry.Item driveTrainLoopTime;
 
-    private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
+//    private final ElapsedTimer driveTrainLoopTimer = new ElapsedTimer();
 
     private final ElapsedTimer voltageUpdateTimer = new ElapsedTimer();
 
-    private final LazyImu lazyImu;
 
 //    public final Localizer roadRunnerLocalizer;
 
-    public final GoBildaPinpointDriverRR pinpointLocalizer;
+//    public final GoBildaPinpointDriverRR pinpointLocalizer;
 
-    public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
+//    public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
 
 
     public NewDrivetrain(SubSystemData data, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder) {
@@ -145,20 +131,20 @@ public class NewDrivetrain extends SubSystem {
 
         drivetrainMotors = Arrays.asList(frontLeft, backLeft, backRight, frontRight);
 
-        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
+//        lazyImu = new LazyImu(hardwareMap, "expansionImu", new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
 
 //        roadRunnerLocalizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), parallelEncoder, perpendicularEncoder, .94*2*Math.PI/2000);
 
 
-        pinpointLocalizer = hardwareMap.get(GoBildaPinpointDriverRR.class, "pinpoint");
+//        pinpointLocalizer = hardwareMap.get(GoBildaPinpointDriverRR.class, "pinpoint");
+//
+//
+//        pinpointLocalizer.setEncoderResolution(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
+//        pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+//        pinpointLocalizer.setOffsets(-78.2, -120.7);
+        this.drive = new PinpointDrive(hardwareMap, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
 
-
-        pinpointLocalizer.setEncoderResolution(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
-        pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        pinpointLocalizer.setOffsets(-78.2, -120.7);
-        this.drive = new MecanumDrive2(hardwareMap, pinpointLocalizer, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
-
-        pinpointLocalizer.resetPosAndIMU();
+//        pinpointLocalizer.resetPosAndIMU();
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -170,13 +156,13 @@ public class NewDrivetrain extends SubSystem {
 
         followState = telemetry.addData("Follow state", "");
 
-        targetMotionState = telemetry.addData("Motion state", "");
+//        targetMotionState = telemetry.addData("Motion state", "");
 
-        forwardComponentTelemetry = telemetry.addData("Forward component", "");
+//        forwardComponentTelemetry = telemetry.addData("Forward component", "");
 
-        radiansPerInch = telemetry.addData("rad per inch", "");
+//        radiansPerInch = telemetry.addData("rad per inch", "");
 
-        driveTrainLoopTime = telemetry.addData("Drivetrain loop time", "");
+//        driveTrainLoopTime = telemetry.addData("Drivetrain loop time", "");
     }
 
     @Override
@@ -188,16 +174,15 @@ public class NewDrivetrain extends SubSystem {
     @Override
     public void loop() {
 
-        driveTrainLoopTimer.reset();
         drive.setVoltage(voltage);
 
-        pinpointLocalizer.update();
+//        pinpointLocalizer.update();
 
 //        Twist2dDual<Time> twist = ;
 
-        roadRunnerPose = pinpointLocalizer.getPositionRR();//MathUtil.toRoadRunnerPose(poseEstimate);//
+//        roadRunnerPose = pinpointLocalizer.getPositionRR();//MathUtil.toRoadRunnerPose(poseEstimate);//
 
-        roadRunnerPoseEstimate = new Pose2d(roadRunnerPose.position.x, roadRunnerPose.position.y, roadRunnerPose.heading.toDouble());
+        roadRunnerPoseEstimate = new Pose2d(drive.pose.position.x, drive.pose.position.y, drive.pose.heading.toDouble());
 
 //        PoseVelocity2d velocity = ;
 
@@ -208,7 +193,7 @@ public class NewDrivetrain extends SubSystem {
 
 //        drive.updatePoseEstimate();
 
-        drive.updatePoseEstimate(roadRunnerPose, pinpointLocalizer.getVelocityRR());
+//        drive.updatePoseEstimate(roadRunnerPose, pinpointLocalizer.getVelocityRR());
 
         if (voltageUpdateTimer.milliSeconds()>200) {
             voltageSensorHardwareAction.setAndQueueIfEmpty(() -> {
@@ -290,8 +275,6 @@ public class NewDrivetrain extends SubSystem {
                 break;
         }
         motorPowerTelemetry.setValue(drive.getDrivePowers());
-        driveTrainLoopTime.setValue(driveTrainLoopTimer.milliSeconds());
-
 
     }
 
@@ -302,26 +285,26 @@ public class NewDrivetrain extends SubSystem {
             packet.fieldOverlay().getOperations().addAll(this.packet.fieldOverlay().getOperations());
         } else {
 
-//            packet.put("x", roadRunnerPose.position.x);
-//            packet.put("y", roadRunnerPose.position.y);
-//            packet.put("heading (deg)", roadRunnerPose.heading.toDouble()*180/Math.PI);
-//
-//            packet.fieldOverlay().setStrokeWidth(1);
-//            packet.fieldOverlay().setStroke("#b33fb5");
-////            DashboardUtil.drawFullPoseHistory(packet.fieldOverlay(), localizer.getPoseHistory());
-//            DashboardUtil.drawRobot(packet.fieldOverlay(), roadRunnerPoseEstimate);
-//
-//            //draws the last 200 points the robot was at
-//
-//            packet.fieldOverlay().setStroke("#3F51B5");
-//
-//
-//            //draws the robots current position
-//
-//            Vector2d robotVelocity = roadRunnerPoseVelocity.getVector2d();
-//
-//
-//            DashboardUtil.drawArrow(packet.fieldOverlay(), roadRunnerPoseEstimate.getVector2d(), roadRunnerPoseEstimate.getVector2d().plus(robotVelocity));
+            packet.put("x", drive.pose.position.x);
+            packet.put("y", drive.pose.position.y);
+            packet.put("heading (deg)", drive.pose.heading.toDouble()*180/Math.PI);
+
+            packet.fieldOverlay().setStrokeWidth(1);
+            packet.fieldOverlay().setStroke("#b33fb5");
+//            DashboardUtil.drawFullPoseHistory(packet.fieldOverlay(), localizer.getPoseHistory());
+            DashboardUtil.drawRobot(packet.fieldOverlay(), roadRunnerPoseEstimate);
+
+            //draws the last 200 points the robot was at
+
+            packet.fieldOverlay().setStroke("#3F51B5");
+
+
+            //draws the robots current position
+
+            Vector2d robotVelocity = roadRunnerPoseVelocity.getVector2d();
+
+
+            DashboardUtil.drawArrow(packet.fieldOverlay(), roadRunnerPoseEstimate.getVector2d(), roadRunnerPoseEstimate.getVector2d().plus(robotVelocity));
 
         }
 

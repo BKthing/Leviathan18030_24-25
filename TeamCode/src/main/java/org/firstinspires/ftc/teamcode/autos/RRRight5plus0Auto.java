@@ -189,8 +189,8 @@ public class RRRight5plus0Auto extends LinearOpMode {
 
 
         waitForStart();
-        drivetrain.drive.pose = new  Pose2d(-5.5, 62.1, Math.toRadians(270));
-        drivetrain.roadRunnerPose = new  Pose2d(-5.5, 62.1, Math.toRadians(270));
+
+        drivetrain.drive.setPoseEstimate(new  Pose2d(-5.5, 62.1, Math.toRadians(270)));
 
         masterThread.clearBulkCache();
 

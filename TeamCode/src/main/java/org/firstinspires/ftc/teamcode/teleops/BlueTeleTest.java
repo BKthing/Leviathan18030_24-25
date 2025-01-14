@@ -74,7 +74,8 @@ public class BlueTeleTest extends LinearOpMode {
 
         waitForStart();
         masterThread.clearBulkCache();
-        drivetrain.pinpointLocalizer.setPositionRR(new Pose2d(0, 0, 0));
+
+        drivetrain.drive.setPoseEstimate(new Pose2d(0, 0, 0));
 
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();

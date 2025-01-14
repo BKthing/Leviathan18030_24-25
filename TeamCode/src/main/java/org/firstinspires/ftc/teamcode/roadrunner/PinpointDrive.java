@@ -26,7 +26,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.messages.PoseMessage;
  * Unless otherwise noted, comments are from Gobilda
  */
 @Config
-public class PinpointDrive extends UnModifiedMecanumDrive {
+public class PinpointDrive extends MecanumDrive3 {
     public static class Params {
         /*
         Set this to the name that your Pinpoint is configured as in your hardware config.
@@ -77,7 +77,7 @@ public class PinpointDrive extends UnModifiedMecanumDrive {
 
     public static Params PARAMS = new Params();
     public GoBildaPinpointDriverRR pinpoint;
-    private Pose2d lastPinpointPose = pose;
+//    private Pose2d lastPinpointPose = pose;
 
     public PinpointDrive(HardwareMap hardwareMap, Pose2d pose) {
         super(hardwareMap, pose);
@@ -117,19 +117,19 @@ public class PinpointDrive extends UnModifiedMecanumDrive {
     }
     @Override
     public PoseVelocity2d updatePoseEstimate() {
-        if (lastPinpointPose != pose) {
-            // RR localizer note:
-            // Something else is modifying our pose (likely for relocalization),
-            // so we override the sensor's pose with the new pose.
-            // This could potentially cause up to 1 loop worth of drift.
-            // I don't like this solution at all, but it preserves compatibility.
-            // The only alternative is to add getter and setters, but that breaks compat.
-            // Potential alternate solution: timestamp the pose set and backtrack it based on speed?
-            pinpoint.setPosition(pose);
-        }
+//        if (lastPinpointPose != pose) {
+//            // RR localizer note:
+//            // Something else is modifying our pose (likely for relocalization),
+//            // so we override the sensor's pose with the new pose.
+//            // This could potentially cause up to 1 loop worth of drift.
+//            // I don't like this solution at all, but it preserves compatibility.
+//            // The only alternative is to add getter and setters, but that breaks compat.
+//            // Potential alternate solution: timestamp the pose set and backtrack it based on speed?
+//            pinpoint.setPosition(pose);
+//        }
         pinpoint.update();
         pose = pinpoint.getPositionRR();
-        lastPinpointPose = pose;
+//        lastPinpointPose = pose;
 
         // RR standard
         poseHistory.add(pose);
@@ -160,6 +160,9 @@ public class PinpointDrive extends UnModifiedMecanumDrive {
         }
     }
 
-
+    public void setPoseEstimate(Pose2d pose) {
+        pinpoint.setPositionRR(pose);
+        this.pose = pose;
+    }
 
 }
