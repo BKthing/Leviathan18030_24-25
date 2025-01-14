@@ -90,9 +90,9 @@ public class AutoTest extends LinearOpMode {
             if (drivetrain.isFinished()) {
                 Action testPath = drivetrain.drive.actionBuilder(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)))
                         .setTangent(Math.toRadians(180))
-                        .splineToConstantHeading(new com.acmerobotics.roadrunner.Vector2d(0, 0), Math.toRadians(180))
+                        .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(0, 0, 0), Math.toRadians(180))
                         .setTangent(Math.toRadians(0))
-                        .splineToConstantHeading(new com.acmerobotics.roadrunner.Vector2d(64, 14), Math.toRadians(0))
+                        .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(64, 14, Math.toRadians(180)), Math.toRadians(0))
                         .build();
                 drivetrain.followPath(testPath);
             }

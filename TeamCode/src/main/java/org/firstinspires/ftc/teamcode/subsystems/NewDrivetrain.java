@@ -78,7 +78,7 @@ public class NewDrivetrain extends SubSystem {
 //    private final TrajectorySequenceRunner runner;
 
     private Pose2d roadRunnerPoseEstimate;
-    private Pose2d roadRunnerPoseVelocity;
+    private Pose2d roadRunnerPoseVelocity = new Pose2d(0, 0, 0);
 //    private Pose2d poseAcceleration;
 
     private boolean fieldCentric = false;
@@ -220,6 +220,7 @@ public class NewDrivetrain extends SubSystem {
                 break;
             case DRIVER_CONTROL:
                 followState.setValue("DRIVER");
+                drive.updatePoseEstimate();
                 double relativeHeading = roadRunnerPoseEstimate.getHeading()-headingOffset;
 
                 double speedMultiplier = 1- gamepad1.right_trigger*.7;

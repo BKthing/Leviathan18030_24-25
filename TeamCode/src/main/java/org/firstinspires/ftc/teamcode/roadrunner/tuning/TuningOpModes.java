@@ -45,7 +45,7 @@ public final class TuningOpModes {
         DriveViewFactory dvf;
         if (DRIVE_CLASS.equals(PinpointDrive.class)) {
                 dvf = hardwareMap -> {
-                    MecanumDrive2 pd = new MecanumDrive2(hardwareMap, new Pose2d(0, 0, 0));
+                    PinpointDrive pd = new PinpointDrive(hardwareMap, new Pose2d(0, 0, 0));
 
                     List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
                     List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
@@ -54,10 +54,10 @@ public final class TuningOpModes {
 
                     return new DriveView(
                             DriveType.MECANUM,
-                            MecanumDrive2.PARAMS.inPerTick,
-                            MecanumDrive2.PARAMS.maxWheelVel,
-                            MecanumDrive2.PARAMS.minProfileAccel,
-                            MecanumDrive2.PARAMS.maxProfileAccel,
+                            MecanumDrive3.PARAMS.inPerTick,
+                            MecanumDrive3.PARAMS.maxWheelVel,
+                            MecanumDrive3.PARAMS.minProfileAccel,
+                            MecanumDrive3.PARAMS.maxProfileAccel,
                             hardwareMap.getAll(LynxModule.class),
                             Arrays.asList(
                                     pd.leftFront,
@@ -73,9 +73,9 @@ public final class TuningOpModes {
                             perpEncs,
                             pd.lazyImu,
                             pd.voltageSensor,
-                            () -> new MotorFeedforward(MecanumDrive2.PARAMS.kS,
-                                    MecanumDrive2.PARAMS.kV / MecanumDrive2.PARAMS.inPerTick,
-                                    MecanumDrive2.PARAMS.kA / MecanumDrive2.PARAMS.inPerTick)
+                            () -> new MotorFeedforward(MecanumDrive3.PARAMS.kS,
+                                    MecanumDrive3.PARAMS.kV / MecanumDrive3.PARAMS.inPerTick,
+                                    MecanumDrive3.PARAMS.kA / MecanumDrive3.PARAMS.inPerTick)
                     );
                 };
 //        } else if (DRIVE_CLASS.equals(SparkFunOTOSDrive.class)) {
