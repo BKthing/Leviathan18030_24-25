@@ -77,12 +77,12 @@ public final class MecanumDrive2 {
         // drive model parameters
         public double inPerTick = 1;
         public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 3620.3695082807526;
+        public double trackWidthTicks = 9.533;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.3174464421787597;
-        public double kV = 0.12880689268881115;
-        public double kA = 0.0001; //.01
+        public double kS = 1.2986808744253784;//1.3174464421787597;
+        public double kV = 0.12978478742802999;//0.12880689268881115;
+        public double kA = 0.03; //.01
 
         // path profile parameters (in inches)
         public double maxWheelVel = 60;
@@ -94,13 +94,13 @@ public final class MecanumDrive2 {
         public double maxAngAccel = 3*Math.PI;
 
         // path controller gains
-        public double axialGain = 5;
-        public double lateralGain = 5;
-        public double headingGain = 5; // shared with turn
+        public double axialGain = 1;
+        public double lateralGain = 1;
+        public double headingGain = 1; // shared with turn
 
-        public double axialVelGain = .5;
-        public double lateralVelGain = .5;
-        public double headingVelGain = .5; // shared with turn
+        public double axialVelGain = 0;
+        public double lateralVelGain = 0;
+        public double headingVelGain = 0; // shared with turn
 
         public boolean usePinpointIMUForTuning = true;
 
@@ -144,10 +144,11 @@ public final class MecanumDrive2 {
     public MecanumDrive2(HardwareMap hardwareMap, Pose2d pose) {
         this(hardwareMap, hardwareMap.get(GoBildaPinpointDriverRR.class, "pinpoint"), pose);
 
-        pinpoint.setCurrentTicksPerMM(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
+        pinpoint.setEncoderResolution(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpoint.setOffsets(-78.2, -120.7);
 
+        pinpoint.resetPosAndIMU();
 
     }
 
@@ -409,9 +410,9 @@ public final class MecanumDrive2 {
         estimatedPoseWriter.write(new PoseMessage(pose));
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
-        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
+//        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
 
-//        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(new Pose2D(DistanceUnit.INCH, pose.position.x, pose.position.y, AngleUnit.DEGREES, pose.heading.toDouble())));
+        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(new Pose2D(DistanceUnit.INCH, pose.position.x, pose.position.y, AngleUnit.RADIANS, pose.heading.toDouble())));
         FlightRecorder.write("PINPOINT_STATUS",pinpoint.getDeviceStatus());
 
 //        FlightRecorder.write("TWO_DEAD_WHEEL_INPUTS", new TwoDeadWheelInputsMessage(poseVelocity., perpPosVel, angles, angularVelocity));
@@ -430,7 +431,9 @@ public final class MecanumDrive2 {
 
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
-        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
+        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(new Pose2D(DistanceUnit.INCH, pose.position.x, pose.position.y, AngleUnit.RADIANS, pose.heading.toDouble())));
+
+//        FlightRecorder.write("PINPOINT_RAW_POSE",new PinpointDrive.FTCPoseMessage(pinpoint.getPosition()));
         FlightRecorder.write("PINPOINT_STATUS",pinpoint.getDeviceStatus());
 
         robotVelRobot = pinpoint.getVelocityRR();

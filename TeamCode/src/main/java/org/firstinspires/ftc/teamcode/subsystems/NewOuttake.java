@@ -149,22 +149,22 @@ public class NewOuttake extends SubSystem {
     private double startingHangHeading = 0;
 
     public enum V4BarPos {
-        PLACE_FRONT(.319),
-        CLEAR_FRONT_BAR(.29),
+        PLACE_FRONT(.319 - .015),
+        CLEAR_FRONT_BAR(.29 - .015),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.59),
-        MID_POSITION_CUTOFF(.55),
-        WAITING_FOR_HANG_DEPLOY(.49),
+        RELEASE_HANG_HOOKS(.59 - .015),
+        MID_POSITION_CUTOFF(.55 - .015),
+        WAITING_FOR_HANG_DEPLOY(.49 - .015),
         // hello brett my king
-        TRANSFER(.48),
+        TRANSFER(.465), //.48
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
-        GRAB_BACK(.62),
-        WAIT_PLACE_BACK(.14),
-        PLACE_BACK(.07),
-        HANG_POS(.23),
-        IDLE_POSITION(.41),
-        TOUCH_BAR(.339);
+        GRAB_BACK(.62 - .015),
+        WAIT_PLACE_BACK(.14 - .015),
+        PLACE_BACK(.07 - .015),//.07
+        HANG_POS(.23 - .015),
+        IDLE_POSITION(.41 - .015),
+        TOUCH_BAR(.339 - .015);
 
         public final double pos;
 
@@ -179,16 +179,16 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPitch {
-        DOWN(.34),
-        BACK(0.08),
-        BACK_ANGLED_DOWN(.19),
-        BACK2(1),
-        TRANSFER(.435),
-        EXTRACT_FROM_TRANSFER(.32),
-        FRONT_ANGLED_UP(.72),
+        DOWN(.34 - .019),
+        BACK(0.08 - .019),
+        BACK_ANGLED_DOWN(.19 - .019),
+        BACK2(1 - .019),
+        TRANSFER(.416), //.435
+        EXTRACT_FROM_TRANSFER(.32 - .019),
+        FRONT_ANGLED_UP(.72 - .019),
         FRONT_ANGELED_DOWN(.49),
 
-        FRONT(.6);
+        FRONT(.6- .019);
 
         public final double pos;
 
@@ -318,7 +318,7 @@ public class NewOuttake extends SubSystem {
         //initiating slide encoder
         slidePos = ticksToInches(verticalSlideEncoder.getCurrentPosition());
 
-        if (PassData.horizontalSlidesInitiated && slidePos>-.1) {
+        if (PassData.horizontalSlidesInitiated && slidePos>-.05) {
             //If slides are not at the bottom they are set to their current pose
             if (slidePos>1) {
                 targetSlidePos = slidePos;
@@ -439,7 +439,7 @@ public class NewOuttake extends SubSystem {
                 //                    transfer = true;
                 //                } else
                 if (gamepad2.a && !oldGamePad2.a) {
-                    if (targetV4BPos>V4BarPos.MID_POSITION_CUTOFF.pos) {
+                    if (targetV4BPos<V4BarPos.MID_POSITION_CUTOFF.pos) {
                         toOuttakeState = ToOuttakeState.RETRACT_FROM_PLACE_BEHIND;
                     } else {
                         retractFromGrabBehind();

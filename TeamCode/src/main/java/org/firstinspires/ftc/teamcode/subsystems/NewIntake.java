@@ -282,7 +282,7 @@ public class NewIntake extends SubSystem {
 
         servoBusCurrentTelem = telemetry.addData("Servo Bus Current", "");
 
-        if (PassData.horizontalSlidesInitiated && slidePos>-.1) {
+        if (PassData.horizontalSlidesInitiated && slidePos>-.05) {
             //If slides are not at the bottom they are set to their current pose
             if (slidePos>1) {
                 targetSlidePos = slidePos;
