@@ -1,12 +1,16 @@
 package org.firstinspires.ftc.teamcode.autos;
 
-import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2.PARAMS;
+import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive3.PARAMS;
 
+import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
+import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TankKinematics;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -84,40 +88,46 @@ public class RRRight5plus0Auto extends LinearOpMode {
                 .afterTime(.3, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .splineToConstantHeading(new Vector2d(-4, 29), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(-6.5, 29), Math.toRadians(270), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-30, PARAMS.maxProfileAccel))
                 .build();
 
-        Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(-4, 29, Math.toRadians(270)))
+        Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(-6.5, 29, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .afterDisp(6, () -> {
+                .afterDisp(15, () -> {
                     intake.setTargetSlidePos(18.5);
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                 })
-                .splineToSplineHeading(new Pose2d(-29, 44, Math.toRadians(240)), Math.toRadians(180))
-                .turn(Math.toRadians(-100))
+                .splineToConstantHeading(new Vector2d(-10, 37), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(-24, 37, Math.toRadians(230)), Math.toRadians(180))
+                .turn(Math.toRadians(-90))
                 .afterTime(.1, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
+                    intake.setTargetSlidePos(14);
                 })
-                .setTangent(new com.reefsharklibrary.data.Vector2d(-34.5, 40).minus(new com.reefsharklibrary.data.Vector2d(-28, 40)).getDirection())
-                .lineToXSplineHeading(-34.5, Math.toRadians(250))
+
+                .setTangent(new com.reefsharklibrary.data.Vector2d(-31.5, 33).minus(new com.reefsharklibrary.data.Vector2d(-24, 37)).getDirection())
+                .lineToXSplineHeading(-31.5, Math.toRadians(215))
                 .build();
 
-        Action moveToPlaceBlock2 = drivetrain.drive.actionBuilder(new Pose2d(-34.5, 40, Math.toRadians(250)))
+        Action moveToPlaceBlock2 = drivetrain.drive.actionBuilder(new Pose2d(-31.5, 33, Math.toRadians(215)))
+                .afterTime(0, () -> {
+                    intake.setTargetSlidePos(18.5);
+                })
                 .waitSeconds(.2)
-                .turn(Math.toRadians(-110))
+                .turn(Math.toRadians(-75))
                 .afterTime(.1, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .setTangent(280)
+                .setTangent(Math.toRadians(180))
                 .afterTime(0, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
-                .splineToLinearHeading(new Pose2d(-33, 58, Math.toRadians(270)), Math.toRadians(270), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                .splineToLinearHeading(new Pose2d(-34, 58, Math.toRadians(270)), Math.toRadians(90), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
                         new AngularVelConstraint(Math.PI))))
 
 
-                .lineToY(63)
+                .lineToY(61.7)
                 .waitSeconds(.1)
                 .build();
 
@@ -136,40 +146,43 @@ public class RRRight5plus0Auto extends LinearOpMode {
 //                .waitSeconds(.1)
 //                .build();
 
-        Action moveToScoreSpecimen2 = drivetrain.drive.actionBuilder(new Pose2d(-33, 63, Math.toRadians(270)))
+        Action moveToScoreSpecimen2 = drivetrain.drive.actionBuilder(new Pose2d(-34, 61.7, Math.toRadians(270)))
                 .waitSeconds(1)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-2, 30), Math.toRadians(305))
+                .splineToConstantHeading(new Vector2d(-3, 29), Math.toRadians(305), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-50, PARAMS.maxProfileAccel))
+
                 .build();
 
-        Action moveToGrabSpecimen3 = drivetrain.drive.actionBuilder(new Pose2d(-2, 30, Math.toRadians(270)))
+        Action moveToGrabSpecimen3 = drivetrain.drive.actionBuilder(new Pose2d(-3, 29, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .afterTime(.3, () -> {
+                .afterTime(.75, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
-                .splineToConstantHeading(new Vector2d(-33, 63), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-34, 60), Math.toRadians(90))
+                .lineToY(61.7)
                 .waitSeconds(.1)
                 .build();
 
-        Action moveToScoreSpecimen3 = drivetrain.drive.actionBuilder(new Pose2d(-33, 63, Math.toRadians(270)))
+        Action moveToScoreSpecimen3 = drivetrain.drive.actionBuilder(new Pose2d(-34, 61.7, Math.toRadians(270)))
                 .waitSeconds(1)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-4, 30), Math.toRadians(305))
+                .splineToConstantHeading(new Vector2d(-4.5, 29), Math.toRadians(305), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-50, PARAMS.maxProfileAccel))
                 .build();
 
-        Action moveToGrabSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-4, 30, Math.toRadians(270)))
+        Action moveToGrabSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-4.5, 29, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .afterTime(.3, () -> {
+                .afterTime(.75, () -> {
                     outtake.toOuttakeState(NewOuttake.ToOuttakeState.WAIT_DROP_BEHIND);
                 })
-                .splineToConstantHeading(new Vector2d(-33, 62.5), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-34, 59), Math.toRadians(90))
+                .lineToY(60.7)
                 .waitSeconds(.1)
                 .build();
 
-        Action moveToScoreSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-33, 62.5, Math.toRadians(270)))
+        Action moveToScoreSpecimen4 = drivetrain.drive.actionBuilder(new Pose2d(-34, 60.7, Math.toRadians(270)))
                 .waitSeconds(1)
                 .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(-4, 30), Math.toRadians(305))
+                .splineToConstantHeading(new Vector2d(-4, 28), Math.toRadians(305), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-50, PARAMS.maxProfileAccel))
                 .build();
 
 //        Action moveToGrabSpecimen5 = drivetrain.drive.actionBuilder(new Pose2d(-6, 35, Math.toRadians(270)))
@@ -187,13 +200,13 @@ public class RRRight5plus0Auto extends LinearOpMode {
 //                .splineToConstantHeading(new Vector2d(-4, 35), Math.toRadians(270))
 //                .build();
 
-        Action moveToPark = drivetrain.drive.actionBuilder(new Pose2d(-4, 30, Math.toRadians(270)))
+        Action moveToPark = drivetrain.drive.actionBuilder(new Pose2d(-4, 28, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
                 .afterTime(.6, () -> {
                     intake.setTargetSlidePos(18.5);
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                 })
-                .splineToSplineHeading(new Pose2d(-22, 50, Math.toRadians(155)), Math.toRadians(165))
+                .splineToSplineHeading(new Pose2d(-22, 47, Math.toRadians(155)), Math.toRadians(165))
                 .build();
 
 

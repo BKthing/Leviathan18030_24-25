@@ -107,7 +107,7 @@ public class NewOuttake extends SubSystem {
         TRANSFER(5.6),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
-        SPECIMEN_PICKUP(3.7),
+        SPECIMEN_PICKUP(3.4),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(13.7),
@@ -206,7 +206,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_OPEN(.39),
         HANG_DEPLOY(.35),
         OPEN(.26),//.15
-        CLOSED(.06);//.02
+        CLOSED(.05);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -521,7 +521,7 @@ public class NewOuttake extends SubSystem {
             case HANG:
                 targetSlidePos = VerticalSlide.HANG_HEIGHT.length;
                 targetV4BPos = V4BarPos.WAITING_FOR_HANG_DEPLOY.pos;
-                targetClawPitch = ClawPitch.DOWN.pos;
+                targetClawPitch = ClawPitch.FRONT.pos;
                 clawPosition = ClawPosition.HANG_DEPLOY;
                 updateClawPosition = true;
 
@@ -677,7 +677,7 @@ public class NewOuttake extends SubSystem {
 
 
             case RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE:
-                if (outtakeTimer.seconds()>.4) {
+                if (outtakeTimer.seconds()>.2) {
                     targetClawPitch = ClawPitch.BACK_ANGLED_DOWN.pos;
 
                     outtakeTimer.reset();
@@ -685,10 +685,15 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case EXTENDING_TO_DROP_SAMPLE:
-                if (outtakeTimer.seconds()>.5) {
+                if (outtakeTimer.seconds()>.1) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
-
-                    outtakeState = OuttakeState.WAITING_DROP_SAMPLE;
+                    if (clawPosition != ClawPosition.CLOSED) {
+                        targetClawPitch = ClawPitch.BACK.pos;
+                        outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;
+                    }
+                    else {
+                        outtakeState = OuttakeState.WAITING_DROP_SAMPLE;
+                    }
                 }
                 break;
             case WAITING_DROP_SAMPLE:
@@ -704,7 +709,7 @@ public class NewOuttake extends SubSystem {
                 }
                  break;
             case DROPPING_SAMPLE:
-                if (outtakeTimer.seconds()>.2) {
+                if (outtakeTimer.seconds()>.1) {
                     targetClawPitch = ClawPitch.BACK.pos;
                     outtakeTimer.reset();
 
@@ -712,7 +717,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case MOVING_TO_GRAB_SPECIMEN:
-                if (outtakeTimer.seconds()>.2) {
+                if (outtakeTimer.seconds()>0) {
                     outtakeState = OuttakeState.WAITING_GRAB_SPECIMEN;
                 }
                 break;
@@ -822,7 +827,7 @@ public class NewOuttake extends SubSystem {
                 if (outtakeTimer.seconds()>.4) {
                     targetV4BPos = V4BarPos.HANG_POS.pos;
                     targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
-                    clawPosition = ClawPosition.CLOSED;
+                    clawPosition = ClawPosition.OPEN;
                     updateClawPosition = true;
 
                     outtakeState = OuttakeState.MOVING_TO_HANG_POSITION;

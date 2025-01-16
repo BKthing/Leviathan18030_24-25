@@ -7,7 +7,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -23,10 +22,8 @@ import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.SingleAction;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
-import java.util.List;
-
 @Autonomous
-public class RRLeft1plus3Auto extends LinearOpMode {
+public class RRLeft0plus4Auto extends LinearOpMode {
     NewDrivetrain drivetrain;
     NewIntake intake;
     NewOuttake outtake;
@@ -79,18 +76,16 @@ public class RRLeft1plus3Auto extends LinearOpMode {
         Action intakeBlock = new IntakeBlock();
 
 
-        Action preload = drivetrain.drive.actionBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)))
-                .setTangent(Math.toRadians(270))
+        Action preload = drivetrain.drive.actionBuilder(new Pose2d(39.8, 65, Math.toRadians(180)))
+                .setTangent(Math.toRadians(300))
                 .afterTime(.3, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .splineToConstantHeading(new Vector2d(5.5, 29), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(56, 52.5, Math.toRadians(225)), Math.toRadians(45))
                 .build();
 
         Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(5.5, 29, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .lineToY(31)
-                .splineToConstantHeading(new Vector2d(45, 56), Math.toRadians(0))
                 .afterTime(0, () -> {
                     intake.setTargetSlidePos(8);
                     extensionDistance = 8;
@@ -98,7 +93,7 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToConstantHeading(new Vector2d(48, 50), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(48, 50, 270), Math.toRadians(270 - 20))
                 .build();
 
         Action moveToScoreBlock1 = drivetrain.drive.actionBuilder(new Pose2d(48, 50, Math.toRadians(270)))
@@ -156,16 +151,16 @@ public class RRLeft1plus3Auto extends LinearOpMode {
 
         waitForStart();
 
-        drivetrain.drive.setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
+        drivetrain.drive.setPoseEstimate(new Pose2d(39.8, 65, Math.toRadians(180)));
 
         masterThread.clearBulkCache();
 
         intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
-        outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
+        outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_BEHIND);
 
         drivetrain.followPath(new SequentialAction(
                 preload,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+                new ScoreBlock(),
                 moveToGrabBlock1,
                 intakeBlock,
                 moveToScoreBlock1,

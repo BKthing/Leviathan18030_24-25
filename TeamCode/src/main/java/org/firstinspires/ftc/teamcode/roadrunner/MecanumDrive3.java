@@ -69,13 +69,13 @@ public  class MecanumDrive3 {
         public double trackWidthTicks = 9.533;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.2986808744253784;
-        public double kV = 0.12978478742802999;
+        public double kS = 1.3476511944342637;//1.2986808744253784;
+        public double kV = 0.12792702344656817;
         public double kA = 0.03;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 60;
-        public double minProfileAccel = -30;
+        public double minProfileAccel = -23;
         public double maxProfileAccel = 60;
 
         // turn profile parameters (in radians)
@@ -228,7 +228,7 @@ public  class MecanumDrive3 {
 
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-
+//
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
