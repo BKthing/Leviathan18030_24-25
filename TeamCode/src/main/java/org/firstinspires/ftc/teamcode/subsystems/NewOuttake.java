@@ -152,9 +152,9 @@ public class NewOuttake extends SubSystem {
         PLACE_FRONT(.319 - .015),
         CLEAR_FRONT_BAR(.29 - .015),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.59 - .015),
+        RELEASE_HANG_HOOKS(.52 - .015),
         MID_POSITION_CUTOFF(.55 - .015),
-        WAITING_FOR_HANG_DEPLOY(.49 - .015),
+        WAITING_FOR_HANG_DEPLOY(.44),
         // hello brett my king
         TRANSFER(.465), //.48
 //        EXTRACT_FROM_TRANSFER(.35),
@@ -180,7 +180,7 @@ public class NewOuttake extends SubSystem {
 
     public enum ClawPitch {
         DOWN(.34 - .019),
-        BACK(0.08 - .019),
+        BACK(0.06 - .019),
         BACK_ANGLED_DOWN(.19 - .019),
         BACK2(1 - .019),
         TRANSFER(.416), //.435
@@ -204,9 +204,10 @@ public class NewOuttake extends SubSystem {
 
     public enum ClawPosition {
         EXTRA_OPEN(.39),
-        HANG_DEPLOY(.35),
+        HANG_DEPLOY(.26),
         OPEN(.26),//.15
-        CLOSED(.05);//.02
+        PARTIALOPEN(.2),
+        CLOSED(.06);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -452,6 +453,10 @@ public class NewOuttake extends SubSystem {
                     slideProfile = false;
                     slideVel = 0;
                 } else if (gamepad2.x && !oldGamePad2.x) {
+                    if (clawPosition == ClawPosition.OPEN) {
+                        clawPosition = ClawPosition.PARTIALOPEN;
+                        updateClawPosition = true;
+                    }
 //                    if (clawPosition == ClawPosition.CLOSED) {
                         dropBehind();
                     slideProfile = false;
@@ -521,7 +526,7 @@ public class NewOuttake extends SubSystem {
             case HANG:
                 targetSlidePos = VerticalSlide.HANG_HEIGHT.length;
                 targetV4BPos = V4BarPos.WAITING_FOR_HANG_DEPLOY.pos;
-                targetClawPitch = ClawPitch.FRONT.pos;
+                targetClawPitch = ClawPitch.BACK.pos;
                 clawPosition = ClawPosition.HANG_DEPLOY;
                 updateClawPosition = true;
 
@@ -687,7 +692,9 @@ public class NewOuttake extends SubSystem {
             case EXTENDING_TO_DROP_SAMPLE:
                 if (outtakeTimer.seconds()>.1) {
                     targetSlidePos = VerticalSlide.SPECIMEN_PICKUP.length;
+
                     if (clawPosition != ClawPosition.CLOSED) {
+                        clawPosition = ClawPosition.EXTRA_OPEN;
                         targetClawPitch = ClawPitch.BACK.pos;
                         outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;
                     }
@@ -824,7 +831,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case DROPPING_HANG_HOOKS:
-                if (outtakeTimer.seconds()>.4) {
+                if (outtakeTimer.seconds()>.55) {
                     targetV4BPos = V4BarPos.HANG_POS.pos;
                     targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
                     clawPosition = ClawPosition.OPEN;

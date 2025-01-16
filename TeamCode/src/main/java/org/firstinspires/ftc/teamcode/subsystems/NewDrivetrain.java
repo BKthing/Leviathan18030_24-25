@@ -143,6 +143,10 @@ public class NewDrivetrain extends SubSystem {
 //        pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 //        pinpointLocalizer.setOffsets(-78.2, -120.7);
         this.drive = new PinpointDrive(hardwareMap, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
 //        pinpointLocalizer.resetPosAndIMU();
 
