@@ -73,6 +73,8 @@ public class NewOuttake extends SubSystem {
 
     private OuttakeState prevOuttakeState = outtakeState;
 
+    private final Telemetry.Item outtakeStateTelem;
+
 //    private Localizer localizer;
 
     public enum ToOuttakeState {
@@ -110,10 +112,10 @@ public class NewOuttake extends SubSystem {
         SPECIMEN_PICKUP(3.4),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(13.7),
+        PLACE_SPECIMEN_BAR(13.3),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
-        HIGH_BUCKET(23),
+        HIGH_BUCKET(22),
         PULL_TO_FIRST_BAR(.3),
         GRAB_FIRST_BAR(3),
         EXTEND_TO_SECOND_BAR(18);
@@ -207,7 +209,7 @@ public class NewOuttake extends SubSystem {
         HANG_DEPLOY(.26),
         OPEN(.26),//.15
         PARTIALOPEN(.2),
-        CLOSED(.06);//.02
+        CLOSED(.055);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -265,10 +267,7 @@ public class NewOuttake extends SubSystem {
 
     private final ElapsedTimer outtakeLoopTimer = new ElapsedTimer();
 
-    private final Telemetry.Item outtakeLoopTime;
-
-    private final Telemetry.Item imuAngles;
-
+    private final Telemetry.Item outtakeMotorPower;
     private final ReusableHardwareAction leftMotorReusableHardwareAction, rightMotorReusableHardwareAction, leftOuttakeServoReusableHardwareAction, rightOuttakeServoReusableHardwareAction, clawPitchServoReusableHardwareAction, clawServoReusableHardwareAction;
 
     public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
@@ -348,8 +347,9 @@ public class NewOuttake extends SubSystem {
 
         }
 
-        outtakeLoopTime = telemetry.addData("Outtake Time", "");
-        imuAngles = telemetry.addData("IMU Angles", "");
+        outtakeMotorPower = telemetry.addData("Outtake motor power", "");
+
+        outtakeStateTelem = telemetry.addData("Outtakestate", outtakeState.toString());
     }
 
 
@@ -581,7 +581,7 @@ public class NewOuttake extends SubSystem {
 
         if (absError>1) {
             //Slides set to max power
-            p = Math.signum(error);
+            p = 2*Math.signum(error);
         } else {
             p =error*.38;
             if (!slideProfile) {
@@ -595,9 +595,13 @@ public class NewOuttake extends SubSystem {
         slideTimer.reset();
         prevSlideError = error;
 
-        if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
+        if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 1) || (Math.abs(motorPower-actualMotorPower)>.05)) {
             leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower));
-            rightMotorReusableHardwareAction.setAndQueueAction(() -> verticalRightMotor.setPower(motorPower));
+            rightMotorReusableHardwareAction.setAndQueueAction(() -> {
+                verticalRightMotor.setPower(motorPower);
+                outtakeMotorPower.setValue(motorPower);
+            }
+            );
 
             actualMotorPower = motorPower;
         }
@@ -633,7 +637,7 @@ public class NewOuttake extends SubSystem {
                     }
                 }
                 else {
-                    if (absError<6) {
+                    if (absError<3) {
                         outtakeTimer.reset();
                         outtakeState = OuttakeState.EXTENDING_V4BAR_PLACE_BEHIND;
                         targetV4BPos = V4BarPos.PLACE_BACK.pos;
@@ -695,6 +699,7 @@ public class NewOuttake extends SubSystem {
 
                     if (clawPosition != ClawPosition.CLOSED) {
                         clawPosition = ClawPosition.EXTRA_OPEN;
+                        updateClawPosition = true;
                         targetClawPitch = ClawPitch.BACK.pos;
                         outtakeState = OuttakeState.MOVING_TO_GRAB_SPECIMEN;
                     }
@@ -994,8 +999,8 @@ public class NewOuttake extends SubSystem {
 
         oldGamePad2.copy(gamepad2);
 
-        outtakeLoopTime.setValue(outtakeLoopTimer.milliSeconds());
 
+        outtakeStateTelem.setValue(outtakeState.toString());
     }
 
     @Override

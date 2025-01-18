@@ -126,8 +126,8 @@ public class NewIntake extends SubSystem {
 
     public enum HorizontalSlide {
         //18.9 max
-        EXTRA_IN(-.5),
-        IN(-.1),
+        EXTRA_IN(-.8),
+        IN(-.3),
         AUTO_PRESET1(13.5),
         AUTO_PRESET2(4),
         CLOSE(7),
@@ -499,9 +499,9 @@ public class NewIntake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.15;//.35;
-            d = ((prevSlideError-error) / elapsedTime) * .018;//.03;//.007
-            f=Math.signum(error)*0.17;//.15;
+            p = error*.2;//.35;
+            d = ((prevSlideError-error) / elapsedTime) * .02;//.03;//.007
+            f=Math.signum(error)*0.22;//.15;
         }
 
 //        p = 0;
@@ -762,7 +762,7 @@ public class NewIntake extends SubSystem {
                 break;
             case RETRACTING:
                 //if fully retracted and holding sample start transferring else rest
-                if ((slidePos<.4 && intakingTimer.seconds() > .2)  || intakeTimer.seconds()>1) {
+                if ((slidePos<.2 && intakingTimer.seconds() > .2)  || intakeTimer.seconds()>1) {
                     intakeTimer.reset();
 
                     intakeState = IntakeState.WAITING_AFTER_RETRACTING;
