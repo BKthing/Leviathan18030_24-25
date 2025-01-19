@@ -93,15 +93,15 @@ public class RRLeft0plus4Auto extends LinearOpMode {
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToLinearHeading(new Pose2d(49.5, 50, Math.toRadians(270)), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(50.5, 50, Math.toRadians(270)), Math.toRadians(270))
                 .build();
 
-        Action moveToScoreBlock1 = drivetrain.drive.actionBuilder(new Pose2d(49.5, 50, Math.toRadians(270)))
+        Action moveToScoreBlock1 = drivetrain.drive.actionBuilder(new Pose2d(50.5, 50, Math.toRadians(270)))
                 .setTangent(Math.toRadians(80))
-                .splineToLinearHeading(new Pose2d(56.5, 53, Math.toRadians(225)), Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(58.5, 53.5, Math.toRadians(225)), Math.toRadians(45))
                 .build();
 
-        Action moveToGrabBlock2 = drivetrain.drive.actionBuilder(new Pose2d(56.5, 53, Math.toRadians(225)))
+        Action moveToGrabBlock2 = drivetrain.drive.actionBuilder(new Pose2d(58.5, 53.5, Math.toRadians(225)))
                 .waitSeconds(.1)
                 .setTangent(270)
                 .afterTime(0, () -> {
@@ -116,10 +116,10 @@ public class RRLeft0plus4Auto extends LinearOpMode {
 
         Action moveToScoreBlock2 = drivetrain.drive.actionBuilder(new Pose2d(56.5, 51.5, Math.toRadians(280)))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(56.5, 53.5, Math.toRadians(225)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(58, 54, Math.toRadians(225)), Math.toRadians(90))
                 .build();
 
-        Action moveToGrabBlock3 = drivetrain.drive.actionBuilder(new Pose2d(56.5, 53.5, Math.toRadians(225)))
+        Action moveToGrabBlock3 = drivetrain.drive.actionBuilder(new Pose2d(58, 54, Math.toRadians(225)))
                 .waitSeconds(.1)
                 .setTangent(270)
                 .afterTime(0, () -> {
@@ -134,10 +134,10 @@ public class RRLeft0plus4Auto extends LinearOpMode {
 
         Action moveToScoreBlock3 = drivetrain.drive.actionBuilder(new Pose2d(57.5, 50, Math.toRadians(298)))
                 .setTangent(Math.toRadians(105))
-                .splineToLinearHeading(new Pose2d(56.5, 53.5, Math.toRadians(225)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(57.5, 53.5, Math.toRadians(225)), Math.toRadians(90))
                 .build();
 
-        Action park = drivetrain.drive.actionBuilder(new Pose2d(56.5, 53.5, Math.toRadians(225)))
+        Action park = drivetrain.drive.actionBuilder(new Pose2d(57.5, 53.5, Math.toRadians(225)))
                 .afterTime(.5, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
@@ -152,6 +152,8 @@ public class RRLeft0plus4Auto extends LinearOpMode {
         waitForStart();
 
         drivetrain.drive.setPoseEstimate(new Pose2d(38.93, 60.23, Math.toRadians(180)));
+        drivetrain.drive.pinpoint.setPosition(new  Pose2d(-38.93, 60.23, Math.toRadians(180)));
+
 
         masterThread.clearBulkCache();
 

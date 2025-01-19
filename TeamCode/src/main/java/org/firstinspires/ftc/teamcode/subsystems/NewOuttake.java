@@ -109,10 +109,10 @@ public class NewOuttake extends SubSystem {
         TRANSFER(5.6),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
-        SPECIMEN_PICKUP(3.4),
+        SPECIMEN_PICKUP(3.35),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(13.3),
+        PLACE_SPECIMEN_BAR(13),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(22),
@@ -187,7 +187,7 @@ public class NewOuttake extends SubSystem {
         BACK2(1 - .019),
         TRANSFER(.416), //.435
         EXTRACT_FROM_TRANSFER(.32 - .019),
-        FRONT_ANGLED_UP(.72 - .019),
+        FRONT_ANGLED_UP(.78 - .019),
         FRONT_ANGELED_DOWN(.49),
 
         FRONT(.6- .019);
@@ -209,7 +209,7 @@ public class NewOuttake extends SubSystem {
         HANG_DEPLOY(.26),
         OPEN(.26),//.15
         PARTIALOPEN(.2),
-        CLOSED(.055);//.02
+        CLOSED(.05);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
