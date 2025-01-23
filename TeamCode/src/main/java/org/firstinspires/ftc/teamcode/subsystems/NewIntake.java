@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.annotation.SuppressLint;
+import android.transition.Slide;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -24,6 +25,8 @@ import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
+import java.util.function.DoubleSupplier;
+
 public class NewIntake extends SubSystem {
 
     private final LynxModule myRevHub;
@@ -42,7 +45,9 @@ public class NewIntake extends SubSystem {
         WAITING_AFTER_RETRACTING,
         WAITING_FOR_TRANSFER,
         TRANSFERING,
-        RESTING
+        RESTING,
+        MOVE_SLIDES_MORE_IN,
+        RESET_SLIDES
     }
 
     private IntakeState intakeState = IntakeState.RESTING;
@@ -79,7 +84,9 @@ public class NewIntake extends SubSystem {
         START_EJECTING_PARTIAL_GRAB,
         EJECTING_PARTIAL_GRAB,
 
-        IDLE
+        IDLE,
+
+
     }
 
     private IntakingState intakingState = IntakingState.IDLE;
@@ -95,6 +102,8 @@ public class NewIntake extends SubSystem {
     private final ElapsedTimer intakingTimer = new ElapsedTimer();
 
     private final Telemetry.Item slidePosTelem;
+
+    private double voltage = 13;
 
 
     public enum SampleColor{
@@ -154,10 +163,12 @@ public class NewIntake extends SubSystem {
 
     private double actualMotorPower = 0;
 
+    private final DoubleSupplier getVoltage;
+
     public enum IntakePos {
         UP(.05),//.69
         AUTO_HEIGHT(.1),
-        PARTIAL_UP(.13),
+        PARTIAL_UP(.12),
         DOWN(.16);//.05
 
         public final double pos;
@@ -219,7 +230,7 @@ public class NewIntake extends SubSystem {
     private final ReusableHardwareAction leftIntakeMotorHardwareAction, rightIntakeMotorHardwareAction, leftIntakeServoHardwareAction, rightIntakeServoHardwareAction, leftSpinnerServoHardwareAction, rightSpinnerServoHardwareAction;
 
 
-    public NewIntake(SubSystemData data, Encoder horizontalSlideEncoder, TouchSensor breakBeam, Boolean blueAlliance, boolean teleOpControls, boolean init) {
+    public NewIntake(SubSystemData data, Encoder horizontalSlideEncoder, TouchSensor breakBeam, Boolean blueAlliance, boolean teleOpControls, boolean init, DoubleSupplier getVoltage) {
         super(data);
 
         this.teleOpControls = teleOpControls;
@@ -250,6 +261,8 @@ public class NewIntake extends SubSystem {
 
         horizontalLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         horizontalRightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        this.getVoltage = getVoltage;
 
 
         //Servos
@@ -369,7 +382,9 @@ public class NewIntake extends SubSystem {
             changedTargetSlidePos = false;
         }
 
+        voltage = getVoltage.getAsDouble();
         prevIntakingState = intakingState;
+
     }
 
     //trying to add to things to hardware queue asap so their more time for it to be called
@@ -460,6 +475,8 @@ public class NewIntake extends SubSystem {
 
                 toIntakeState = ToIntakeState.IDLE;
                 break;
+
+
         }
 
         if (breakBeamUpdateTimer.milliSeconds()>20) {
@@ -513,8 +530,8 @@ public class NewIntake extends SubSystem {
 
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            leftIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalLeftMotor.setPower(motorPower));
-            rightIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalRightMotor.setPower(motorPower));
+            leftIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalLeftMotor.setPower(motorPower * 12/voltage));
+            rightIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalRightMotor.setPower(motorPower * 12/voltage));
 
             actualMotorPower = motorPower;
         }
@@ -548,6 +565,7 @@ public class NewIntake extends SubSystem {
                     intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
                 }
                 else if (checkColor) {
+
                     if (blueAlliance == null) {
                         targetIntakePos = IntakePos.UP.pos;
 
@@ -711,6 +729,8 @@ public class NewIntake extends SubSystem {
                     intakingState = IntakingState.IDLE;
                 }
                 break;
+
+
         }
 
         if (teleOpControls && gamepad2.right_trigger > .05 && (intakeState == IntakeState.INTAKING || intakeState == IntakeState.RESTING || intakeState == IntakeState.DROPPING_INTAKE || intakeState == IntakeState.EXTENDING)) {
@@ -804,6 +824,17 @@ public class NewIntake extends SubSystem {
                     intakingState = IntakingState.IDLE;
                 }
                 break;
+            case MOVE_SLIDES_MORE_IN:
+                setTargetSlidePos(-2.5);
+                intakeState =  IntakeState.RESET_SLIDES;
+                intakeTimer.reset();
+                break;
+            case RESET_SLIDES:
+                if (intakeTimer.seconds() > .5) {
+                    horizontalLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    intakeState = IntakeState.WAITING_FOR_TRANSFER;
+                }
+                break;
         }
 
         intakeTelem.setValue(intakeState.name());
@@ -826,14 +857,14 @@ public class NewIntake extends SubSystem {
     }
 
     private SampleColor findSampleColor() {
-        if (colors.red > .008 && colors.green < .012) {
+        if (colors.red > .006) { //&& colors.green < .012) {
 //            throw new RuntimeException("Not red");
             return SampleColor.RED;
         }
-        else if (colors.blue > .0075) {
+        else if (colors.blue > .0055) {
             return SampleColor.BLUE;
         }
-        else if (colors.green > .015) {
+        else if (colors.green > .013) {
 //            throw new RuntimeException("Not yellow");
             return SampleColor.YELLOW;
         }
@@ -886,6 +917,13 @@ public class NewIntake extends SubSystem {
     public void setTargetSlidePos(double distance) {
         newTargetSlidePos = distance;
         changedTargetSlidePos = true;
+    }
+
+    public void checkSlidesIn() {
+        double currentSlidePos = slidePos;
+
+
+
     }
 
     public IntakingState getPrevIntakingState() {

@@ -17,6 +17,8 @@ import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
+import java.util.function.DoubleSupplier;
+
 public class NewOuttake extends SubSystem {
 
     public enum OuttakeState {
@@ -150,6 +152,12 @@ public class NewOuttake extends SubSystem {
 
     private double startingHangHeading = 0;
 
+    private boolean neverResetIntake = true;
+
+    private final DoubleSupplier getVoltage;
+
+    private double voltage = 13;
+
     public enum V4BarPos {
         PLACE_FRONT(.319 - .015),
         CLEAR_FRONT_BAR(.29 - .015),
@@ -270,7 +278,7 @@ public class NewOuttake extends SubSystem {
     private final Telemetry.Item outtakeMotorPower;
     private final ReusableHardwareAction leftMotorReusableHardwareAction, rightMotorReusableHardwareAction, leftOuttakeServoReusableHardwareAction, rightOuttakeServoReusableHardwareAction, clawPitchServoReusableHardwareAction, clawServoReusableHardwareAction;
 
-    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init) {
+    public NewOuttake(SubSystemData data, NewIntake intake, Encoder verticalSlideEncoder, Boolean blueAlliance, boolean teleOpControls, boolean autoExtendSlides, boolean autoRetractSlides, boolean init, DoubleSupplier getVoltage) {
         super(data);
 //        this.localizer = localizer;
         this.teleOpControls = teleOpControls;
@@ -282,6 +290,8 @@ public class NewOuttake extends SubSystem {
         this.intake = intake;
 
         this.verticalSlideEncoder = verticalSlideEncoder;
+
+        this.getVoltage = getVoltage;
 
         this.leftMotorReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
         this.rightMotorReusableHardwareAction = new ReusableHardwareAction(hardwareQueue);
@@ -383,6 +393,7 @@ public class NewOuttake extends SubSystem {
             changedClawPosition = false;
         }
 
+        voltage = getVoltage.getAsDouble();
         prevOuttakeState = outtakeState;
     }
 
@@ -596,9 +607,9 @@ public class NewOuttake extends SubSystem {
         prevSlideError = error;
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 1) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower));
+            leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower * 12/voltage));
             rightMotorReusableHardwareAction.setAndQueueAction(() -> {
-                verticalRightMotor.setPower(motorPower);
+                verticalRightMotor.setPower(motorPower * 12/voltage);
                 outtakeMotorPower.setValue(motorPower);
             }
             );
@@ -883,8 +894,19 @@ public class NewOuttake extends SubSystem {
                         if (transferAttemptCounter == 0) {//transferAttemptCounter == 0
                             retractFromFront();
 
+                            if (neverResetIntake) {
+                                intake.setIntakeState(NewIntake.IntakeState.MOVE_SLIDES_MORE_IN);
+                                neverResetIntake = false;
+                            }
+                            else {
+                                intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
+
+                            }
                             intake.setIntakingState(NewIntake.IntakingState.START_REINTAKING);
-                            intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
+
+
+
+
 
                             transferAttemptCounter++;
                         } else if (transferAttemptCounter < maxTransferAttempts) {
@@ -914,15 +936,18 @@ public class NewOuttake extends SubSystem {
                     }
 
                     transferAttemptCounter = 0;
-//(gamepad2.right_trigger>.2 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+
+                    if (gamepad2.right_trigger>.8 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+                        intake.setIntakingState(NewIntake.IntakingState.START_EJECTING);
 //                        targetSlidePos = VerticalSlide.TRANSFER.length + 2;
 //                        targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;
 //                        targetClawPitch = ClawPitch.FRONT_ANGELED_DOWN.pos;
-//
-//                        outtakeTimer.reset();
-//
-//                        outtakeState = OuttakeState.MOVING_TO_EJECTION;
-//                    } else
+
+                        outtakeTimer.reset();
+
+                        outtakeState = OuttakeState.WAITING_FOR_TRANSFER;
+                    } else
+
                      if (autoExtendSlides) {
                         if ( cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
                             dropBehind();

@@ -351,6 +351,10 @@ public class NewDrivetrain extends SubSystem {
         }
     }
 
+    public double getVoltage() {
+        return updatedVoltage;
+    }
+
 
 
 }
