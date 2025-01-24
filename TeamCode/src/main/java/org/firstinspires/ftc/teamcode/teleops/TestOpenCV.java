@@ -1,47 +1,47 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.opencv.core.Core.bitwise_and;
 import static org.opencv.core.Core.bitwise_not;
 import static org.opencv.core.Core.bitwise_or;
-import static org.opencv.core.Core.inRange;
-import static org.opencv.imgproc.Imgproc.COLOR_BGR2HSV;
-import static org.opencv.imgproc.Imgproc.COLOR_GRAY2BGR;
-import static org.opencv.imgproc.Imgproc.COLOR_HSV2BGR;
-import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestOpenCV extends OpenCvPipeline {
 
-    Mat outputLayer = new Mat();
-    Mat output = new Mat();
+    Scalar lowB = new Scalar(110, 20, 33);
+    Scalar highB = new Scalar(130, 255, 80);
+
+    Scalar lowR = new Scalar(0, 60, 33);
+    Scalar highR = new Scalar(30, 255, 80);
+
+    Scalar lowY = new Scalar(35, 20, 33);
+    Scalar highY = new Scalar(71, 255, 80);
+
+    Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(24, 24));
+    Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
+
 
     Mat blurred = new Mat();
-    Mat mask = new Mat();
+    Mat maskBlue = new Mat();
+    Mat maskRed = new Mat();
+    Mat maskYellow = new Mat();
 
     Mat hsvMat = new Mat();
 
-    Mat morphOutput = new Mat();
+    Mat morphOutputBlue = new Mat();
+    Mat morphOutputRed = new Mat();
+    Mat morphOutputYellow = new Mat();
 
-    Mat white2Blue = new Mat();
+
+    Mat output = new Mat();
 
 
     ArrayList<double[]> framelist;
@@ -63,71 +63,88 @@ public class TestOpenCV extends OpenCvPipeline {
         // following https://opencv-java-tutorials.readthedocs.io/en/latest/08-object-detection.html
 
         Imgproc.blur(input, blurred, new Size(7, 7));
-//
+
         Imgproc.cvtColor(blurred, hsvMat, Imgproc.COLOR_RGB2HSV);
 
         if (hsvMat.empty()) {
             return input;
         }
 
-
-        Scalar lowB = new Scalar(105, 20, 33);
-        Scalar highB = new Scalar(130, 255, 200);
-
-        Core.inRange(hsvMat, lowB, highB, mask);
-
-        Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(24, 24));
-        Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
-
-        Imgproc.erode(mask, morphOutput, erodeElement);
-        Imgproc.erode(mask, morphOutput, erodeElement);
-
-        Imgproc.dilate(mask, morphOutput, dilateElement);
-        Imgproc.dilate(mask, morphOutput, dilateElement);
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Mat hierarchy = new Mat();
-
-        Imgproc.findContours(morphOutput, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//mask
-
-//        input.copyTo(output);
-
-//        try {
-//            Imgproc.applyColorMap(morphOutput, outputLayer, white2Blue);
-////            Imgproc.cvtColor(morphOutput, outputLayer, Imgproc.COLOR_HSV2BGR);
-//        } catch (Exception e) {
-//            throw new RuntimeException("other new exeption");
-//        }
-
-
-        Imgproc.cvtColor(mask, outputLayer, COLOR_GRAY2BGR);
         input.copyTo(output);
 
-        output.setTo(new Scalar(0, 0, 255), mask);
+
+        //Blue
+        Core.inRange(hsvMat, lowB, highB, maskBlue);
+
+        Imgproc.erode(maskBlue, morphOutputBlue, erodeElement);
+        Imgproc.erode(maskBlue, morphOutputBlue, erodeElement);
+
+        Imgproc.dilate(maskBlue, morphOutputBlue, dilateElement);
+        Imgproc.dilate(maskBlue, morphOutputBlue, dilateElement);
+
+        List<MatOfPoint> contoursBlue = new ArrayList<>();
+        Mat hierarchyBlue = new Mat();
+
+        Imgproc.findContours(morphOutputBlue, contoursBlue, hierarchyBlue, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//mask
+
+        if (hierarchyBlue.size().height > 0 && hierarchyBlue.size().width > 0) { //
+            for (int i = 0; i >= 0; i = (int) hierarchyBlue.get(0, i)[0]) {
+                Imgproc.drawContours(output, contoursBlue, i, new Scalar(0, 0, 0), 3);
+            }
+        }
+
+        output.setTo(blue, maskBlue);
+
+
+        //Red
+        Core.inRange(hsvMat, lowR, highR, maskRed);
+
+        Imgproc.erode(maskRed, morphOutputRed, erodeElement);
+        Imgproc.erode(maskRed, morphOutputRed, erodeElement);
+
+        Imgproc.dilate(maskRed, morphOutputRed, dilateElement);
+        Imgproc.dilate(maskRed, morphOutputRed, dilateElement);
+
+        List<MatOfPoint> contoursRed = new ArrayList<>();
+        Mat hierarchyRed = new Mat();
+
+        Imgproc.findContours(morphOutputRed, contoursRed, hierarchyRed, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//mask
+
+        if (hierarchyRed.size().height > 0 && hierarchyRed.size().width > 0) { //
+            for (int i = 0; i >= 0; i = (int) hierarchyRed.get(0, i)[0]) {
+                Imgproc.drawContours(output, contoursRed, i, new Scalar(0, 0, 0), 3);
+            }
+        }
+
+        output.setTo(red, maskRed);
+
+
+        //Yellow
+        Core.inRange(hsvMat, lowY, highY, maskYellow);
+
+        Imgproc.erode(maskYellow, morphOutputYellow, erodeElement);
+        Imgproc.erode(maskYellow, morphOutputYellow, erodeElement);
+
+        Imgproc.dilate(maskYellow, morphOutputYellow, dilateElement);
+        Imgproc.dilate(maskYellow, morphOutputYellow, dilateElement);
+
+        List<MatOfPoint> contoursYellow = new ArrayList<>();
+        Mat hierarchyYellow = new Mat();
+
+        Imgproc.findContours(morphOutputYellow, contoursYellow, hierarchyYellow, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);//mask
+
+        if (hierarchyYellow.size().height > 0 && hierarchyYellow.size().width > 0) { //
+            for (int i = 0; i >= 0; i = (int) hierarchyYellow.get(0, i)[0]) {
+                Imgproc.drawContours(output, contoursYellow, i, new Scalar(0, 0, 0), 3);
+            }
+        }
+
+        output.setTo(yellow, maskYellow);
 
 
         return output;
-//
-//        if (outputLayer.channels() != input.channels()) {
-//            throw new RuntimeException("issuueue");
-//        }
-
-//        try {
-//            Core.addWeighted(input, .5, outputLayer, .5, 0, output);
-//        } catch (Exception e) {
-//            throw new RuntimeException("other issueeueue");
-//        }
-//
-//        if (hierarchy.size().height > 0 && hierarchy.size().width > 0) { //
-//            for (int i = 0; i >= 0; i = (int) hierarchy.get(0, i)[0]) {
-//                Imgproc.drawContours(output, contours, i, blue);
-//            }
-//        }
 
 
-
-//        return outputLayer;
-//
 //        // would you be able to repeat with yellow and red?
 //
 //        Scalar lowY;
