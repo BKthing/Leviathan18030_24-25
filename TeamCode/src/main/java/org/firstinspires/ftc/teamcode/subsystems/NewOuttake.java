@@ -166,7 +166,7 @@ public class NewOuttake extends SubSystem {
         MID_POSITION_CUTOFF(.55 - .015),
         WAITING_FOR_HANG_DEPLOY(.44),
         // hello brett my king
-        TRANSFER(.465), //.48
+        TRANSFER(.46), //.48
 //        EXTRACT_FROM_TRANSFER(.35),
         EJECT_OUT_FRONT(.46),
         GRAB_BACK(.62 - .015),
@@ -213,11 +213,11 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPosition {
-        EXTRA_OPEN(.39),
-        HANG_DEPLOY(.26),
-        OPEN(.26),//.15
-        PARTIALOPEN(.2),
-        CLOSED(.05);//.02
+        EXTRA_OPEN(.49),
+        HANG_DEPLOY(.36),
+        OPEN(.36),//.15
+        PARTIALOPEN(.3),
+        CLOSED(.15);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),

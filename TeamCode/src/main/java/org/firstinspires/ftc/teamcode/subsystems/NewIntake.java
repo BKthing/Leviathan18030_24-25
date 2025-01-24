@@ -166,10 +166,10 @@ public class NewIntake extends SubSystem {
     private final DoubleSupplier getVoltage;
 
     public enum IntakePos {
-        UP(.05),//.69
+        UP(.0),//.69
         AUTO_HEIGHT(.1),
-        PARTIAL_UP(.12),
-        DOWN(.165);//.05
+        PARTIAL_UP(.11),
+        DOWN(.17);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -857,16 +857,14 @@ public class NewIntake extends SubSystem {
     }
 
     private SampleColor findSampleColor() {
-        if (colors.red > .006) { //&& colors.green < .012) {
-//            throw new RuntimeException("Not red");
-            return SampleColor.RED;
-        }
-        else if (colors.blue > .0055) {
-            return SampleColor.BLUE;
-        }
-        else if (colors.green > .013) {
+        if (colors.green > .013) {
 //            throw new RuntimeException("Not yellow");
             return SampleColor.YELLOW;
+        } else if (colors.red > .006) { //&& colors.green < .012) {
+//            throw new RuntimeException("Not red");
+            return SampleColor.RED;
+        } else if (colors.blue > .0055) {
+            return SampleColor.BLUE;
         }
         else {
 //            throw new RuntimeException("Not nothing");
