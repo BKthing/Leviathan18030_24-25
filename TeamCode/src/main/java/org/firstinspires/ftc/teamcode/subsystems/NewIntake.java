@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.annotation.SuppressLint;
-import android.transition.Slide;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -44,7 +43,8 @@ public class NewIntake extends SubSystem {
         RETRACTING,
         WAITING_AFTER_RETRACTING,
         WAITING_FOR_TRANSFER,
-        TRANSFERING,
+        WAITING_FOR_TRANSFERRING,
+        TRANSFERRING,
         RESTING,
         MOVE_SLIDES_MORE_IN,
         RESET_SLIDES
@@ -166,10 +166,10 @@ public class NewIntake extends SubSystem {
     private final DoubleSupplier getVoltage;
 
     public enum IntakePos {
-        UP(.0),//.69
+        UP(.04),//.69
         AUTO_HEIGHT(.1),
         PARTIAL_UP(.11),
-        DOWN(.17);//.05
+        DOWN(.16);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -616,7 +616,7 @@ public class NewIntake extends SubSystem {
                     intakingState = IntakingState.SERVO_STALL_START_UNJAMMING;
                 }
                 else if (intakingTimer.seconds()>.8 || targetIntakeSpeed == 0) {
-                    targetIntakeSpeed = 0;
+//                    targetIntakeSpeed = 0;
 
                     intakingState = IntakingState.HOLDING_SAMPLE;
                 }
@@ -793,10 +793,10 @@ public class NewIntake extends SubSystem {
                     targetSlidePos = HorizontalSlide.IN.length;
 
                     if (intakingState == IntakingState.HOLDING_SAMPLE || (isBreakBeam && (intakingState == IntakingState.IDLE || intakingState == IntakingState.FINISH_INTAKING))) {
-                        targetIntakeSpeed = 0;
+//                        targetIntakeSpeed = 0;
                         if (isBreakBeam) {
                             transfer = true;
-                            intakeState = IntakeState.TRANSFERING;
+                            intakeState = IntakeState.WAITING_FOR_TRANSFERRING;
                         } else {
                             intakeState = IntakeState.WAITING_FOR_TRANSFER;
                             intakingState = IntakingState.START_UNJAMMING;
@@ -811,17 +811,25 @@ public class NewIntake extends SubSystem {
                 if (intakingState == IntakingState.HOLDING_SAMPLE) {
                     if (isBreakBeam) {
                         transfer = true;
-                        intakeState = IntakeState.TRANSFERING;
+                        intakeState = IntakeState.WAITING_FOR_TRANSFERRING;
                     } else {
                         intakingState = IntakingState.START_UNJAMMING;
                     }
                 }
                 break;
-            case TRANSFERING:
+            case WAITING_FOR_TRANSFERRING:
                 //if transferred go to resting position, add more logic later
                 if (!transfer) {
-                    intakeState = IntakeState.RESTING;
+                    intakeState = IntakeState.TRANSFERRING;
+                    intakeTimer.reset();
+                }
+                break;
+            case TRANSFERRING:
+                if (intakeTimer.seconds() > .5) {
+                    targetIntakeSpeed = 0;
                     intakingState = IntakingState.IDLE;
+                    intakeState = IntakeState.RESTING;
+
                 }
                 break;
             case MOVE_SLIDES_MORE_IN:
@@ -860,7 +868,7 @@ public class NewIntake extends SubSystem {
         if (colors.green > .013) {
 //            throw new RuntimeException("Not yellow");
             return SampleColor.YELLOW;
-        } else if (colors.red > .006) { //&& colors.green < .012) {
+        } else if (colors.red > .004) { //&& colors.green < .012) {
 //            throw new RuntimeException("Not red");
             return SampleColor.RED;
         } else if (colors.blue > .0055) {

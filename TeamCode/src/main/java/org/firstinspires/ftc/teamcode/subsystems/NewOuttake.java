@@ -216,7 +216,7 @@ public class NewOuttake extends SubSystem {
         EXTRA_OPEN(.49),
         HANG_DEPLOY(.36),
         OPEN(.36),//.15
-        PARTIALOPEN(.3),
+        PARTIALOPEN(.22),
         CLOSED(.15);//.02
 
 //        EXTRA_OPEN(.6),
@@ -353,7 +353,7 @@ public class NewOuttake extends SubSystem {
 
             clawPitchServo.setPosition(targetClawPitch);
 
-            clawServo.setPosition(clawPosition.pos);
+            clawServo.setPosition(ClawPosition.PARTIALOPEN.pos);//clawPosition.pos);
 
         }
 
@@ -779,6 +779,7 @@ public class NewOuttake extends SubSystem {
             case EXTENDING_PLACE_FRONT:
                 if (absError<.5) {
                     outtakeState = OuttakeState.WAITING_PLACE_FRONT;
+
                 }
                 break;
             case WAITING_PLACE_FRONT:
@@ -813,7 +814,8 @@ public class NewOuttake extends SubSystem {
                 break;
             case MOVING_ARM_BACK:
                 if (outtakeTimer.seconds()>.4) {
-                    retractFromFront();
+//                    retractFromFront();
+                    dropBehind();
                 }
                 break;
 
@@ -864,13 +866,17 @@ public class NewOuttake extends SubSystem {
             case WAITING_FOR_TRANSFER:
                 if (transfer) {
                     transfer = false;
-
+                    if (cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
+                        outtakeState = OuttakeState.IDLE;
+                    }
+                    else {
                     clawPosition = ClawPosition.CLOSED;
                     updateClawPosition = true;
 
                     outtakeTimer.reset();
 
                     outtakeState = OuttakeState.GRABBING_FROM_TRANSFER;
+                    }
                 }
                 break;
             case GRABBING_FROM_TRANSFER:
@@ -891,17 +897,13 @@ public class NewOuttake extends SubSystem {
             case VERIFYING_EXTRACTION:
                     //trys to grab sample again if first grab fails
                     if (intakeHoldingSample) {//intakeHoldingSample
-                        if (transferAttemptCounter == 0) {//transferAttemptCounter == 0
+                        if (neverResetIntake ) {//transferAttemptCounter == 0
                             retractFromFront();
 
-                            if (neverResetIntake) {
-                                intake.setIntakeState(NewIntake.IntakeState.MOVE_SLIDES_MORE_IN);
-                                neverResetIntake = false;
-                            }
-                            else {
-                                intake.setIntakeState(NewIntake.IntakeState.WAITING_FOR_TRANSFER);
 
-                            }
+                            intake.setIntakeState(NewIntake.IntakeState.MOVE_SLIDES_MORE_IN);
+                            neverResetIntake = false;
+
                             intake.setIntakingState(NewIntake.IntakingState.START_REINTAKING);
 
 
@@ -949,11 +951,11 @@ public class NewOuttake extends SubSystem {
                     } else
 
                      if (autoExtendSlides) {
-                        if ( cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
-                            dropBehind();
-                        } else {
+//                        if ( cycleSpecimen && (blueAlliance == null || sampleColor != NewIntake.SampleColor.YELLOW)) {
+//                            dropBehind();
+//                        } else {
                             extendPlaceBehind();
-                        }
+//                        }
                     } else {
                         outtakeState = OuttakeState.IDLE;
                     }
@@ -1040,6 +1042,12 @@ public class NewOuttake extends SubSystem {
     private void extendPlaceBehind() {
         targetSlidePos = VerticalSlide.HIGH_BUCKET.length;
 
+        if (targetV4BPos > V4BarPos.MID_POSITION_CUTOFF.pos) {
+            if (clawPosition != ClawPosition.CLOSED){
+                clawPosition = ClawPosition.PARTIALOPEN;
+                updateClawPosition = true;
+            }
+        }
         if (teleOpControls) {
             targetV4BPos = V4BarPos.PLACE_BACK.pos;
         }
@@ -1053,13 +1061,30 @@ public class NewOuttake extends SubSystem {
     }
 
     private void extendPlaceFront() {
-        targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
 
-        targetV4BPos = V4BarPos.PLACE_FRONT.pos;
+        if (targetV4BPos < V4BarPos.MID_POSITION_CUTOFF.pos) {
+            targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
 
-        targetClawPitch = ClawPitch.DOWN.pos;
+            targetV4BPos = V4BarPos.PLACE_FRONT.pos;
 
-        outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
+            targetClawPitch = ClawPitch.DOWN.pos;
+
+            outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
+        }
+        else {
+            if (clawPosition != ClawPosition.CLOSED) {
+                clawPosition = ClawPosition.PARTIALOPEN;
+                updateClawPosition = true;
+
+            }
+            targetSlidePos = VerticalSlide.PLACE_SPECIMEN_BAR.length;
+            targetV4BPos = V4BarPos.PLACE_FRONT.pos;
+
+            targetClawPitch = ClawPitch.DOWN.pos;
+
+            outtakeState = OuttakeState.EXTENDING_PLACE_FRONT;
+        }
+
     }
 
 //    private void extend
@@ -1067,6 +1092,11 @@ public class NewOuttake extends SubSystem {
     private void dropBehind() {
         targetV4BPos = V4BarPos.GRAB_BACK.pos;
         targetClawPitch = ClawPitch.FRONT.pos;
+        if (clawPosition != ClawPosition.CLOSED){
+            clawPosition = ClawPosition.PARTIALOPEN;
+            updateClawPosition = true;
+
+        }
 
         //set to this so V4B has room to rotate, set lower after v4b is clear
         targetSlidePos = VerticalSlide.MIN_PASSTHROUGH_HEIGHT.length;

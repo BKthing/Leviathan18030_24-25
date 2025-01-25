@@ -20,6 +20,7 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 
 import org.firstinspires.ftc.ftccommon.internal.manualcontrol.commands.AnalogCommands;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
 
 @TeleOp
@@ -140,15 +141,16 @@ public class AxonTest extends LinearOpMode {
 
             colorTelem.setValue(colors.red + " " + colors.green + " " + colors.blue);
 
-            if (colors.red > .008 && colors.green < .012) {
+            if (colors.green > .013) {
+//            throw new RuntimeException("Not yellow");
+                sampleColorTelem.setValue("yellow");
+            } else if (colors.red > .004) { //&& colors.green < .012) {
+//            throw new RuntimeException("Not red");
                 sampleColorTelem.setValue("red");
-            }
-            else if (colors.blue > .007) {
+            } else if (colors.blue > .0055) {
                 sampleColorTelem.setValue("blue");
             }
-            else if (colors.green > .015) {
-                sampleColorTelem.setValue("yellow");
-            }
+
             else {
                 sampleColorTelem.setValue("no sample");
             }
