@@ -583,12 +583,12 @@ public class NewIntake extends SubSystem {
 
                     sampleColor = findSampleColor();
 
-//                    if (sampleColor == SampleColor.NONE) {
-//                        hardwareQueue.add(() -> {
-//                            newColors = colorSensor.getNormalizedColors();
-//                        });
-//                        break;
-//                    }
+                    if (sampleColor == SampleColor.NONE) {
+                        hardwareQueue.add(() -> {
+                            newColors = colorSensor.getNormalizedColors();
+                        });
+                        break;
+                    }
 
                     checkColor = false;
 
