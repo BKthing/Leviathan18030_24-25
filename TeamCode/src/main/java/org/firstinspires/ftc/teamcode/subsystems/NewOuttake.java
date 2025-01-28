@@ -108,7 +108,7 @@ public class NewOuttake extends SubSystem {
     public enum VerticalSlide {
         EXTRA_DOWN(-.3),
         DOWN(0),
-        TRANSFER(5.6),
+        TRANSFER(5.7),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
         SPECIMEN_PICKUP(3.35),
@@ -159,22 +159,21 @@ public class NewOuttake extends SubSystem {
     private double voltage = 13;
 
     public enum V4BarPos {
-        PLACE_FRONT(.319 - .015),
-        CLEAR_FRONT_BAR(.29 - .015),
+        PLACE_FRONT(.319 - .035),
+        CLEAR_FRONT_BAR(.29 - .035),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.52 - .015),
-        MID_POSITION_CUTOFF(.55 - .015),
-        WAITING_FOR_HANG_DEPLOY(.44),
+        RELEASE_HANG_HOOKS(.52 - .035),
+        MID_POSITION_CUTOFF(.55 - .035),
+        WAITING_FOR_HANG_DEPLOY(.44-.02),
         // hello brett my king
-        TRANSFER(.46), //.48
-//        EXTRACT_FROM_TRANSFER(.35),
+        TRANSFER(.44), //.46
         EJECT_OUT_FRONT(.46),
-        GRAB_BACK(.62 - .015),
-        WAIT_PLACE_BACK(.14 - .015),
-        PLACE_BACK(.07 - .015),//.07
-        HANG_POS(.23 - .015),
-        IDLE_POSITION(.41 - .015),
-        TOUCH_BAR(.339 - .015);
+        GRAB_BACK(.62 - .035),
+        WAIT_PLACE_BACK(.14 - .035),
+        PLACE_BACK(.07 - .035),//.07
+        HANG_POS(.23 - .035),
+        IDLE_POSITION(.41 - .035),
+        TOUCH_BAR(.339 - .035);
 
         public final double pos;
 
@@ -215,7 +214,7 @@ public class NewOuttake extends SubSystem {
     public enum ClawPosition {
         EXTRA_OPEN(.27),//.49),
         HANG_DEPLOY(.26),
-        OPEN(.2),//.36),//.15
+        OPEN(.22),//.36),//.15
         PARTIALOPEN(.12),
         CLOSED(.07);//.15);//.02
 

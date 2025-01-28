@@ -68,10 +68,10 @@ public class AxonTest extends LinearOpMode {
         leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
 
-        leftIntakeServo.scaleRange(.34, .965);
-        rightIntakeServo.scaleRange(.34, .965);
 
-        rightIntakeServo.setDirection(Servo.Direction.REVERSE);
+
+        leftIntakeServo.setDirection(Servo.Direction.REVERSE);
+
 
 
         leftSpinnerServo = hardwareMap.get(CRServo.class, "leftSpinnerServo");
@@ -161,8 +161,8 @@ public class AxonTest extends LinearOpMode {
 
 
             if (gamepad2.y) {
-                leftIntakeServo.setPosition(.17);
-                rightIntakeServo.setPosition(.17);
+                leftIntakeServo.setPosition(.9);
+                rightIntakeServo.setPosition(.9);
             }
             else {
                 leftIntakeServo.setPosition(.07);

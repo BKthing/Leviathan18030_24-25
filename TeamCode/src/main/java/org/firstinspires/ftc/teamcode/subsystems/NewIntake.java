@@ -166,10 +166,10 @@ public class NewIntake extends SubSystem {
     private final DoubleSupplier getVoltage;
 
     public enum IntakePos {
-        UP(.04),//.69
-        AUTO_HEIGHT(.1),
-        PARTIAL_UP(.11),
-        DOWN(.16);//.05
+        UP(.75),//.69
+        AUTO_HEIGHT(.55),//.1),
+        PARTIAL_UP(.5),//.11),
+        DOWN(.37);//.16);//.05
 
         public final double pos;
         IntakePos(double pos) {this.pos = pos;}
@@ -270,10 +270,8 @@ public class NewIntake extends SubSystem {
         rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
 
 
-        rightIntakeServo.setDirection(Servo.Direction.REVERSE);
+        leftIntakeServo.setDirection(Servo.Direction.REVERSE);
 
-        leftIntakeServo.scaleRange(.34, .965);
-        rightIntakeServo.scaleRange(.34, .965);
 
         if (init) {
             leftIntakeServo.setPosition(targetIntakePos);
@@ -540,7 +538,7 @@ public class NewIntake extends SubSystem {
 
         if (targetIntakePos != actualIntakePos) {
             leftIntakeServoHardwareAction.setAndQueueAction(() -> leftIntakeServo.setPosition(targetIntakePos+.03));
-            rightIntakeServoHardwareAction.setAndQueueAction(() -> rightIntakeServo.setPosition(targetIntakePos));
+            rightIntakeServoHardwareAction.setAndQueueAction(() -> rightIntakeServo.setPosition(targetIntakePos + .01));
 
             actualIntakePos = targetIntakePos;
         }
@@ -774,7 +772,7 @@ public class NewIntake extends SubSystem {
 //                }
                 break;
             case RETRACTING_INTAKE:
-                if (intakeTimer.seconds()>.1) {
+                if (intakeTimer.seconds()>.3) {
                     targetSlidePos = HorizontalSlide.EXTRA_IN.length;
 
                     intakeState = IntakeState.RETRACTING;
