@@ -111,7 +111,7 @@ public class NewOuttake extends SubSystem {
         TRANSFER(5.7),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
-        SPECIMEN_PICKUP(3.35),
+        SPECIMEN_PICKUP(3.55),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
         PLACE_SPECIMEN_BAR(13),
@@ -159,21 +159,20 @@ public class NewOuttake extends SubSystem {
     private double voltage = 13;
 
     public enum V4BarPos {
-        PLACE_FRONT(.319 - .035),
-        CLEAR_FRONT_BAR(.29 - .035),
+        PLACE_FRONT(.327 - .039),
+        CLEAR_FRONT_BAR(.29 - .039),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.52 - .035),
-        MID_POSITION_CUTOFF(.55 - .035),
+        RELEASE_HANG_HOOKS(.52 - .039),
+        MID_POSITION_CUTOFF(.55 - .039),
         WAITING_FOR_HANG_DEPLOY(.44-.02),
         // hello brett my king
-        TRANSFER(.44), //.46
-        EJECT_OUT_FRONT(.46),
-        GRAB_BACK(.62 - .035),
-        WAIT_PLACE_BACK(.14 - .035),
-        PLACE_BACK(.07 - .035),//.07
-        HANG_POS(.23 - .035),
-        IDLE_POSITION(.41 - .035),
-        TOUCH_BAR(.339 - .035);
+        TRANSFER(.444), //.44
+        GRAB_BACK(.63 - .039),
+        WAIT_PLACE_BACK(.14 - .039),
+        PLACE_BACK(.07 - .039),//.07
+        HANG_POS(.23 - .039),
+        IDLE_POSITION(.41 - .039),
+        TOUCH_BAR(.339 - .039);
 
         public final double pos;
 
@@ -811,9 +810,10 @@ public class NewOuttake extends SubSystem {
                 break;
             case MOVING_TO_CLEAR_FRONT_BAR:
                 if (outtakeTimer.seconds()>.3) {
-                    targetSlidePos = VerticalSlide.CLEAR_SPECIMEN_BAR.length;
-
-                    outtakeState = OuttakeState.MOVING_DOWN_TO_RETRACT;
+                    dropBehind();
+//                    clawPosition = ClawPosition.PARTIALOPEN;
+//
+//                    outtakeState = OuttakeState.MOVING_DOWN_TO_RETRACT;
                 }
                 break;
             case MOVING_DOWN_TO_RETRACT:

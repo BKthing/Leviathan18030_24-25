@@ -160,14 +160,14 @@ public class AxonTest extends LinearOpMode {
 //            }
 
 
-            if (gamepad2.y) {
-                leftIntakeServo.setPosition(.9);
-                rightIntakeServo.setPosition(.9);
-            }
-            else {
-                leftIntakeServo.setPosition(.07);
-                rightIntakeServo.setPosition(.07);
-            }
+//            if (gamepad2.y) {
+//                leftIntakeServo.setPosition(.9);
+//                rightIntakeServo.setPosition(.9);
+//            }
+//            else {
+//                leftIntakeServo.setPosition(.07);
+//                rightIntakeServo.setPosition(.07);
+//            }
 //
             if (gamepad2.a) {
                 leftSpinnerServo.setPower(.6);

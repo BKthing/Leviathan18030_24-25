@@ -130,7 +130,7 @@ public class NewIntake extends SubSystem {
 
     private boolean changedToIntakeState = false;
 
-    private final Boolean blueAlliance;
+    public Boolean blueAlliance;
 
 
     public enum HorizontalSlide {

@@ -1,13 +1,17 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive3.PARAMS;
+
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -20,13 +24,12 @@ import org.firstinspires.ftc.teamcode.subsystems.NewIntake;
 import org.firstinspires.ftc.teamcode.subsystems.NewOuttake;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.firstinspires.ftc.teamcode.util.MathUtil;
-import org.firstinspires.ftc.teamcode.util.SingleAction;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
-import java.util.List;
+import java.util.Arrays;
 
 @Autonomous
-public class RRLeft1plus3Auto extends LinearOpMode {
+public class RRLeft0plus5Auto extends LinearOpMode {
     NewDrivetrain drivetrain;
     NewIntake intake;
     NewOuttake outtake;
@@ -46,6 +49,8 @@ public class RRLeft1plus3Auto extends LinearOpMode {
     private final ElapsedTimer loopTimer = new ElapsedTimer();
 
     private final ElapsedTimer autoTimer = new ElapsedTimer();
+
+    public Action wiggle;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -79,36 +84,37 @@ public class RRLeft1plus3Auto extends LinearOpMode {
         Action intakeBlock = new IntakeBlock();
 
 
-        Action preload = drivetrain.drive.actionBuilder(new Pose2d(16.8, 62.1, Math.toRadians(270)))
-                .setTangent(Math.toRadians(270))
+        Action preload = drivetrain.drive.actionBuilder(new Pose2d(38.93, 60.23, Math.toRadians(180)))
+                .setTangent(Math.toRadians(300))
                 .afterTime(.3, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
-                .splineToConstantHeading(new Vector2d(5.5, 29), Math.toRadians(270))
+                .afterTime(.9, () -> {
+                    intake.setTargetSlidePos(16);
+                    extensionDistance = 16;
+                })
+                .splineToLinearHeading(new Pose2d(62, 54, Math.toRadians(250)), Math.toRadians(45))
                 .build();
 
-        Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(5.5, 29, Math.toRadians(270)))
-                .setTangent(Math.toRadians(90))
-                .lineToY(31)
-                .splineToConstantHeading(new Vector2d(45, 56), Math.toRadians(0))
+        Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(61, 55, Math.toRadians(250)))
+                .setTangent(Math.toRadians(250))
                 .afterTime(0, () -> {
-                    intake.setTargetSlidePos(9);
-                    extensionDistance = 9;
+//                    intake.setTargetSlidePos(9);
+//                    extensionDistance = 9;
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToConstantHeading(new Vector2d(49.5, 50), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(56, 51), Math.toRadians(250))
+//                .splineToLinearHeading(new Pose2d(50.5, 50, Math.toRadians(270)), Math.toRadians(270))
                 .build();
 
-        Action moveToScoreBlock1 = drivetrain.drive.actionBuilder(new Pose2d(49.5, 50, Math.toRadians(270)))
-                .setTangent(Math.toRadians(80))
-                .splineToLinearHeading(new Pose2d(59.5, 52.5, Math.toRadians(225)), Math.toRadians(45))
+        Action moveToScoreBlock1 = drivetrain.drive.actionBuilder(new Pose2d(56, 51, Math.toRadians(270)))
+                .setTangent(Math.toRadians(84))
+                .splineToLinearHeading(new Pose2d(61.5, 51, Math.toRadians(265)), Math.toRadians(85))
                 .build();
 
-        Action moveToGrabBlock2 = drivetrain.drive.actionBuilder(new Pose2d(59.5, 52.5, Math.toRadians(225)))
-                .waitSeconds(.1)
-                .setTangent(270)
+        Action moveToGrabBlock2 = drivetrain.drive.actionBuilder(new Pose2d(61.5, 51, Math.toRadians(265)))
                 .afterTime(0, () -> {
                     intake.setTargetSlidePos(11);
                     extensionDistance = 11;
@@ -116,33 +122,66 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToLinearHeading(new Pose2d(57.5, 51.5, Math.toRadians(280)), Math.toRadians(270))
-                .build();
-
-        Action moveToScoreBlock2 = drivetrain.drive.actionBuilder(new Pose2d(57.5, 51.5, Math.toRadians(280)))
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(58, 54, Math.toRadians(225)), Math.toRadians(90))
-                .build();
-
-        Action moveToGrabBlock3 = drivetrain.drive.actionBuilder(new Pose2d(59, 54, Math.toRadians(225)))
                 .waitSeconds(.1)
-                .setTangent(270)
+                .setTangent(265)
+                .splineToConstantHeading(new Vector2d(61, 51), Math.toRadians(265))
+                .build();
+
+        Action moveToScoreBlock2 = drivetrain.drive.actionBuilder(new Pose2d(61, 51, Math.toRadians(265)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(62.5, 52, Math.toRadians(270)), Math.toRadians(90))
+                .build();
+
+        Action moveToGrabBlock3 = drivetrain.drive.actionBuilder(new Pose2d(62.5, 52, Math.toRadians(270)))
                 .afterTime(0, () -> {
-                    intake.setTargetSlidePos(12);
-                    extensionDistance = 12;
+                    intake.setTargetSlidePos(13);
+                    extensionDistance = 13;
                     intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToLinearHeading(new Pose2d(57.5, 50, Math.toRadians(298)), Math.toRadians(270))
+                .waitSeconds(.1)
+                .setTangent(270)
+                .splineToLinearHeading(new Pose2d(62.5, 51.5, Math.toRadians(278)), Math.toRadians(270))
                 .build();
 
-        Action moveToScoreBlock3 = drivetrain.drive.actionBuilder(new Pose2d(57.5, 50, Math.toRadians(298)))
-                .setTangent(Math.toRadians(105))
-                .splineToLinearHeading(new Pose2d(58.5, 53.5, Math.toRadians(225)), Math.toRadians(90))
+        Action moveToScoreBlock3 = drivetrain.drive.actionBuilder(new Pose2d(62.5, 51.5, Math.toRadians(278)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(62.5, 53, Math.toRadians(270)), Math.toRadians(90))
                 .build();
 
-        Action park = drivetrain.drive.actionBuilder(new Pose2d(58.5, 53.5, Math.toRadians(225)))
+        Action grabSubmersible1 = drivetrain.drive.actionBuilder(new Pose2d(62.5, 53, Math.toRadians(270)))
+                .afterTime(.5, () -> {
+                    intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
+                })
+                .setTangent(Math.toRadians(240))
+                .splineToLinearHeading(new Pose2d(35, 7, Math.toRadians(180)), Math.toRadians(180))
+                .afterTime(.8, () -> {
+                    intake.setTargetSlidePos(7);
+                    extensionDistance = 7;
+                })
+                .afterTime(1.3, () -> {
+                    intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
+                    intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
+                })
+                .splineToLinearHeading(new Pose2d(23, 7, 185), Math.toRadians(180), new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-50, PARAMS.maxProfileAccel))
+                .build();
+
+        wiggle = drivetrain.drive.actionBuilder(new Pose2d(23, 7, Math.toRadians(185)))
+                .turn(Math.toRadians(-10))
+                .turn(Math.toRadians(10))
+                .build();
+
+        Action scoreSubGrab1 = drivetrain.drive.actionBuilder(new Pose2d(23, 7, Math.toRadians(180)))
+                .afterTime(0, () -> {
+                    intake.blueAlliance = true;
+                })
+                .setTangent(0)
+                .lineToX(40)
+                .splineToLinearHeading(new Pose2d(58.5, 53.5, Math.toRadians(225)), Math.toRadians(45))
+                .build();
+
+        Action park = drivetrain.drive.actionBuilder(new Pose2d(64, 53, Math.toRadians(270)))
                 .afterTime(.5, () -> {
                     intake.toIntakeState(NewIntake.ToIntakeState.RAISE_INTAKE);
                 })
@@ -156,18 +195,18 @@ public class RRLeft1plus3Auto extends LinearOpMode {
 
         waitForStart();
 
-        drivetrain.drive.setPoseEstimate(new Pose2d(16.8, 62.1, Math.toRadians(270)));
-        drivetrain.drive.pinpoint.setPosition(new  Pose2d(16.8, 62.1, Math.toRadians(270)));
+        drivetrain.drive.setPoseEstimate(new Pose2d(38.93, 60.23, Math.toRadians(180)));
+        drivetrain.drive.pinpoint.setPosition(new  Pose2d(38.93, 60.23, Math.toRadians(180)));
 
 
         masterThread.clearBulkCache();
 
         intake.toIntakeState(NewIntake.ToIntakeState.DROP_INTAKE);
-        outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_FRONT);
+        outtake.toOuttakeState(NewOuttake.ToOuttakeState.PLACE_BEHIND);
 
         drivetrain.followPath(new SequentialAction(
                 preload,
-                new SingleAction(() -> outtake.toClawPosition(NewOuttake.ClawPosition.OPEN)),
+                new ScoreBlock(),
                 moveToGrabBlock1,
                 intakeBlock,
                 moveToScoreBlock1,
@@ -180,8 +219,13 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                 intakeBlock,
                 moveToScoreBlock3,
                 new ScoreBlock(),
-                park
-                ));
+                grabSubmersible1,
+                new GrabFromSub(wiggle),
+                scoreSubGrab1,
+                new ScoreBlock()
+
+//                park
+        ));
 
         while ( !isStopRequested()) {
 
@@ -230,6 +274,45 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                     return true;
                 }
             }
+        }
+    }
+
+    public class GrabFromSub implements Action {
+        Action movement;
+        Action savedMovement;
+
+        public GrabFromSub(Action movement) {
+            this.movement = movement;
+            this.savedMovement = this.movement;
+        }
+
+        @Override
+        public void preview(@NonNull Canvas fieldOverlay) {
+            Action.super.preview(fieldOverlay);
+            wiggle.preview(fieldOverlay);
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if (!wiggle.run(telemetryPacket)) {
+                wiggle = savedMovement;
+            }
+
+
+            if (intake.getPrevIntakingState() != NewIntake.IntakingState.INTAKING && intake.getPrevIntakingState() != NewIntake.IntakingState.START_INTAKING && intake.getPrevIntakingState() != NewIntake.IntakingState.SERVO_STALL_START_UNJAMMING && intake.getPrevIntakingState() != NewIntake.IntakingState.SERVO_STALL_UNJAMMING_SPIN_OUT) {
+//                return false;
+            }  else {
+                extensionDistance = MathUtil.clip(extensionDistance + 20 * loopTimer.seconds(), -.5, 18.5);
+                intake.setTargetSlidePos(extensionDistance);
+//                return true;
+            }
+
+            return true;
+
+//            else if (autoTimer.seconds()>7) {
+//                intake.toIntakeState(NewIntake.ToIntakeState.RETRACT);
+//                return false;
+//            }
         }
     }
 
