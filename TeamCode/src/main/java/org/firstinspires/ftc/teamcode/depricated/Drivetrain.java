@@ -341,14 +341,14 @@ public class Drivetrain extends SubSystem {
     }
 
     public void setDrivePower(MotorPowers motorPowers) {
-        List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
-
-        for (int i = 0; i<4; i++) {
-            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.075)) {
-                int finalI = i;
-                hardwareQueue.add(() -> drivetrainMotors.get(finalI).setPower(powers.get(finalI)));
-            }
-        }
+//        List<Double> powers = motorPowers.getNormalizedVoltages(voltage);
+//
+//        for (int i = 0; i<4; i++) {
+//            if ((lastPowers.get(i) == 0 && powers.get(i) != 0) || (lastPowers.get(i) != 0 && powers.get(i) == 0) || (Math.abs(powers.get(i)-lastPowers.get(i))>.075)) {
+//                int finalI = i;
+//                hardwareQueue.add(() -> drivetrainMotors.get(finalI).setPower(powers.get(finalI)));
+//            }
+//        }
     }
 
 }

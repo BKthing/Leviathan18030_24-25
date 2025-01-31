@@ -114,7 +114,7 @@ public class NewOuttake extends SubSystem {
         SPECIMEN_PICKUP(3.55),
         CLEAR_SPECIMEN_BAR(6.6),
         SPECIMEN_BAR(8),
-        PLACE_SPECIMEN_BAR(13),
+        PLACE_SPECIMEN_BAR(13.15),
         HANG_HEIGHT(21),
         LOW_BUCKET_HEIGHT(20),
         HIGH_BUCKET(22),
@@ -215,7 +215,7 @@ public class NewOuttake extends SubSystem {
         HANG_DEPLOY(.26),
         OPEN(.22),//.36),//.15
         PARTIALOPEN(.12),
-        CLOSED(.07);//.15);//.02
+        CLOSED(.06);//.15);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -260,7 +260,7 @@ public class NewOuttake extends SubSystem {
 
     private NewIntake.SampleColor sampleColor = NewIntake.SampleColor.NONE;
 
-    private final Boolean blueAlliance;
+    public Boolean blueAlliance;
 
     private boolean intakeHoldingSample = false;
     private boolean updateIntakeHoldingSample = false;
@@ -441,6 +441,11 @@ public class NewOuttake extends SubSystem {
 //                        startingHangHeading = ((TwoDeadWheelLocalizer)localizer).angles.getYaw();
                     }
 
+                }
+
+                if (gamepad2.start && !oldGamePad2.start) {
+                    intake.blueAlliance = null;
+                    blueAlliance = null;
                 }
 
             } else {
@@ -809,7 +814,7 @@ public class NewOuttake extends SubSystem {
                 }
                 break;
             case MOVING_TO_CLEAR_FRONT_BAR:
-                if (outtakeTimer.seconds()>.3) {
+                if (outtakeTimer.seconds()>.4) {
                     dropBehind();
 //                    clawPosition = ClawPosition.PARTIALOPEN;
 //

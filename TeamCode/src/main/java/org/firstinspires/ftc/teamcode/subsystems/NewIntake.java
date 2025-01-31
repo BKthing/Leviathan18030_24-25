@@ -514,9 +514,9 @@ public class NewIntake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.2;//.35;
-            d = ((prevSlideError-error) / elapsedTime) * .02;//.03;//.007
-            f=Math.signum(error)*0.22;//.15;
+            p = error*.22;//.35;
+            d = ((prevSlideError-error) / elapsedTime) * .022;//.03;//.007
+            f=Math.signum(error)*0.2;//.15;
         }
 
 //        p = 0;
@@ -863,7 +863,7 @@ public class NewIntake extends SubSystem {
     }
 
     private SampleColor findSampleColor() {
-        if (colors.green > .013) {
+        if (colors.green > .008) {
 //            throw new RuntimeException("Not yellow");
             return SampleColor.YELLOW;
         } else if (colors.red > .004) { //&& colors.green < .012) {

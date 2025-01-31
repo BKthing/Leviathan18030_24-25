@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive3.PARAMS;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -23,6 +27,7 @@ import org.firstinspires.ftc.teamcode.util.MathUtil;
 import org.firstinspires.ftc.teamcode.util.SingleAction;
 import org.firstinspires.ftc.teamcode.util.threading.MasterThread;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Autonomous
@@ -89,7 +94,10 @@ public class RRLeft1plus3Auto extends LinearOpMode {
 
         Action moveToGrabBlock1 = drivetrain.drive.actionBuilder(new Pose2d(5.5, 29, Math.toRadians(270)))
                 .setTangent(Math.toRadians(90))
-                .lineToY(31)
+                .afterTime(1.3, () -> {
+                    outtake.toOuttakeState(NewOuttake.ToOuttakeState.RETRACT_FROM_PLACE_BEHIND);
+                })
+                .lineToY(31, new MinVelConstraint(Arrays.asList(drivetrain.drive.kinematics.new WheelVelConstraint(PARAMS.maxWheelVel))), new ProfileAccelConstraint(-50, 80))
                 .splineToConstantHeading(new Vector2d(45, 56), Math.toRadians(0))
                 .afterTime(0, () -> {
                     intake.setTargetSlidePos(9);
@@ -116,10 +124,10 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                     intake.setIntakingState(NewIntake.IntakingState.START_INTAKING);
                     autoTimer.reset();
                 })
-                .splineToLinearHeading(new Pose2d(57.5, 51.5, Math.toRadians(280)), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(57.5, 51.5, Math.toRadians(275)), Math.toRadians(270))
                 .build();
 
-        Action moveToScoreBlock2 = drivetrain.drive.actionBuilder(new Pose2d(57.5, 51.5, Math.toRadians(280)))
+        Action moveToScoreBlock2 = drivetrain.drive.actionBuilder(new Pose2d(57.5, 51.5, Math.toRadians(275)))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(58, 54, Math.toRadians(225)), Math.toRadians(90))
                 .build();
@@ -151,7 +159,7 @@ public class RRLeft1plus3Auto extends LinearOpMode {
                 })
                 .setTangent(Math.toRadians(240))
                 .splineToLinearHeading(new Pose2d(35, 6, Math.toRadians(180)), Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(20, 6), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(20, 6, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
         waitForStart();
