@@ -45,6 +45,7 @@ public class NewOuttake extends SubSystem {
         RETRACING_FROM_PLACE_FRONT_CLEAR_INTAKE,
 
         MOVING_TO_DROP_HANG_HOOKS,
+        MOVING_TO_REDROP_HANG_HOOKS,
         DROPPING_HANG_HOOKS,
         MOVING_TO_HANG_POSITION,
         WAITING_TO_HANG,
@@ -159,20 +160,20 @@ public class NewOuttake extends SubSystem {
     private double voltage = 13;
 
     public enum V4BarPos {
-        PLACE_FRONT(.327 - .039),
-        CLEAR_FRONT_BAR(.29 - .039),
+        PLACE_FRONT(.327 - .042),
+        CLEAR_FRONT_BAR(.29 - .042),
 //        WAIT_FOR_TRANSFER(.35),
-        RELEASE_HANG_HOOKS(.52 - .039),
-        MID_POSITION_CUTOFF(.55 - .039),
-        WAITING_FOR_HANG_DEPLOY(.44-.02),
+        RELEASE_HANG_HOOKS(.53 - .042),
+        MID_POSITION_CUTOFF(.55 - .042),
+        WAITING_FOR_HANG_DEPLOY(.363),//.42
         // hello brett my king
-        TRANSFER(.444), //.44
-        GRAB_BACK(.63 - .039),
-        WAIT_PLACE_BACK(.14 - .039),
-        PLACE_BACK(.07 - .039),//.07
-        HANG_POS(.23 - .039),
-        IDLE_POSITION(.41 - .039),
-        TOUCH_BAR(.339 - .039);
+        TRANSFER(.447), //.444
+        GRAB_BACK(.63 - .042),
+        WAIT_PLACE_BACK(.14 - .042),
+        PLACE_BACK(.07 - .042),//.07
+        HANG_POS(.23 - .042),
+        IDLE_POSITION(.41 - .042),
+        TOUCH_BAR(.339 - .042);
 
         public final double pos;
 
@@ -211,11 +212,11 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPosition {
-        EXTRA_OPEN(.27),//.49),
+        EXTRA_OPEN(.28),//.49),
         HANG_DEPLOY(.26),
         OPEN(.22),//.36),//.15
         PARTIALOPEN(.12),
-        CLOSED(.06);//.15);//.02
+        CLOSED(.05);//.15);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -237,7 +238,7 @@ public class NewOuttake extends SubSystem {
     private boolean updateClawPosition = false;
 
 
-
+    private int hookDropCount = 0;
 
     private boolean transfer = false;
 
@@ -450,9 +451,6 @@ public class NewOuttake extends SubSystem {
 
             } else {
 
-                //if (gamepad2.right_trigger>.2 && oldGamePad2.right_trigger<=.2) {
-                //                    transfer = true;
-                //                } else
                 if (gamepad2.a && !oldGamePad2.a) {
                     if (targetV4BPos<V4BarPos.MID_POSITION_CUTOFF.pos) {
                         retractFromFront();
@@ -556,6 +554,8 @@ public class NewOuttake extends SubSystem {
                 outtakeTimer.reset();
 
                 toOuttakeState = ToOuttakeState.IDLE;
+
+                hookDropCount = 0;
                 break;
             case POWER_OFF_OUTTAKE_ARM:
                 leftOuttakeServo.getController().pwmDisable();
@@ -874,14 +874,32 @@ public class NewOuttake extends SubSystem {
 
                 }
                 break;
+            case MOVING_TO_REDROP_HANG_HOOKS:
+                if (outtakeTimer.seconds()>.2) {
+                    targetV4BPos = V4BarPos.RELEASE_HANG_HOOKS.pos;
+                    outtakeState = OuttakeState.DROPPING_HANG_HOOKS;
+                    outtakeTimer.reset();
+
+                }
+                break;
             case DROPPING_HANG_HOOKS:
                 if (outtakeTimer.seconds()>.55) {
-                    targetV4BPos = V4BarPos.HANG_POS.pos;
-                    targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
-                    clawPosition = ClawPosition.OPEN;
-                    updateClawPosition = true;
+                    if (hookDropCount >= 1) {
+                        targetV4BPos = V4BarPos.HANG_POS.pos;
+                        targetClawPitch = ClawPitch.FRONT_ANGLED_UP.pos;
+                        clawPosition = ClawPosition.OPEN;
+                        updateClawPosition = true;
 
-                    outtakeState = OuttakeState.MOVING_TO_HANG_POSITION;
+                        outtakeState = OuttakeState.MOVING_TO_HANG_POSITION;
+                    } else {
+                        targetV4BPos = V4BarPos.WAITING_FOR_HANG_DEPLOY.pos;
+
+                        outtakeState = OuttakeState.MOVING_TO_REDROP_HANG_HOOKS;
+
+                        outtakeTimer.reset();
+
+                        hookDropCount++;
+                    }
                 }
                 break;
             case MOVING_TO_HANG_POSITION:
@@ -965,7 +983,7 @@ public class NewOuttake extends SubSystem {
 
                     transferAttemptCounter = 0;
 
-                    if (gamepad2.right_trigger>.8 || (blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
+                    if ((blueAlliance != null && ((sampleColor == NewIntake.SampleColor.RED && blueAlliance) || (sampleColor == NewIntake.SampleColor.BLUE && !blueAlliance)))){// {//gamepad2.right_trigger>.4 && oldGamePad2.right_trigger<=.4
                         intake.setIntakingState(NewIntake.IntakingState.START_EJECTING);
 //                        targetSlidePos = VerticalSlide.TRANSFER.length + 2;
 //                        targetV4BPos = V4BarPos.EJECT_OUT_FRONT.pos;

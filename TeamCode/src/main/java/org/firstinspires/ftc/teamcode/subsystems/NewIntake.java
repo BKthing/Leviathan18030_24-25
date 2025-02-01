@@ -401,7 +401,7 @@ public class NewIntake extends SubSystem {
                 }
 
                 if (Math.abs(gamepad2.left_stick_y)>.05) {
-                    targetSlidePos = targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75);
+                    targetSlidePos = targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y;
                 }
             } else {
                 if (gamepad2.dpad_down && !oldGamePad2.dpad_down) {
@@ -418,7 +418,7 @@ public class NewIntake extends SubSystem {
                     targetSlidePos = HorizontalSlide.FAR.length;
                 } else if (Math.abs(gamepad2.left_stick_y) > .05) {
                     if (!gamepad2.start) {
-                        targetSlidePos = MathUtil.clip(targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75), -.5, 18.5);
+                        targetSlidePos = MathUtil.clip(targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y, -.5, 18.5);
     //                    intake.setTargetSlidePos(intake.getTargetSlidePos() + 10 * loopTimer.seconds() * -gamepad2.left_stick_y * (1 - gamepad2.right_trigger * .75));
                     } else {
     //                    intake.setTargetIntakePos(intake.getTargetIntakePos() + gamepad2.left_stick_y * .0002 * loopTimer.milliSeconds());
@@ -510,13 +510,13 @@ public class NewIntake extends SubSystem {
         //Checks if error is in acceptable amounts
         if (absError<.1) {
             p = 0;
-        } else if (absError>4) {
+        } else if (absError>3) {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.22;//.35;
-            d = ((prevSlideError-error) / elapsedTime) * .022;//.03;//.007
-            f=Math.signum(error)*0.2;//.15;
+            p = error*.28;//.35;
+            d = ((prevSlideError-error) / elapsedTime) * .023;//.03;//.007
+            f=Math.signum(error)*0.22;//.15;
         }
 
 //        p = 0;
@@ -733,6 +733,8 @@ public class NewIntake extends SubSystem {
 
         if (teleOpControls && gamepad2.right_trigger > .05 && (intakeState == IntakeState.INTAKING || intakeState == IntakeState.RESTING || intakeState == IntakeState.DROPPING_INTAKE || intakeState == IntakeState.EXTENDING)) {
             targetIntakePos = IntakePos.DOWN.pos+gamepad2.right_trigger*(IntakePos.UP.pos-IntakePos.DOWN.pos);
+        } else if (gamepad2.right_trigger <= .05 && oldGamePad2.right_trigger > .05) {
+            targetIntakePos = IntakePos.DOWN.pos;
         }
 
 
