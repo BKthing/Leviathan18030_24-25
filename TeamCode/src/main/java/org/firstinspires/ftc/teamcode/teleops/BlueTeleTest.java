@@ -32,7 +32,7 @@ public class BlueTeleTest extends LinearOpMode {
 
     private Encoder verticalSlideEncoder, horizontalSlideEncoder;
 
-    private DcMotorEx parallelWheel;
+    private DcMotorEx perpendicularWheel, parallelWheel;
 
     private TouchSensor breakBeam;
 
@@ -47,10 +47,11 @@ public class BlueTeleTest extends LinearOpMode {
 
 //        Twist2dDual<Time> testPose = new Twist2dDual<Time>(new Vector2dDual<>(new DualNum<Time>(new double[2.0, 4.1])))
 
+        perpendicularWheel = hardwareMap.get(DcMotorEx.class, "verticalRight");
         parallelWheel = hardwareMap.get(DcMotorEx.class, "bl");
 
 
-        drivetrain = new NewDrivetrain(masterThread.getData());
+        drivetrain = new NewDrivetrain(masterThread.getData(), parallelWheel, perpendicularWheel);
         drivetrain.setDriveState(NewDrivetrain.DriveState.DRIVER_CONTROL);
 
         horizontalSlideEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "horizontalLeft"));
@@ -73,6 +74,8 @@ public class BlueTeleTest extends LinearOpMode {
 
         waitForStart();
         masterThread.clearBulkCache();
+
+        drivetrain.drive.setPoseEstimate(new Pose2d(0, 0, 0));
 
         while ( !isStopRequested()) {
             masterThread.unThreadedUpdate();

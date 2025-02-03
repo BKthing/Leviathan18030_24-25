@@ -3,6 +3,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
+import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -15,6 +18,9 @@ import com.reefsharklibrary.misc.ElapsedTimer;
 import com.reefsharklibrary.robotControl.ReusableHardwareAction;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive2;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive3;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.threading.SubSystemData;
 
@@ -29,6 +35,8 @@ public class NewDrivetrain extends SubSystem {
     }
 
     private DriveState driveState;
+
+    public final PinpointDrive drive;
 
     private Action path;
 
@@ -92,11 +100,11 @@ public class NewDrivetrain extends SubSystem {
 //    public com.acmerobotics.roadrunner.Pose2d roadRunnerPose = new com.acmerobotics.roadrunner.Pose2d(0, 0, 0);
 
 
-    public NewDrivetrain(SubSystemData data) {
-        this(data, DriveState.FOLLOW_PATH);
+    public NewDrivetrain(SubSystemData data, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder) {
+        this(data, parallelEncoder, perpendicularEncoder, DriveState.FOLLOW_PATH);
     }
 
-    public NewDrivetrain(SubSystemData data, DriveState driveState) {
+    public NewDrivetrain(SubSystemData data, DcMotorEx parallelEncoder, DcMotorEx perpendicularEncoder, DriveState driveState) {
         super(data);
 
 //        this.localizer = localizer;
@@ -134,6 +142,7 @@ public class NewDrivetrain extends SubSystem {
 //        pinpointLocalizer.setEncoderResolution(GoBildaPinpointDriverRR.goBILDA_SWINGARM_POD);
 //        pinpointLocalizer.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 //        pinpointLocalizer.setOffsets(-78.2, -120.7);
+        this.drive = new PinpointDrive(hardwareMap, new com.acmerobotics.roadrunner.Pose2d(0, 0, 0));
 //        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 //        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 //        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -169,11 +178,15 @@ public class NewDrivetrain extends SubSystem {
     @Override
     public void loop() {
 
+        drive.setVoltage(voltage);
+
 //        pinpointLocalizer.update();
 
 //        Twist2dDual<Time> twist = ;
 
 //        roadRunnerPose = pinpointLocalizer.getPositionRR();//MathUtil.toRoadRunnerPose(poseEstimate);//
+
+        roadRunnerPoseEstimate = new Pose2d(drive.pose.position.x, drive.pose.position.y, drive.pose.heading.toDouble());
 
 //        PoseVelocity2d velocity = ;
 
@@ -204,7 +217,7 @@ public class NewDrivetrain extends SubSystem {
                     followPath = path.run(packet);
 
 
-//                    setDrivePower(drive.getDrivePowers());
+                    setDrivePower(drive.getDrivePowers());
                     followState.setValue("FOLLOW");
                 }
 
@@ -266,7 +279,7 @@ public class NewDrivetrain extends SubSystem {
 
                 break;
         }
-//        motorPowerTelemetry.setValue(drive.getDrivePowers());
+        motorPowerTelemetry.setValue(drive.getDrivePowers());
 
     }
 
@@ -277,9 +290,9 @@ public class NewDrivetrain extends SubSystem {
             packet.fieldOverlay().getOperations().addAll(this.packet.fieldOverlay().getOperations());
         } else {
 
-//            packet.put("x", drive.pose.position.x);
-//            packet.put("y", drive.pose.position.y);
-//            packet.put("heading (deg)", drive.pose.heading.toDouble()*180/Math.PI);
+            packet.put("x", drive.pose.position.x);
+            packet.put("y", drive.pose.position.y);
+            packet.put("heading (deg)", drive.pose.heading.toDouble()*180/Math.PI);
 
             packet.fieldOverlay().setStrokeWidth(1);
             packet.fieldOverlay().setStroke("#b33fb5");
