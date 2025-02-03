@@ -211,7 +211,7 @@ public class NewDrivetrain extends SubSystem {
                 break;
             case DRIVER_CONTROL:
                 followState.setValue("DRIVER");
-//                drive.updatePoseEstimate();
+                drive.updatePoseEstimate();
                 double relativeHeading = roadRunnerPoseEstimate.getHeading()-headingOffset;
 
                 double speedMultiplier = 1- gamepad1.right_trigger*.7;

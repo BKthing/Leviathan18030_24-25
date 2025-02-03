@@ -109,7 +109,7 @@ public class NewOuttake extends SubSystem {
     public enum VerticalSlide {
         EXTRA_DOWN(-.3),
         DOWN(0),
-        TRANSFER(5.65),
+        TRANSFER(5.7),
         EXTRACT_FROM_TRANSFER(9),
         MIN_PASSTHROUGH_HEIGHT(10),
         SPECIMEN_PICKUP(3.55),
@@ -167,7 +167,7 @@ public class NewOuttake extends SubSystem {
         MID_POSITION_CUTOFF(.55 - .042),
         WAITING_FOR_HANG_DEPLOY(.363),//.42
         // hello brett my king
-        TRANSFER(.446), //.444
+        TRANSFER(.447), //.444
         GRAB_BACK(.63 - .042),
         WAIT_PLACE_BACK(.14 - .042),
         PLACE_BACK(.07 - .042),//.07
@@ -188,7 +188,7 @@ public class NewOuttake extends SubSystem {
 
 
     public enum ClawPitch {
-        DOWN(.39 - .019),
+        DOWN(.34 - .019),
         BACK(0.09 - .019),
         BACK_ANGLED_DOWN(.19 - .019),
         BACK2(1 - .019),
@@ -216,7 +216,7 @@ public class NewOuttake extends SubSystem {
         HANG_DEPLOY(.26),
         OPEN(.22),//.36),//.15
         PARTIALOPEN(.12),
-        CLOSED(.045);//.15);//.02
+        CLOSED(.05);//.15);//.02
 
 //        EXTRA_OPEN(.6),
 //        OPEN(.4),
@@ -445,12 +445,8 @@ public class NewOuttake extends SubSystem {
                 }
 
                 if (gamepad2.start && !oldGamePad2.start) {
-                    leftOuttakeServo.getController().pwmDisable();
-                    rightOuttakeServo.getController().pwmDisable();
-                    clawServo.getController().pwmDisable();
-                    clawPitchServo.getController().pwmDisable();
-//                    intake.blueAlliance = null;
-//                    blueAlliance = null;
+                    intake.blueAlliance = null;
+                    blueAlliance = null;
                 }
 
             } else {
@@ -621,9 +617,9 @@ public class NewOuttake extends SubSystem {
         prevSlideError = error;
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 1) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower));// * 12/voltage
+            leftMotorReusableHardwareAction.setAndQueueAction(() -> verticalLeftMotor.setPower(motorPower * 12/voltage));
             rightMotorReusableHardwareAction.setAndQueueAction(() -> {
-                verticalRightMotor.setPower(motorPower);// * 12/voltage
+                verticalRightMotor.setPower(motorPower * 12/voltage);
                 outtakeMotorPower.setValue(motorPower);
             }
             );

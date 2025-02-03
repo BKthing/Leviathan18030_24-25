@@ -135,8 +135,8 @@ public class NewIntake extends SubSystem {
 
     public enum HorizontalSlide {
         //18.9 max
-        EXTRA_IN(-1.5),
-        IN(-1),
+        EXTRA_IN(-.8),
+        IN(-.3),
         AUTO_PRESET1(13.5),
         AUTO_PRESET2(4),
         CLOSE(7),
@@ -403,14 +403,6 @@ public class NewIntake extends SubSystem {
                 if (Math.abs(gamepad2.left_stick_y)>.05) {
                     targetSlidePos = targetSlidePos + 10 * slideTimer.seconds() * -gamepad2.left_stick_y;
                 }
-
-                if (gamepad2.start) {
-                    leftSpinnerServo.getController().pwmDisable();
-                    rightSpinnerServo.getController().pwmDisable();
-                    leftIntakeServo.getController().pwmDisable();
-                    rightIntakeServo.getController().pwmDisable();
-
-                }
             } else {
                 if (gamepad2.dpad_down && !oldGamePad2.dpad_down) {
                     toIntakeState = ToIntakeState.RETRACT;
@@ -522,9 +514,9 @@ public class NewIntake extends SubSystem {
             //Slides set to max power
             p = Math.signum(error);
         } else {//if (error<4 but error>.1)
-            p = error*.32;//.35;
+            p = error*.28;//.35;
             d = ((prevSlideError-error) / elapsedTime) * .023;//.03;//.007
-            f=Math.signum(error)*0.24;//.15;
+            f=Math.signum(error)*0.22;//.15;
         }
 
 //        p = 0;
@@ -536,8 +528,8 @@ public class NewIntake extends SubSystem {
 
 
         if ((actualMotorPower == 0 && motorPower != 0) || (actualMotorPower != 0 && motorPower == 0) || (Math.abs(motorPower-actualMotorPower)>.05)) {
-            leftIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalLeftMotor.setPower(motorPower));// * 12/voltage
-            rightIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalRightMotor.setPower(motorPower));// * 12/voltage
+            leftIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalLeftMotor.setPower(motorPower * 12/voltage));
+            rightIntakeMotorHardwareAction.setAndQueueAction(() -> horizontalRightMotor.setPower(motorPower * 12/voltage));
 
             actualMotorPower = motorPower;
         }
@@ -572,7 +564,7 @@ public class NewIntake extends SubSystem {
                 }
                 else if (checkColor) {
 
-                    if (blueAlliance == null || sampleColor == SampleColor.NONE) {
+                    if (blueAlliance == null) {
                         targetIntakePos = IntakePos.UP.pos;
 
                         intakeState = IntakeState.RETRACTING_INTAKE;
@@ -589,12 +581,12 @@ public class NewIntake extends SubSystem {
 
                     sampleColor = findSampleColor();
 
-//                    if (sampleColor == SampleColor.NONE) {
-//                        hardwareQueue.add(() -> {
-//                            newColors = colorSensor.getNormalizedColors();
-//                        });
-//                        break;
-//                    }
+                    if (sampleColor == SampleColor.NONE) {
+                        hardwareQueue.add(() -> {
+                            newColors = colorSensor.getNormalizedColors();
+                        });
+                        break;
+                    }
 
                     checkColor = false;
 
