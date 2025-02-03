@@ -47,7 +47,7 @@ public class MasterThread {
 
 
 
-    private final boolean dashboardEnabled = true;
+    private final boolean dashboardEnabled = false;
 
     private final SubSystemData data;
 
@@ -131,7 +131,9 @@ public class MasterThread {
 //                minHardwareUpdates -= 1;
 //            }
 //        }
-
+        if (hardwareQueue.size() > 100) {
+            throw new RuntimeException("HARDWARE QUEUE SIZE TOO LARGE");
+        }
         hardwareQueue.update(minHardwareUpdates, 5);
 
         queueSize.setValue(hardwareQueue.size());
