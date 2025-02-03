@@ -21,17 +21,15 @@ dependencies {
 
     implementation 'com.github.BKthing.reefshark:reefsharkLibrary:0.0.2b-alpha'
 
-    implementation('com.acmerobotics.dashboard:dashboard:0.4.16')
-
     implementation 'com.pedropathing:pedro:1.0.7'
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.16'
 
 //    implementation "com.acmerobotics.roadrunner:ftc:0.1.14"
     implementation "com.acmerobotics.roadrunner:core:1.0.1"
     implementation "com.acmerobotics.roadrunner:actions:1.0.1"
 
-    implementation("page.j5155.roadrunner:ftc-otos:0.1.2+0.1.14") {
-        exclude group: "page.j5155.roadrunner", module: "ftc-otos-0.1.2+0.1.14"
-    }
+//    implementation "page.j5155.roadrunner:ftc-otos:0.1.2+0.1.14"
+//        exclude group: "page.j5155.roadrunner", module: "ftc-otos:0.1.2+0.1.14
 
 }
 
